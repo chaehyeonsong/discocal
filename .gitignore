@@ -1,0 +1,6 @@
+upload.sh
+backup/
+backup*/
+.vscode/
+build/
+imgs/
