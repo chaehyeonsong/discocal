@@ -1,5 +1,5 @@
 # docker 
-docker push chaehyeonsong/discocal
+docker pull chaehyeonsong/discocal:latest
 
 # build
 mkdir build
