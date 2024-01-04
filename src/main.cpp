@@ -113,17 +113,18 @@ int main(int argc, char** argv){
 
     int n_x = atoi(argv[1]);
     int n_y = atoi(argv[2]);
-    string img_dir(argv[3]);
-    double r  = atof(argv[4]);
-    double distance  = atof(argv[5]);
-    bool is_thermal= (1== atoi(argv[6])); //0: rgb, 1:theraml
+    int n_d = atoi(argv[3]);
+    string img_dir(argv[4]);
+    double r  = atof(argv[5]);
+    double distance  = atof(argv[6]);
+    bool is_thermal= (1== atoi(argv[7])); //0: rgb, 1:theraml
 
 
     cout<<img_dir<<endl;
-    printf("%d, %d, %f, %f \n",n_x, n_y, r, distance);
+    printf("%d, %d, %d, %f, %f \n",n_x, n_y, n_d, r, distance);
 
     string type = "circle";
-    int n_d= 4;
+    
     bool save_pose = false;
     int mode = 0;
     test_calibration(img_dir,type,mode, n_x, n_y, n_d, r,distance,is_thermal,save_pose);
