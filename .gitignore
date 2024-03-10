@@ -3,4 +3,5 @@ backup/
 backup*/
 .vscode/
 build/
-imgs/
+imgs/*
+.Ds_Store

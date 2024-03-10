@@ -40,16 +40,11 @@ public:
     MomentumTracker();
     ~MomentumTracker();
 
-    // static int _nCr(int i, int j);
-    // static long long int fact(int n);
-    // static long long int fact(int n, int k);
-
     double I_2i2j(int i, int j);
     
     double M_2i2j(int i, int j);
     double M_2i2j(int i, int j, double a, double b);
     array<double ,3> intSn(int n,double a, double b, double tx, double ty,double alpha );
-    // pair<double, double> distortedCenter(array<double ,4> ellipse,vector<double> ds);
     Point ne2dp(Eigen::Matrix3d Q, vector<double> ds);
     Point distort_Point(Point pn, vector<double> ds);
     double nCr(int i, int j);

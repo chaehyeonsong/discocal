@@ -35,7 +35,6 @@ class LieAlgebra{
         static se3 to_se3(const Eigen::Matrix3d &E);
         static pair<double, double> dist(se3 a,se3 b);
         static se3 solveAXXB(const vector<pair<se3, se3>> &ABs);
-        // static Eigen::Vector4d to_quat(Se3 se3);
 
 
 

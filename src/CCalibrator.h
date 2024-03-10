@@ -51,7 +51,6 @@ struct CalibrationFunctor {
         for(int i=0;i<origin_target.size();i++){
             double wx = origin_target[i].x;
             double wy = origin_target[i].y;
-            // double radius = 0.05;
             Eigen::Matrix3d Cw;
             Cw <<   1.0, 0.0, -wx,
                     0.0, 1.0, -wy,
@@ -59,11 +58,6 @@ struct CalibrationFunctor {
 
             Eigen::Matrix3d E, E_inv, Qn;
             Eigen::Vector3d rot_vector{rot[0],rot[1],rot[2]};
-            // Is normalize rot needed????
-            // double rot_norm = rot_vector.norm();
-            // if(rot_norm> M_PI){
-            //     rot_vector = rot_vector/rot_norm*M_PI;
-            // }
             
             
             E= LieAlgebra::to_E(se3(rot_vector,Eigen::Vector3d(trans[0],trans[1],trans[2])));
@@ -82,8 +76,6 @@ struct CalibrationFunctor {
                 dp = tracker->distort_Point(pn,ds);
             }
             else if(mode == 2){
-                // array<double,5> ellipse_w= tracker->ellipse2array(Cw);
-                // Point pw(ellipse_w[0],ellipse_w[1]);
                 Eigen::Vector3d Pw{wx,wy,1};
                 Eigen::Vector3d Pn = E*Pw;
                 Point pn(Pn[0]/Pn[2],Pn[1]/Pn[2]);
@@ -107,11 +99,9 @@ struct CalibrationFunctor {
     }
     private:
         int mode;
-        // double distance_ratio,radius_ratio;
         vector<Point> origin_target;
         vector<Point> target;
         MomentumTracker* tracker;
-        // bool normalize;
 };
 
 class Calibrator{
@@ -128,9 +118,6 @@ class Calibrator{
         void get_extrinsic(string root_dir);
         vector<se3> get_extrinsic();
 
-        // Eigen::Matrix3d get_extrinsic(Params params, int target_index);
-        // Params batch_optimize(std::vector<int> sample, Params initial_params,int phase, double ratio);
-
     private:
         int height, width;
         int num_scene;
@@ -139,7 +126,6 @@ class Calibrator{
         double distance;
         double original_r;
         double curr_r;
-        // vector<double> rs;
         double thr_homography;
 
         vector<se3> Es; // [R1, R2, t] se3: rot , trans
@@ -147,7 +133,6 @@ class Calibrator{
 
         vector<vector<Point>> targets;
         vector<vector<Point>> ud_targets;
-        // vector<Eigen::Matrix3d> origin_conics;
         vector<Point> origin_target;
         array<double, 4> ori_ms; //original_mean_sigma
 

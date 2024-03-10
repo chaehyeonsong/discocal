@@ -165,8 +165,6 @@ Point MomentumTracker::ne2dp(Eigen::Matrix3d Q, vector<double> ds){
     ty = ellipse[1];
     a = ellipse[2];
     b = ellipse[3];
-    // a=0;
-    // b=0;
     alpha = ellipse[4];
     double A_d=0; // =Ad/An
     double x_d=0;
@@ -197,26 +195,3 @@ Point MomentumTracker::distort_Point(Point pn, vector<double> ds){
     }
     return Point(k*x, k*y);
 }
-
-//-------------static----------------//
-
-// long long int MomentumTracker::fact(int n){
-//     return fact(n,n);
-// }
-
-// long long int MomentumTracker::fact(int n, int k){
-//     // n>=k
-//     if(k==0) return 1;
-//     if (k>0) return n*fact(n-1,k-1);
-// }
-
-// int MomentumTracker::_nCr(int n,int r){
-//     if(n<r) return 0;
-//     if(n==r) return 1;
-//     if (r==0&&n!=0) return 1;
-
-//     if( r > n/2){
-//         return _nCr(n,n-r);
-//     }
-//     else return fact(n,r)/fact(r);
-// }

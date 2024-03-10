@@ -473,8 +473,6 @@ Params Calibrator::calibrate(int mode){
     printf("initial ");
     printParams(initial_params,true);
 
-
-    // 0: all, 2: w/o r
     
     set_inital_Es(initial_params);
     std::vector<int> sample = get_randomSample(num_scene,num_scene);

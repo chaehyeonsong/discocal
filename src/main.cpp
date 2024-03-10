@@ -41,7 +41,7 @@ vector<T> split(string str, char Delimiter) {
     return result;
 }
 
-void test_calibration(string img_dir, string type, int mode, int n_x, int n_y, int n_d, double r, double distance, bool is_thermal, bool save_pose){
+void do_calibration(string img_dir, string type, int mode, int n_x, int n_y, int n_d, double r, double distance, bool is_thermal, bool save_pose){
 
     vector<string> imgs;
 
@@ -127,7 +127,7 @@ int main(int argc, char** argv){
     
     bool save_pose = false;
     int mode = 0;
-    test_calibration(img_dir,type,mode, n_x, n_y, n_d, r,distance,is_thermal,save_pose);
+    do_calibration(img_dir,type,mode, n_x, n_y, n_d, r,distance,is_thermal,save_pose);
     finish = clock();
     double duration = (double)(finish - start) / CLOCKS_PER_SEC;
     printf("%f초\n", duration);

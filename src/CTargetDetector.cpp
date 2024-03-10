@@ -74,16 +74,6 @@ pair<bool,vector<cv::Point2f>> TargetDetector::detect(cv::Mat img, string type){
 void TargetDetector::dfs(cv::Mat img, vector<vector<bool>> &buffer, vector<array<int,3>> &area, int x, int y){
     int W = img.cols;
     int H = img.rows;
-
-    // buffer[y][x]=false;
-    // if( check_pixel(img, x, y)){
-    //     area.push_back(array<int,3>{x,y,img.data[y*W+x]});
-    //     if(x+1<W && buffer[y][x+1]) dfs(img,buffer,area,x+1,y);
-    //     if(x>0 && buffer[y][x-1]) dfs(img,buffer,area,x-1,y);
-    //     if(y+1<H && buffer[y+1][x]) dfs(img,buffer,area,x,y+1);
-    //     if(y>0 && buffer[y-1][x]) dfs(img,buffer,area,x,y-1);
-    // }
-
     if(area.size()>W*H/4) return;
     stack<cv::Point2i> stack;
     buffer[y][x]=false;
