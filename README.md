@@ -7,7 +7,7 @@ As shown above, the circle center is not projected to the centroid of the distor
 **Our unbiased estimator completes the missing piece in the conic-based calibration pipeline and outperforms the checkerboard pattern-based calibration.**
 
 ## Camera model
-We assume pin-hole camera model with radial distortion.
+We assume the pinhole camera model with radial distortion.
 ![overview](./Figs/camera_model.png)
 
 
