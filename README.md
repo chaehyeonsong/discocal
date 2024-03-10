@@ -1,4 +1,4 @@
-# Disco-Cal: Unbiased Estimator for Distorted Conics in Camera Calibration (CVPR24)
+# Unbiased Estimator for Distorted Conics in Camera Calibration (CVPR24)
 ## Description
 ![overview](./Figs/overview.png)
 
@@ -10,15 +10,6 @@ As shown above, the circle center is not projected to the centroid of the distor
 We assume pin-hole camera model with radial distortion.
 ![overview](./Figs/camera_model.png)
 
-## Bibtex
-	@INPROCEEDINGS { chsong-2024-cvpr,
-		AUTHOR = { Chaehyeon Song and Jaeho Shin and Myung-Hwan Jeon and Jongwoo Lim and Ayoung Kim },
-		TITLE = { Unbiased Estimator for Distorted Conic in Camera Calibration },
-		BOOKTITLE = { IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) },
-		YEAR = { 2024 },
-		MONTH = { June. },
-		ADDRESS = { Seattle },
-	}
 
 # How to use
 ## Dependency
@@ -38,3 +29,14 @@ We assume pin-hole camera model with radial distortion.
 	
 ## run
 	./main.out [n_x] [n_y] [n_d] [img_dir_path] [r(m)] [distance(m)] [0:rgb, 1:thermal]
+
+
+# Bibtex
+	@INPROCEEDINGS { chsong-2024-cvpr,
+		AUTHOR = { Chaehyeon Song and Jaeho Shin and Myung-Hwan Jeon and Jongwoo Lim and Ayoung Kim },
+		TITLE = { Unbiased Estimator for Distorted Conic in Camera Calibration },
+		BOOKTITLE = { IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) },
+		YEAR = { 2024 },
+		MONTH = { June. },
+		ADDRESS = { Seattle },
+	}
