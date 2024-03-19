@@ -22,7 +22,7 @@ class WrongTypeException: public std::exception{
 
 class TargetDetector{
     public:
-        TargetDetector(int n_x, int n_y, bool is_thermal= false);
+        TargetDetector(int n_x, int n_y, bool is_thermal= false, bool draw = true);
         pair<bool,vector<cv::Point2f>>detect(cv::Mat img, string type);
         static double ALPHA ,DELTA;
 

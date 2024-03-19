@@ -484,7 +484,7 @@ Params Calibrator::calibrate(int mode){
         printParams(final_params,true);
 
         printf("It will take few minites.....\n");
-        final_params= batch_optimize(sample, final_params,1,mode);
+        final_params= batch_optimize(sample, final_params,0,mode);
 
     }
     else{

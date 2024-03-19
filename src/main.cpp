@@ -9,7 +9,6 @@
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
-#include <opencv2/core/eigen.hpp>
 
 #include "CCalibrator.h"
 #include "CTargetDetector.h"
@@ -25,23 +24,19 @@ class WrongPathException: public std::exception{
 
 template <typename T>
 vector<T> split(string str, char Delimiter) {
-    istringstream iss(str);             // istringstream에 str을 담는다.
-    string buffer;                      // 구분자를 기준으로 절삭된 문자열이 담겨지는 버퍼
- 
+    istringstream iss(str);             
+    string buffer;                      
     vector<T> result;
- 
-    // istringstream은 istream을 상속받으므로 getline을 사용할 수 있다.
     while (getline(iss, buffer, Delimiter)) {
         std::stringstream value(buffer);
         T d;
         value>>d;
-        result.push_back(d);               // 절삭된 문자열을 vector에 저장
+        result.push_back(d);               
     }
- 
     return result;
 }
 
-void do_calibration(string img_dir, string type, int mode, int n_x, int n_y, int n_d, double r, double distance, bool is_thermal, bool save_pose){
+void do_calibration(string img_dir, string type, int mode, int n_x, int n_y, int n_d, double r, double distance, bool check_detection_result, bool is_thermal, bool save_pose){
 
     vector<string> imgs;
 
@@ -59,7 +54,7 @@ void do_calibration(string img_dir, string type, int mode, int n_x, int n_y, int
     sort(imgs.begin(),imgs.end());
     int max_scene = imgs.size();
 
-    TargetDetector detector(n_x, n_y,is_thermal);
+    TargetDetector detector(n_x, n_y,is_thermal,check_detection_result);
     pair<bool,vector<cv::Point2f>> result;
     int count=0;
     Calibrator calibrator = Calibrator(n_x,n_y,n_d,r,distance,max_scene);
@@ -82,6 +77,7 @@ void do_calibration(string img_dir, string type, int mode, int n_x, int n_y, int
         result = detector.detect(img, type);
         if(result.first){
             calibrator.inputTarget(result.second);
+
         }
         else cout<<path<<": detection failed"<<endl;
 
@@ -106,9 +102,11 @@ int main(int argc, char** argv){
     // user parameter
     // int n_x = 4;
     // int n_y= 3;
+    // int n_d = 3;
     // string img_dir= "../imgs/";
     // double r = 0.035; 
     // double distance = 0.09; 
+    // bool is_thermal =  false;
 
 
     int n_x = atoi(argv[1]);
@@ -125,9 +123,10 @@ int main(int argc, char** argv){
 
     string type = "circle";
     
+    bool check_detection_result = true;
     bool save_pose = false;
     int mode = 0;
-    do_calibration(img_dir,type,mode, n_x, n_y, n_d, r,distance,is_thermal,save_pose);
+    do_calibration(img_dir,type,mode, n_x, n_y, n_d, r,distance,check_detection_result,is_thermal,save_pose);
     finish = clock();
     double duration = (double)(finish - start) / CLOCKS_PER_SEC;
     printf("%f초\n", duration);

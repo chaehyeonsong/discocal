@@ -4,7 +4,7 @@ double TargetDetector::DELTA=0;
 
 
 
-TargetDetector::TargetDetector(int n_x, int n_y, bool is_thermal){
+TargetDetector::TargetDetector(int n_x, int n_y, bool is_thermal, bool draw){
     this->n_x = n_x;    
     this->n_y = n_y;
     this->prev_success=false;
@@ -16,16 +16,16 @@ TargetDetector::TargetDetector(int n_x, int n_y, bool is_thermal){
     this->fullfill_threshold2 = 0.01;
     this->eccentricity_threshold = 0.1;
 
+    this->draw=draw; 
     this->use_weight=false; 
     this->do_iterative_search=true;
-    this->draw=true;
     if(is_thermal){
         this->color_threshold_max = 150; 
         this->color_threshold_step = 5;
     }
     else{
         if(do_iterative_search){
-            this->color_threshold_max = 230; 
+            this->color_threshold_max = 255; 
             this->color_threshold_step = 5;
         }
         else this->color_threshold_max = 125;
@@ -59,7 +59,16 @@ pair<bool,vector<cv::Point2f>> TargetDetector::detect(cv::Mat img, string type){
             color_threshold = color_threshold_max;
             ret=detect_circles(img, target);
         }
-        
+        printf("save: 1, ignore: 0\n");
+        char key = cv::waitKey(0);
+        while(key != '0' && key!='1'){
+            printf("wrong commend is detected\n");
+            key = cv::waitKey(0);
+        }
+        cv::destroyAllWindows();
+        if(key == '0'){
+            ret = false;
+        }
         printf("color_threshold: %d\n",color_threshold);
         if(ret) prev_success=true;
     }
@@ -242,9 +251,7 @@ bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target){
                 }
                 if(is_thermal) cv::resize(bgr_img, bgr_img, cv::Size(bgr_img.cols*2, bgr_img.rows*2));
                 else cv::resize(bgr_img, bgr_img, cv::Size(bgr_img.cols*0.8, bgr_img.rows*0.8));
-                cv::imshow("hi",bgr_img);
-                cv::waitKey(0);
-                cv::destroyAllWindows();
+                cv::imshow("input_image",bgr_img);
             }
             return  true;
         }
