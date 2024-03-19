@@ -36,7 +36,8 @@ We also furnish official docker image.
 	make
 
 	## Run
-	./main.out [n_x] [n_y] [n_d] [img_dir_path] [r(m)] [distance(m)] [0:rgb, 1:thermal]
+	./main.out [n_x] [n_y] [n_d] [img_dir_path] [r(m)] [distance(m)] [0:rgb or 1:thermal]
+	(ex) ./main.out 4 3 3 ../imgs/ 0.035 0.05 0
 
 ## Important
 **To get high-quality results, plz check all pixels in the circle are correctly detected like this.**
@@ -47,7 +48,6 @@ If you don’t want to verify the images, turn off the “check_detection_result
 
 
 Our circle detector finds the elliptical blobs in the image with the color value and ellipse test.
-
 #### Parameters:
 - **color_threshold_max**: the intensity threshold between the blob and surrounding pixels (intensity of a blob pixel < color_threshold_max)
 - **size_threshold**: the number of pixels composing a blob is bigger than this value
