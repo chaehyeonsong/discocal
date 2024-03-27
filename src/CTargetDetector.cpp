@@ -59,15 +59,17 @@ pair<bool,vector<cv::Point2f>> TargetDetector::detect(cv::Mat img, string type){
             color_threshold = color_threshold_max;
             ret=detect_circles(img, target);
         }
-        printf("save: 1, ignore: 0\n");
-        char key = cv::waitKey(0);
-        while(key != '0' && key!='1'){
-            printf("wrong commend is detected\n");
-            key = cv::waitKey(0);
-        }
-        cv::destroyAllWindows();
-        if(key == '0'){
-            ret = false;
+        if(this->draw){
+            printf("save: 1, ignore: 0\n");
+            char key = cv::waitKey(0);
+            while(key != '0' && key!='1'){
+                printf("wrong commend is detected\n");
+                key = cv::waitKey(0);
+            }
+            cv::destroyAllWindows();
+            if(key == '0'){
+                ret = false;
+            }
         }
         printf("color_threshold: %d\n",color_threshold);
         if(ret) prev_success=true;

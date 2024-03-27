@@ -39,12 +39,12 @@ We also furnish official docker image.
 	./main.out [n_x] [n_y] [n_d] [img_dir_path] [r(m)] [distance(m)] [0:rgb or 1:thermal]
 	(ex) ./main.out 4 3 3 ../imgs/ 0.035 0.05 0
 
-## Important
+## Important: Circle detection
 **To get high-quality results, plz check all pixels in the circle are correctly detected like this.**
 <!-- ![sample](./Figs/detection_sample.png){: width="100" height="100"} -->
 <img src="./Figs/detection_sample.png" width="400" height="300">
 
-If you don’t want to verify the images, turn off the “check_detection_results” option in "main.cpp".
+If you don’t want to verify images, turn off the “check_detection_results” option in "main.cpp".
 
 
 Our circle detector finds the elliptical blobs in the image with the color value and ellipse test.
