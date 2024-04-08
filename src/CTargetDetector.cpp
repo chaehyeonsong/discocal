@@ -53,11 +53,13 @@ pair<bool,vector<cv::Point2f>> TargetDetector::detect(cv::Mat img, string type){
                 ret=detect_circles(img, target);
                 if(ret) break;
                 else color_threshold -= color_threshold_step;
-            }   
+            }
+            color_threshold = 125;
+            ret=detect_circles(img, target,true);
         }
         else{
             color_threshold = color_threshold_max;
-            ret=detect_circles(img, target);
+            ret=detect_circles(img, target, true);
         }
         if(this->draw){
             printf("save: 1, ignore: 0\n");
@@ -196,7 +198,7 @@ bool TargetDetector::compare(cv::Point2i a, cv::Point2i b){
 	return aless; // true이면 a가 b 앞에 감. 즉 a가 b보다 앞일 조건 쓰면 됌
 }
 
-bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target){
+bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, bool debug){
     int W = img.cols;
     int H = img.rows;
 
@@ -237,29 +239,38 @@ bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target){
     }
 
     // find axis
-    if(source.size()==n_x*n_y) {
-        sortTarget(source,target);
-        if(target.size()==n_x*n_y) {
-            if(draw){
-                
-                for(int i=0;i<target.size();i++){
+    if (debug && draw){
+        if(is_thermal) cv::resize(bgr_img, bgr_img, cv::Size(bgr_img.cols*2, bgr_img.rows*2));
+        else cv::resize(bgr_img, bgr_img, cv::Size(bgr_img.cols*0.8, bgr_img.rows*0.8));
+        cv::imshow("input_image",bgr_img);
+        return  false;
+    }
+    else{
+        if(source.size()==n_x*n_y) {
+            sortTarget(source,target);
+            if(target.size()==n_x*n_y) {
+                if(draw){
                     
-                    cv::Point2f pt = target[i];
-                    if(i/4 ==0 ) cv::putText(bgr_img,to_string(i%4),pt,0,1,cv::Scalar(0,255,0),2);
-                    else if(i/4==1) cv::putText(bgr_img,to_string(i%4),pt,0,1,cv::Scalar(0,0,255),2);
-                    else if(i/4==2) cv::putText(bgr_img,to_string(i%4),pt,0,1,cv::Scalar(0,255,255),2);
-                    // cv::imwrite("../temp.png",bgr_img);
-                    // usleep(200000);
+                    for(int i=0;i<target.size();i++){
+                        
+                        cv::Point2f pt = target[i];
+                        if(i/4 ==0 ) cv::putText(bgr_img,to_string(i%4),pt,0,1,cv::Scalar(0,255,0),2);
+                        else if(i/4==1) cv::putText(bgr_img,to_string(i%4),pt,0,1,cv::Scalar(0,0,255),2);
+                        else if(i/4==2) cv::putText(bgr_img,to_string(i%4),pt,0,1,cv::Scalar(0,255,255),2);
+                        // cv::imwrite("../temp.png",bgr_img);
+                        // usleep(200000);
+                    }
+                    if(is_thermal) cv::resize(bgr_img, bgr_img, cv::Size(bgr_img.cols*2, bgr_img.rows*2));
+                    else cv::resize(bgr_img, bgr_img, cv::Size(bgr_img.cols*0.8, bgr_img.rows*0.8));
+                    cv::imshow("input_image",bgr_img);
                 }
-                if(is_thermal) cv::resize(bgr_img, bgr_img, cv::Size(bgr_img.cols*2, bgr_img.rows*2));
-                else cv::resize(bgr_img, bgr_img, cv::Size(bgr_img.cols*0.8, bgr_img.rows*0.8));
-                cv::imshow("input_image",bgr_img);
+                return  true;
             }
-            return  true;
+            else return false;
         }
         else return false;
     }
-    else return false;
+
 }
 
 
