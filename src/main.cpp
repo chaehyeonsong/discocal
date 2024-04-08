@@ -103,7 +103,7 @@ int main(int argc, char** argv){
     // int n_x = 4;
     // int n_y= 3;
     // int n_d = 3;
-    // string img_dir= "../imgs/";
+    // string img_dir= "../imgs/easy/";
     // double r = 0.035; 
     // double distance = 0.09; 
     // bool is_thermal =  false;

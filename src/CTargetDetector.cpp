@@ -54,14 +54,14 @@ pair<bool,vector<cv::Point2f>> TargetDetector::detect(cv::Mat img, string type){
                 if(ret) break;
                 else color_threshold -= color_threshold_step;
             }
-            color_threshold = 125;
-            ret=detect_circles(img, target,true);
         }
         else{
             color_threshold = color_threshold_max;
-            ret=detect_circles(img, target, true);
+            ret=detect_circles(img, target);
         }
         if(this->draw){
+            if(!ret) color_threshold=125;
+            detect_circles(img, target, true);
             printf("save: 1, ignore: 0\n");
             char key = cv::waitKey(0);
             while(key != '0' && key!='1'){
@@ -74,12 +74,12 @@ pair<bool,vector<cv::Point2f>> TargetDetector::detect(cv::Mat img, string type){
             }
         }
         printf("color_threshold: %d\n",color_threshold);
+
         if(ret) prev_success=true;
     }
     else{
         throw WrongTypeException();
     }
-
 
     return make_pair(ret, target);
 }
@@ -203,7 +203,7 @@ bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, boo
     int H = img.rows;
 
     cv::Mat bgr_img;
-    if(draw) cv::cvtColor(img,bgr_img, cv::COLOR_GRAY2BGR);
+    if(debug) cv::cvtColor(img,bgr_img, cv::COLOR_GRAY2BGR);
     vector<cv::Point2f> source;
 
 
@@ -223,7 +223,7 @@ bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, boo
                 area.clear();
                 dfs(img,buffer,area,x,y);
                 if(ellipse_test(area,pt)){
-                    if(draw){
+                    if(debug){
                         for(int i=0;i<area.size();i++){
                             int pos= area[i][0]+area[i][1]*W;
                             if (use_weight) bgr_img.data[3*pos]=(color_threshold-area[i][2]);
@@ -237,39 +237,26 @@ bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, boo
             }
         }
     }
-
-    // find axis
-    if (debug && draw){
+    if(debug){
+        // for(int i=0;i<target.size();i++){
+        //     cv::Point2f pt = target[i];
+        //     if(i/4 ==0 ) cv::putText(bgr_img,to_string(i%4),pt,0,1,cv::Scalar(0,255,0),2);
+        //     else if(i/4==1) cv::putText(bgr_img,to_string(i%4),pt,0,1,cv::Scalar(0,0,255),2);
+        //     else if(i/4==2) cv::putText(bgr_img,to_string(i%4),pt,0,1,cv::Scalar(0,255,255),2);
+        // }
         if(is_thermal) cv::resize(bgr_img, bgr_img, cv::Size(bgr_img.cols*2, bgr_img.rows*2));
         else cv::resize(bgr_img, bgr_img, cv::Size(bgr_img.cols*0.8, bgr_img.rows*0.8));
         cv::imshow("input_image",bgr_img);
-        return  false;
     }
-    else{
-        if(source.size()==n_x*n_y) {
-            sortTarget(source,target);
-            if(target.size()==n_x*n_y) {
-                if(draw){
-                    
-                    for(int i=0;i<target.size();i++){
-                        
-                        cv::Point2f pt = target[i];
-                        if(i/4 ==0 ) cv::putText(bgr_img,to_string(i%4),pt,0,1,cv::Scalar(0,255,0),2);
-                        else if(i/4==1) cv::putText(bgr_img,to_string(i%4),pt,0,1,cv::Scalar(0,0,255),2);
-                        else if(i/4==2) cv::putText(bgr_img,to_string(i%4),pt,0,1,cv::Scalar(0,255,255),2);
-                        // cv::imwrite("../temp.png",bgr_img);
-                        // usleep(200000);
-                    }
-                    if(is_thermal) cv::resize(bgr_img, bgr_img, cv::Size(bgr_img.cols*2, bgr_img.rows*2));
-                    else cv::resize(bgr_img, bgr_img, cv::Size(bgr_img.cols*0.8, bgr_img.rows*0.8));
-                    cv::imshow("input_image",bgr_img);
-                }
-                return  true;
-            }
-            else return false;
+
+    if(source.size()==n_x*n_y) {
+        sortTarget(source,target);
+        if(target.size()==n_x*n_y) {
+            return  true;
         }
         else return false;
     }
+    else return false;
 
 }
 
