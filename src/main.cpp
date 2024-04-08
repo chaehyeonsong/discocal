@@ -100,22 +100,22 @@ int main(int argc, char** argv){
     clock_t start, finish;
     start = clock();
     // user parameter
-    int n_x = 4;
-    int n_y= 3;
-    int n_d = 3;
-    string img_dir= "../imgs/";
-    double r = 0.035; 
-    double distance = 0.09; 
-    bool is_thermal =  false;
+    // int n_x = 4;
+    // int n_y= 3;
+    // int n_d = 3;
+    // string img_dir= "../imgs/";
+    // double r = 0.035; 
+    // double distance = 0.09; 
+    // bool is_thermal =  false;
 
 
-    // int n_x = atoi(argv[1]);
-    // int n_y = atoi(argv[2]);
-    // int n_d = atoi(argv[3]);
-    // string img_dir(argv[4]);
-    // double r  = atof(argv[5]);
-    // double distance  = atof(argv[6]);
-    // bool is_thermal= (1== atoi(argv[7])); //0: rgb, 1:theraml
+    int n_x = atoi(argv[1]);
+    int n_y = atoi(argv[2]);
+    int n_d = atoi(argv[3]);
+    string img_dir(argv[4]);
+    double r  = atof(argv[5]);
+    double distance  = atof(argv[6]);
+    bool is_thermal= (1== atoi(argv[7])); //0: rgb, 1:theraml
 
 
     cout<<img_dir<<endl;
