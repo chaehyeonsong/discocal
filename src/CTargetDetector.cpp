@@ -18,7 +18,7 @@ TargetDetector::TargetDetector(int n_x, int n_y, bool is_thermal, bool draw){
 
     this->draw=draw; 
     this->use_weight=false; 
-    this->do_iterative_search=true;
+    this->do_iterative_search=false;
     if(is_thermal){
         this->color_threshold_max = 150; 
         this->color_threshold_step = 5;
@@ -28,7 +28,7 @@ TargetDetector::TargetDetector(int n_x, int n_y, bool is_thermal, bool draw){
             this->color_threshold_max = 255; 
             this->color_threshold_step = 5;
         }
-        else this->color_threshold_max = 125;
+        else this->color_threshold_max = 50;
     }
 }
 pair<bool,vector<cv::Point2f>> TargetDetector::detect(cv::Mat img, string type){
@@ -47,6 +47,70 @@ pair<bool,vector<cv::Point2f>> TargetDetector::detect(cv::Mat img, string type){
         reverse(target.begin(), target.end());
     }
     else if(type == "circle"){
+
+        cv::Mat img_origin, img_blur, img_thresh, img_contour, img_output;
+        img_origin = img.clone();
+        img_output = img_origin.clone();
+        cvtColor(img_output, img_output, cv::COLOR_GRAY2BGR);
+
+        cv::GaussianBlur(img_origin, img_blur, cv::Size(5, 5), 0);
+        cv::adaptiveThreshold(img_blur, img_thresh, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY_INV, 11, 2);
+
+        cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
+        cv::morphologyEx(img_thresh, img_thresh, cv::MORPH_CLOSE, kernel);
+
+        std::vector<std::vector<cv::Point>> contours;
+        cv::findContours(img_thresh, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+
+        // img_contour = cv::Mat::zeros(img_origin.size(), CV_8UC3);
+        // cv::drawContours(img_contour, contours, -1, cv::Scalar(255, 255, 255), 2);
+
+        std::vector<std::vector<cv::Point>> set_of_circle_pts;
+
+        int W = img_origin.cols;
+        int H = img_origin.rows;
+        float area_threshold = 400.;
+        float circularity_min = 0.5;
+        float circularity_max = 1.3;
+        for (size_t i = 0; i < contours.size(); i++) 
+        {
+            double area = cv::contourArea(contours[i]);
+            double perimeter = cv::arcLength(contours[i], true);
+            double circularity = (4 * M_PI * area) / (perimeter * perimeter);
+
+            // Check for circularity near 1 to identify circles
+            if (area > area_threshold && circularity > circularity_min && circularity < circularity_max) 
+            {
+                std::vector<std::vector<cv::Point>> cnt;
+                cnt.push_back(contours[i]);
+                cv::Mat mask = cv::Mat::zeros(img_origin.size(), CV_8UC1);
+                cv::drawContours(mask, cnt, -1, cv::Scalar(255, 255, 255), cv::FILLED);
+
+                std::vector<cv::Point> loc; 
+                cv::findNonZero(mask, loc); // output, locations of non-zero pixels
+                set_of_circle_pts.push_back(loc);
+            }
+        }
+
+        for (int i = 0; i < set_of_circle_pts.size(); i++)
+        {
+            for (int j = 0; j < set_of_circle_pts[i].size(); j++)
+            {
+                cv::Point pnt = set_of_circle_pts[i][j];
+                int pos = pnt.x + pnt.y * W;
+                img_output.data[3 * pos + 0] = 255;
+                img_output.data[3 * pos + 1] = 0;
+                img_output.data[3 * pos + 2] = 0;
+            }
+        }
+
+        cv::resize(img_output, img_output, cv::Size(img_output.cols*0.5, img_output.rows*0.5));
+        cv::imshow("img_output", img_output);
+        cv::waitKey(0);
+
+        // **************************************** //
+        // ellipse_test 해야됨. ellipse 아닌거 가끔 잡힘 //
+
         if(do_iterative_search){
             color_threshold = color_threshold_max;
             while(color_threshold>color_threshold_min){
@@ -205,7 +269,6 @@ bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, boo
     cv::Mat bgr_img;
     if(draw) cv::cvtColor(img,bgr_img, cv::COLOR_GRAY2BGR);
     vector<cv::Point2f> source;
-
 
     // initialize
     vector<vector<bool>> buffer; // 확인 안했으면 true;
