@@ -10,7 +10,7 @@ TargetDetector::TargetDetector(int n_x, int n_y, bool is_thermal, bool draw){
     this->prev_success=false;
     this->is_thermal = is_thermal;
     
-    this->color_threshold_min = 60; 
+    this->color_threshold_min = 60;//60; 
     this->size_threshold = 400;
 
     //detector1
@@ -202,15 +202,13 @@ bool TargetDetector::compare(cv::Point2i a, cv::Point2i b){
 	return aless; // true이면 a가 b 앞에 감. 즉 a가 b보다 앞일 조건 쓰면 됌
 }
 bool TargetDetector::detect_circles2(cv::Mat img, vector<cv::Point2f>&target, bool debug){
-    vector<cv::Point2f> source;
-    vector<array<int,3>> circle_pts;
-    cv::Point2f pt;
 
     cv::Mat img_origin, img_blur, img_thresh, img_contour, img_output;
     img_origin = img.clone();
     img_output = img_origin.clone();
     cvtColor(img_output, img_output, cv::COLOR_GRAY2BGR);
 
+    // collect all blob candidates //
     std::vector<std::vector<cv::Point>> circle_contour_candidates;
     cv::GaussianBlur(img_origin, img_blur, cv::Size(5, 5), 0);
     for (int bs = 3; bs <= 19; bs += 2)
@@ -236,13 +234,10 @@ bool TargetDetector::detect_circles2(cv::Mat img, vector<cv::Point2f>&target, bo
                     circle_contour_candidates.push_back(contours[i]);
                 }
             }
-
-            // img_contour = img_origin.clone();
-            // cvtColor(img_contour, img_contour, cv::COLOR_GRAY2BGR);
-            // cv::drawContours(img_contour, circle_contour_candidates, -1, cv::Scalar(255, 0, 0), 2);
         }
     }
     
+    // select valid blobs //
     std::vector<std::vector<cv::Point>> circle_contours;
     for (size_t i = 0; i < circle_contour_candidates.size(); i++)
     {
@@ -278,16 +273,12 @@ bool TargetDetector::detect_circles2(cv::Mat img, vector<cv::Point2f>&target, bo
             if (!overlap)   circle_contours.push_back(circle_contour_candidates[i]);
         }
     }
-    // std::cout << circle_contour_candidates.size() << std::endl;
-    // std::cout << circle_contours.size() << std::endl;
-
-    // img_contour = img_origin.clone();
-    // cvtColor(img_contour, img_contour, cv::COLOR_GRAY2BGR);
-    // cv::drawContours(img_contour, circle_contours, -1, cv::Scalar(255, 0, 0), 2);
-    // cv::resize(img_contour, img_contour, cv::Size(img_contour.cols*0.8, img_contour.rows*0.8));
-    // cv::imshow("aa", img_contour);
-    // cv::waitKey(0);
-
+    
+    // check ellpisoid and make set of points //
+    std::vector<cv::Point2f> source;
+    std::vector<vector<array<int,3>>> circle_pts_candidates;
+    circle_pts_candidates.resize(circle_contours.size());
+    cv::Point2f pt;
     int W = img_origin.cols;
     int H = img_origin.rows;
     for (size_t i = 0; i < circle_contours.size(); i++)
@@ -300,36 +291,54 @@ bool TargetDetector::detect_circles2(cv::Mat img, vector<cv::Point2f>&target, bo
         std::vector<cv::Point> loc;
         cv::findNonZero(mask, loc); // output, locations of non-zero pixels
 
-        circle_pts.clear();
         for (int j = 0; j < loc.size(); j++)
         {
             int u = loc[j].x;
             int v = loc[j].y;
             int intensity = img_origin.data[v * W + u];
-            circle_pts.push_back(array<int, 3>{u, v, intensity});
+            circle_pts_candidates[i].push_back(array<int, 3>{u, v, intensity});
         }
 
-        if (ellipse_test(circle_pts, pt))
+        if (ellipse_test(circle_pts_candidates[i], pt))   source.push_back(pt);
+    }
+
+    // check patten grid //
+    vector<cv::Point2f> center_pts;
+    std::vector<vector<array<int,3>>> circle_pts;
+    sortTarget(source, center_pts);
+    source = center_pts;
+    for (size_t i = 0; i < circle_contours.size(); i++)
+    {
+        cv::Moments m = cv::moments(circle_contours[i]);
+        if (m.m00 != 0)
         {
-            if (debug)
+            cv::Point m_c = cv::Point(int(m.m10 / m.m00), int(m.m01 / m.m00));
+
+            for (int j = 0; j < center_pts.size(); j++)
             {
-                for (int j = 0; j < circle_pts.size(); j++)
+                float dist = sqrt(pow(m_c.x - center_pts[j].x, 2) + pow(m_c.y - center_pts[j].y, 2));
+                if (dist < 5.)
                 {
-                    int pos = circle_pts[j][0] + circle_pts[j][1] * W;
-                    if (use_weight)
-                        img_output.data[3 * pos] = (color_threshold - circle_pts[j][2]);
-                    else
-                        img_output.data[3 * pos] = 100;
-                    img_output.data[3 * pos + 1] = 0;
-                    img_output.data[3 * pos + 2] = 0;
+                    circle_pts.push_back(circle_pts_candidates[i]);
+                    break;
                 }
             }
-            source.push_back(pt);
         }
     }
 
-    if(debug){
-        sortTarget(source,target);
+    if(debug)
+    {
+        for (size_t i = 0; i < circle_pts.size(); i++)
+        {
+            for (size_t j = 0; j < circle_pts[i].size(); j++)
+            {
+                int pos = circle_pts[i][j][0] + circle_pts[i][j][1] * W;
+                img_output.data[3*pos] = 100;
+                img_output.data[3*pos+1]=0;
+                img_output.data[3*pos+2]=0;
+            }    
+        }  
+
         std::vector<cv::Scalar> colors;
         colors.push_back(cv::Scalar(255,0,0));
         colors.push_back(cv::Scalar(0,255,0));
@@ -338,7 +347,7 @@ bool TargetDetector::detect_circles2(cv::Mat img, vector<cv::Point2f>&target, bo
         colors.push_back(cv::Scalar(255,0,255));
         colors.push_back(cv::Scalar(0,255,255));
         colors.push_back(cv::Scalar(255,255,255));
-        std::cout << target.size() << std::endl;
+
         for(int i=0;i<target.size();i++)
         {
             cv::Point2f pt = target[i];
