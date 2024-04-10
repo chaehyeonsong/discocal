@@ -26,7 +26,7 @@ We also furnish official docker image.
 
 	docker pull chaehyeonsong/discocal:latest
 
-Or build docker image using the dockerfile.
+Or build a docker image using the dockerfile.
 
 	docker build -t chaehyeonsong/discocal .  -f dockerfile
 
