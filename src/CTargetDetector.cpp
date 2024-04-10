@@ -12,6 +12,8 @@ TargetDetector::TargetDetector(int n_x, int n_y, bool is_thermal, bool draw){
     
     this->color_threshold_min = 60; 
     this->size_threshold = 200;
+
+    //detector1
     this->fullfill_threshold1 = 0.3; // rgb12: 0.1
     this->fullfill_threshold2 = 0.01;
     this->eccentricity_threshold = 0.1;
@@ -28,7 +30,7 @@ TargetDetector::TargetDetector(int n_x, int n_y, bool is_thermal, bool draw){
             this->color_threshold_max = 255; 
             this->color_threshold_step = 5;
         }
-        else this->color_threshold_max = 50;
+        else this->color_threshold_max = 125;
     }
 }
 pair<bool,vector<cv::Point2f>> TargetDetector::detect(cv::Mat img, string type){
@@ -48,69 +50,6 @@ pair<bool,vector<cv::Point2f>> TargetDetector::detect(cv::Mat img, string type){
     }
     else if(type == "circle"){
 
-        cv::Mat img_origin, img_blur, img_thresh, img_contour, img_output;
-        img_origin = img.clone();
-        img_output = img_origin.clone();
-        cvtColor(img_output, img_output, cv::COLOR_GRAY2BGR);
-
-        cv::GaussianBlur(img_origin, img_blur, cv::Size(5, 5), 0);
-        cv::adaptiveThreshold(img_blur, img_thresh, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY_INV, 11, 2);
-
-        cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
-        cv::morphologyEx(img_thresh, img_thresh, cv::MORPH_CLOSE, kernel);
-
-        std::vector<std::vector<cv::Point>> contours;
-        cv::findContours(img_thresh, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-
-        // img_contour = cv::Mat::zeros(img_origin.size(), CV_8UC3);
-        // cv::drawContours(img_contour, contours, -1, cv::Scalar(255, 255, 255), 2);
-
-        std::vector<std::vector<cv::Point>> set_of_circle_pts;
-
-        int W = img_origin.cols;
-        int H = img_origin.rows;
-        float area_threshold = 400.;
-        float circularity_min = 0.5;
-        float circularity_max = 1.3;
-        for (size_t i = 0; i < contours.size(); i++) 
-        {
-            double area = cv::contourArea(contours[i]);
-            double perimeter = cv::arcLength(contours[i], true);
-            double circularity = (4 * M_PI * area) / (perimeter * perimeter);
-
-            // Check for circularity near 1 to identify circles
-            if (area > area_threshold && circularity > circularity_min && circularity < circularity_max) 
-            {
-                std::vector<std::vector<cv::Point>> cnt;
-                cnt.push_back(contours[i]);
-                cv::Mat mask = cv::Mat::zeros(img_origin.size(), CV_8UC1);
-                cv::drawContours(mask, cnt, -1, cv::Scalar(255, 255, 255), cv::FILLED);
-
-                std::vector<cv::Point> loc; 
-                cv::findNonZero(mask, loc); // output, locations of non-zero pixels
-                set_of_circle_pts.push_back(loc);
-            }
-        }
-
-        for (int i = 0; i < set_of_circle_pts.size(); i++)
-        {
-            for (int j = 0; j < set_of_circle_pts[i].size(); j++)
-            {
-                cv::Point pnt = set_of_circle_pts[i][j];
-                int pos = pnt.x + pnt.y * W;
-                img_output.data[3 * pos + 0] = 255;
-                img_output.data[3 * pos + 1] = 0;
-                img_output.data[3 * pos + 2] = 0;
-            }
-        }
-
-        cv::resize(img_output, img_output, cv::Size(img_output.cols*0.5, img_output.rows*0.5));
-        cv::imshow("img_output", img_output);
-        cv::waitKey(0);
-
-        // **************************************** //
-        // ellipse_test 해야됨. ellipse 아닌거 가끔 잡힘 //
-
         if(do_iterative_search){
             color_threshold = color_threshold_max;
             while(color_threshold>color_threshold_min){
@@ -118,14 +57,14 @@ pair<bool,vector<cv::Point2f>> TargetDetector::detect(cv::Mat img, string type){
                 if(ret) break;
                 else color_threshold -= color_threshold_step;
             }
-            color_threshold = 125;
-            ret=detect_circles(img, target,true);
         }
         else{
             color_threshold = color_threshold_max;
-            ret=detect_circles(img, target, true);
+            ret=detect_circles2(img, target);
         }
         if(this->draw){
+            if(!ret) color_threshold=125;
+            detect_circles2(img, target, true);
             printf("save: 1, ignore: 0\n");
             char key = cv::waitKey(0);
             while(key != '0' && key!='1'){
@@ -138,6 +77,7 @@ pair<bool,vector<cv::Point2f>> TargetDetector::detect(cv::Mat img, string type){
             }
         }
         printf("color_threshold: %d\n",color_threshold);
+
         if(ret) prev_success=true;
     }
     else{
@@ -261,7 +201,85 @@ bool TargetDetector::compare(cv::Point2i a, cv::Point2i b){
     }
 	return aless; // true이면 a가 b 앞에 감. 즉 a가 b보다 앞일 조건 쓰면 됌
 }
+bool TargetDetector::detect_circles2(cv::Mat img, vector<cv::Point2f>&target, bool debug){
+    vector<cv::Point2f> source;
+    vector<array<int,3>> circle_pts;
+    cv::Point2f pt;
 
+    cv::Mat img_origin, img_blur, img_thresh, img_contour, img_output,img_output2;
+    img_origin = img.clone();
+    img_output = img_origin.clone();
+    cvtColor(img_output, img_output, cv::COLOR_GRAY2BGR);
+
+    cv::GaussianBlur(img_origin, img_blur, cv::Size(5, 5), 0);
+    cv::adaptiveThreshold(img_blur, img_thresh, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY_INV, 11, 2);
+
+    cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
+    cv::morphologyEx(img_thresh, img_thresh, cv::MORPH_CLOSE, kernel);
+
+    std::vector<std::vector<cv::Point>> contours;
+    cv::findContours(img_thresh, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+
+    
+
+    int W = img_origin.cols;
+    int H = img_origin.rows;
+
+    for (size_t i = 0; i < contours.size(); i++) 
+    {
+        double area = cv::contourArea(contours[i]);
+        double perimeter = cv::arcLength(contours[i], true);
+        double circularity = abs(1-(4 * M_PI * area) / (perimeter * perimeter));
+
+        // Check for circularity near 1 to identify circles
+        if (area > size_threshold && circularity <fullfill_threshold1) 
+        {
+            std::vector<std::vector<cv::Point>> cnt;
+            cnt.push_back(contours[i]);
+            cv::Mat mask = cv::Mat::zeros(img_origin.size(), CV_8UC1);
+            cv::drawContours(mask, cnt, -1, cv::Scalar(255, 255, 255), cv::FILLED);
+
+            std::vector<cv::Point> loc; 
+            cv::findNonZero(mask, loc); // output, locations of non-zero pixels
+
+            circle_pts.clear();
+            for(int j=0;j<loc.size();j++){
+                int u = loc[j].x;
+                int v = loc[j].y;
+                int intensity = img_origin.data[v*W+u];
+                circle_pts.push_back(array<int,3>{u,v,intensity});
+            }
+        
+            if(ellipse_test(circle_pts,pt)){
+                if(debug){
+                    for(int j=0;j<circle_pts.size();j++){
+                        int pos= circle_pts[j][0]+circle_pts[j][1]*W;
+                        if (use_weight) img_output.data[3*pos]=(color_threshold-circle_pts[j][2]);
+                        else img_output.data[3*pos] = 100;
+                        img_output.data[3*pos+1]=0;
+                        img_output.data[3*pos+2]=0;
+                    }
+                }
+                source.push_back(pt);
+            }
+            
+        }
+    }
+    if(debug){
+        if(is_thermal) cv::resize(img_output, img_output, cv::Size(img_output.cols*2, img_output.rows*2));
+        else cv::resize(img_output, img_output, cv::Size(img_output.cols*0.8, img_output.rows*0.8));
+        cv::imshow("input_image`",img_output);
+    }
+    
+    if(source.size()==n_x*n_y) {
+        sortTarget(source,target);
+        if(target.size()==n_x*n_y) {
+            return  true;
+        }
+        else return false;
+    }
+    else return false;
+}
 bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, bool debug){
     int W = img.cols;
     int H = img.rows;
@@ -286,7 +304,7 @@ bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, boo
                 area.clear();
                 dfs(img,buffer,area,x,y);
                 if(ellipse_test(area,pt)){
-                    if(draw){
+                    if(debug){
                         for(int i=0;i<area.size();i++){
                             int pos= area[i][0]+area[i][1]*W;
                             if (use_weight) bgr_img.data[3*pos]=(color_threshold-area[i][2]);
@@ -302,37 +320,26 @@ bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, boo
     }
 
     // find axis
-    if (debug && draw){
+    if(debug){
+        // for(int i=0;i<target.size();i++){
+        //     cv::Point2f pt = target[i];
+        //     if(i/4 ==0 ) cv::putText(bgr_img,to_string(i%4),pt,0,1,cv::Scalar(0,255,0),2);
+        //     else if(i/4==1) cv::putText(bgr_img,to_string(i%4),pt,0,1,cv::Scalar(0,0,255),2);
+        //     else if(i/4==2) cv::putText(bgr_img,to_string(i%4),pt,0,1,cv::Scalar(0,255,255),2);
+        // }
         if(is_thermal) cv::resize(bgr_img, bgr_img, cv::Size(bgr_img.cols*2, bgr_img.rows*2));
         else cv::resize(bgr_img, bgr_img, cv::Size(bgr_img.cols*0.8, bgr_img.rows*0.8));
         cv::imshow("input_image",bgr_img);
-        return  false;
     }
-    else{
-        if(source.size()==n_x*n_y) {
-            sortTarget(source,target);
-            if(target.size()==n_x*n_y) {
-                if(draw){
-                    
-                    for(int i=0;i<target.size();i++){
-                        
-                        cv::Point2f pt = target[i];
-                        if(i/4 ==0 ) cv::putText(bgr_img,to_string(i%4),pt,0,1,cv::Scalar(0,255,0),2);
-                        else if(i/4==1) cv::putText(bgr_img,to_string(i%4),pt,0,1,cv::Scalar(0,0,255),2);
-                        else if(i/4==2) cv::putText(bgr_img,to_string(i%4),pt,0,1,cv::Scalar(0,255,255),2);
-                        // cv::imwrite("../temp.png",bgr_img);
-                        // usleep(200000);
-                    }
-                    if(is_thermal) cv::resize(bgr_img, bgr_img, cv::Size(bgr_img.cols*2, bgr_img.rows*2));
-                    else cv::resize(bgr_img, bgr_img, cv::Size(bgr_img.cols*0.8, bgr_img.rows*0.8));
-                    cv::imshow("input_image",bgr_img);
-                }
-                return  true;
-            }
-            else return false;
+
+    if(source.size()==n_x*n_y) {
+        sortTarget(source,target);
+        if(target.size()==n_x*n_y) {
+            return  true;
         }
         else return false;
     }
+    else return false;
 
 }
 

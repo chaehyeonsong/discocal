@@ -15,7 +15,7 @@
 
 using namespace std;
 
-class WrongPathException: public std::exception{
+class DeficientImagesException: public std::exception{
     public:
         const char* what(){
             return "Image path is wrong or number of images is lower than six";
@@ -46,9 +46,6 @@ void do_calibration(string img_dir, string type, int mode, int n_x, int n_y, int
         if (path.find(type) != string::npos && path.find(".png") != string::npos){
             imgs.push_back(s);
         }
-    }
-    if(imgs.size()<6){
-        throw WrongPathException();
     }
 
     sort(imgs.begin(),imgs.end());
@@ -82,6 +79,10 @@ void do_calibration(string img_dir, string type, int mode, int n_x, int n_y, int
         else cout<<path<<": detection failed"<<endl;
 
     }
+    if(calibrator.get_num_scene()<6){
+        throw DeficientImagesException();
+    }
+
     Params final_params;
 
     if(type=="circle"){
@@ -100,22 +101,22 @@ int main(int argc, char** argv){
     clock_t start, finish;
     start = clock();
     // user parameter
-    // int n_x = 4;
-    // int n_y= 3;
-    // int n_d = 3;
-    // string img_dir= "../imgs/";
-    // double r = 0.035; 
-    // double distance = 0.09; 
-    // bool is_thermal =  false;
+    int n_x = 4;
+    int n_y= 3;
+    int n_d = 3;
+    string img_dir= "../imgs/circle_0/";
+    double r = 0.035; 
+    double distance = 0.09; 
+    bool is_thermal =  false;
 
 
-    int n_x = atoi(argv[1]);
-    int n_y = atoi(argv[2]);
-    int n_d = atoi(argv[3]);
-    string img_dir(argv[4]);
-    double r  = atof(argv[5]);
-    double distance  = atof(argv[6]);
-    bool is_thermal= (1== atoi(argv[7])); //0: rgb, 1:theraml
+    // int n_x = atoi(argv[1]);
+    // int n_y = atoi(argv[2]);
+    // int n_d = atoi(argv[3]);
+    // string img_dir(argv[4]);
+    // double r  = atof(argv[5]);
+    // double distance  = atof(argv[6]);
+    // bool is_thermal= (1== atoi(argv[7])); //0: rgb, 1:theraml
 
 
     cout<<img_dir<<endl;
