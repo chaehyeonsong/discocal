@@ -34,7 +34,6 @@ class TargetDetector{
         double fullfill_threshold1,fullfill_threshold2, eccentricity_threshold;
         bool prev_success, use_weight;
         bool do_iterative_search;
-        string TYPE;
         std::vector<cv::Scalar> text_colors;
         
 
