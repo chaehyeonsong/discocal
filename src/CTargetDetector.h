@@ -35,6 +35,7 @@ class TargetDetector{
         bool prev_success, use_weight;
         bool do_iterative_search;
         string TYPE;
+        std::vector<cv::Scalar> text_colors;
         
 
         bool detect_circles(cv::Mat img, vector<cv::Point2f>&target, bool debug=false);

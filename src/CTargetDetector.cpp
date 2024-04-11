@@ -32,6 +32,15 @@ TargetDetector::TargetDetector(int n_x, int n_y, bool is_thermal, bool draw){
         }
         else this->color_threshold_max = 125;
     }
+
+    this->text_colors;
+    text_colors.push_back(cv::Scalar(255,0,0));
+    text_colors.push_back(cv::Scalar(0,255,0));
+    text_colors.push_back(cv::Scalar(0,0,255));
+    text_colors.push_back(cv::Scalar(255,255,0));
+    text_colors.push_back(cv::Scalar(255,0,255));
+    text_colors.push_back(cv::Scalar(0,255,255));
+    text_colors.push_back(cv::Scalar(255,255,255));
 }
 pair<bool,vector<cv::Point2f>> TargetDetector::detect(cv::Mat img, string type){
     bool ret;
@@ -50,21 +59,35 @@ pair<bool,vector<cv::Point2f>> TargetDetector::detect(cv::Mat img, string type){
     }
     else if(type == "circle"){
 
-        if(do_iterative_search){
-            color_threshold = color_threshold_max;
-            while(color_threshold>color_threshold_min){
-                ret=detect_circles(img, target);
-                if(ret) break;
-                else color_threshold -= color_threshold_step;
-            }
-        }
-        else{
-            color_threshold = color_threshold_max;
-            ret=detect_circles2(img, target);
-        }
+        // if(do_iterative_search){
+        //     color_threshold = color_threshold_max;
+        //     while(color_threshold>color_threshold_min){
+        //         ret=detect_circles(img, target);
+        //         if(ret) break;
+        //         else color_threshold -= color_threshold_step;
+        //     }
+        // }
+        // else{
+        //     color_threshold = color_threshold_max;
+        //     ret=detect_circles(img, target);
+        // }
+        // if(this->draw){
+        //     if(!ret) color_threshold=125;
+        //     detect_circles(img, target, true);
+        //     printf("save: 1, ignore: 0\n");
+        //     char key = cv::waitKey(0);
+        //     while(key != '0' && key!='1'){
+        //         printf("wrong commend is detected\n");
+        //         key = cv::waitKey(0);
+        //     }
+        //     cv::destroyAllWindows();
+        //     if(key == '0'){
+        //         ret = false;
+        //     }
+        // }
+
         if(this->draw){
-            if(!ret) color_threshold=125;
-            detect_circles2(img, target, true);
+            ret= detect_circles2(img, target, true);
             printf("save: 1, ignore: 0\n");
             char key = cv::waitKey(0);
             while(key != '0' && key!='1'){
@@ -75,6 +98,9 @@ pair<bool,vector<cv::Point2f>> TargetDetector::detect(cv::Mat img, string type){
             if(key == '0'){
                 ret = false;
             }
+        }
+        else{
+            ret= detect_circles2(img, target);
         }
         printf("color_threshold: %d\n",color_threshold);
 
@@ -299,76 +325,71 @@ bool TargetDetector::detect_circles2(cv::Mat img, vector<cv::Point2f>&target, bo
             circle_pts_candidates[i].push_back(array<int, 3>{u, v, intensity});
         }
 
-        if (ellipse_test(circle_pts_candidates[i], pt))   source.push_back(pt);
+        if (ellipse_test(circle_pts_candidates[i], pt))   {
+            if(debug){
+                for(array<int,3> pnt: circle_pts_candidates[i])
+                {
+                    int pos = pnt[0] + pnt[1] * W;
+                    img_output.data[3*pos] = 100;
+                    img_output.data[3*pos+1]=0;
+                    img_output.data[3*pos+2]=0;
+
+                }  
+            }
+            source.push_back(pt);
+        }
     }
 
-    // check patten grid //
-    vector<cv::Point2f> center_pts;
-    std::vector<vector<array<int,3>>> circle_pts;
-    sortTarget(source, center_pts);
-    source = center_pts;
-    for (size_t i = 0; i < circle_contours.size(); i++)
-    {
-        cv::Moments m = cv::moments(circle_contours[i]);
-        if (m.m00 != 0)
-        {
-            cv::Point m_c = cv::Point(int(m.m10 / m.m00), int(m.m01 / m.m00));
+    // // check patten grid //
+    // vector<cv::Point2f> center_pts;
+    // std::vector<vector<array<int,3>>> circle_pts;
+    // sortTarget(source, center_pts);
+    // source = center_pts;
+    // for (size_t i = 0; i < circle_contours.size(); i++)
+    // {
+    //     cv::Moments m = cv::moments(circle_contours[i]);
+    //     if (m.m00 != 0)
+    //     {
+    //         cv::Point m_c = cv::Point(int(m.m10 / m.m00), int(m.m01 / m.m00));
 
-            for (int j = 0; j < center_pts.size(); j++)
+    //         for (int j = 0; j < center_pts.size(); j++)
+    //         {
+    //             float dist = sqrt(pow(m_c.x - center_pts[j].x, 2) + pow(m_c.y - center_pts[j].y, 2));
+    //             if (dist < 5.)
+    //             {
+    //                 circle_pts.push_back(circle_pts_candidates[i]);
+    //                 break;
+    //             }
+    //         }
+    //     }
+    // }
+
+    sortTarget(source,target);
+    bool result=false;
+
+
+    if(target.size()==n_x*n_y){
+        result=true;
+        if(debug){
+            for(int i=0;i<target.size();i++)
             {
-                float dist = sqrt(pow(m_c.x - center_pts[j].x, 2) + pow(m_c.y - center_pts[j].y, 2));
-                if (dist < 5.)
+                cv::Point2f pt = target[i];
+                for (int j=0;j<n_x;j++)
                 {
-                    circle_pts.push_back(circle_pts_candidates[i]);
-                    break;
+                    if(i/n_x == j ) cv::putText(img_output,to_string(i%n_x),pt,0,1,text_colors[j],2);
                 }
             }
         }
     }
-
     if(debug)
     {
-        for (size_t i = 0; i < circle_pts.size(); i++)
-        {
-            for (size_t j = 0; j < circle_pts[i].size(); j++)
-            {
-                int pos = circle_pts[i][j][0] + circle_pts[i][j][1] * W;
-                img_output.data[3*pos] = 100;
-                img_output.data[3*pos+1]=0;
-                img_output.data[3*pos+2]=0;
-            }    
-        }  
-
-        std::vector<cv::Scalar> colors;
-        colors.push_back(cv::Scalar(255,0,0));
-        colors.push_back(cv::Scalar(0,255,0));
-        colors.push_back(cv::Scalar(0,0,255));
-        colors.push_back(cv::Scalar(255,255,0));
-        colors.push_back(cv::Scalar(255,0,255));
-        colors.push_back(cv::Scalar(0,255,255));
-        colors.push_back(cv::Scalar(255,255,255));
-
-        for(int i=0;i<target.size();i++)
-        {
-            cv::Point2f pt = target[i];
-            for (int j=0;j<n_x;j++)
-            {
-                if(i/n_x == j ) cv::putText(img_output,to_string(i%n_x),pt,0,1,colors[j],2);
-            }
-        }
         if(is_thermal) cv::resize(img_output, img_output, cv::Size(img_output.cols*2, img_output.rows*2));
         else cv::resize(img_output, img_output, cv::Size(img_output.cols*0.5, img_output.rows*0.5));
         cv::imshow("input_image",img_output);
     }
     
-    if(source.size()==n_x*n_y) {
-        sortTarget(source,target);
-        if(target.size()==n_x*n_y) {
-            return  true;
-        }
-        else return false;
-    }
-    else return false;
+    return result;
+
 }
 bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, bool debug){
     int W = img.cols;
@@ -411,12 +432,15 @@ bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, boo
 
     // find axis
     if(debug){
-        // for(int i=0;i<target.size();i++){
-        //     cv::Point2f pt = target[i];
-        //     if(i/4 ==0 ) cv::putText(bgr_img,to_string(i%4),pt,0,1,cv::Scalar(0,255,0),2);
-        //     else if(i/4==1) cv::putText(bgr_img,to_string(i%4),pt,0,1,cv::Scalar(0,0,255),2);
-        //     else if(i/4==2) cv::putText(bgr_img,to_string(i%4),pt,0,1,cv::Scalar(0,255,255),2);
-        // }
+
+        for(int i=0;i<target.size();i++)
+        {
+            cv::Point2f pt = target[i];
+            for (int j=0;j<n_x;j++)
+            {
+                if(i/n_x == j ) cv::putText(bgr_img,to_string(i%n_x),pt,0,1,text_colors[j],2);
+            }
+        }
         if(is_thermal) cv::resize(bgr_img, bgr_img, cv::Size(bgr_img.cols*2, bgr_img.rows*2));
         else cv::resize(bgr_img, bgr_img, cv::Size(bgr_img.cols*0.8, bgr_img.rows*0.8));
         cv::imshow("input_image",bgr_img);
