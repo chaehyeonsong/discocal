@@ -1,4 +1,4 @@
-docs/docs/figs# Unbiased Estimator for Distorted Conics in Camera Calibration (CVPR24, ***highlight***)
+# Unbiased Estimator for Distorted Conics in Camera Calibration (CVPR24, ***highlight***)
 
 For decades, the checkerboard pattern has been the go-to method for camera calibration, providing only pixel-level precision. But what if we could improve accuracy even further? This paper reveals the power of the circular pattern: a game-changer offering subpixel precision to meet challenges even from unconventional visual sensors.
 
