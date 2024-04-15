@@ -1,22 +1,32 @@
-# Unbiased Estimator for Distorted Conics in Camera Calibration (CVPR24)
-## Description
+# Unbiased Estimator for Distorted Conics in Camera Calibration (CVPR24, ***highlight***)
+
+For decades, the checkerboard pattern has been the go-to method for camera calibration, providing only pixel-level precision. But what if we could improve accuracy even further? This paper reveals the power of the circular pattern: a game-changer offering subpixel precision to meet challenges even from unconventional visual sensors.
+
+
+## The core limitation for conic in camera calibration
+
+Sub-pixel accuracy and detection robustness are virtues of the conic features. But why do we use a checkerboard, not a circular pattern?
+
+> :cry: Conic is ***not*** conic anymore under distortion!!
+
+As shown below, the circle center is not projected to the centroid of the distorted ellipse under perspective transformation and distortion. 
+
 <img src="./Figs/overview.png" width="600" height="300">
 
+Without considering geometery of the distorted ellipse, existing circular pattern-based calibration methods are biased, which leads low calibration accuracy than a checkerboard pattern. 
 
-As shown above, the circle center is not projected to the centroid of the distorted ellipse under perspective transformation and distortion. Without considering geometery of the distorted ellipse, existing circular pattern-based calibration methods are biased, which leads low calibration accuracy than a checkerboard pattern. 
+> :pushpin: **Our unbiased estimator completes the missing piece in the conic-based calibration pipeline**
 
-**Our unbiased estimator completes the missing piece in the conic-based calibration pipeline and outperforms the checkerboard pattern-based calibration.**
+## Calibration parameters in camera model
 
-## Camera model
 We assume pin-hole camera model with radial distortion.
 <img src="./Figs/camera_model.png" width="600" height="200">
 
-Calibration results:	
-	fx, fy, cx, cy, skew, d1, d2, ... dn
+Calibration results: fx, fy, cx, cy, skew, d1, d2, ... dn
 
 
 
-# How to use
+# Installation
 ## Dependency
 - [Ceres-Solver](http://ceres-solver.org/index.html)
 - [Eigen3](https://eigen.tuxfamily.org/dox/index.html)
@@ -62,6 +72,9 @@ You can refine these parameters in the TargetDetector class.
 
 
 # Bibtex
+
+Please use and cite our works using below bibtex.
+
 	@INPROCEEDINGS { chsong-2024-cvpr,
 		AUTHOR = { Chaehyeon Song and Jaeho Shin and Myung-Hwan Jeon and Jongwoo Lim and Ayoung Kim },
 		TITLE = { Unbiased Estimator for Distorted Conic in Camera Calibration },
