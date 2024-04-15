@@ -3,6 +3,19 @@
 For decades, the checkerboard pattern has been the go-to method for camera calibration, providing only pixel-level precision. But what if we could improve accuracy even further? This paper reveals the power of the circular pattern: a game-changer offering subpixel precision to meet challenges even from unconventional visual sensors.
 
 
+[[Paper]](https://arxiv.org/abs/2403.04583) [[Video]](https://youtu.be/87_R7Qkpczo) 
+
+```
+@INPROCEEDINGS{chsong-2024-cvpr,  
+    AUTHOR = { Chaehyeon Song and Jaeho Shin and Myung-Hwan Jeon and Jongwoo Lim and Ayoung Kim },  
+    TITLE = { Unbiased Estimator for Distorted Conic in Camera Calibration },  
+    BOOKTITLE = { IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) },  
+    YEAR = { 2024 },  
+    MONTH = { June. },  
+    ADDRESS = { Seattle },  
+}
+```
+
 ## The core limitation for conic in camera calibration
 
 Sub-pixel accuracy and detection robustness are virtues of the conic features. But why do we use a checkerboard, not a circular pattern?
@@ -68,18 +81,3 @@ Our circle detector finds the elliptical blobs in the image with the color value
 - **eccentricity_threshold**: the length ratio between a blob's major and minor axis.
 You can refine these parameters in the TargetDetector class.
 
-
-
-
-# Bibtex
-
-Please use and cite our works using below bibtex.
-
-	@INPROCEEDINGS { chsong-2024-cvpr,
-		AUTHOR = { Chaehyeon Song and Jaeho Shin and Myung-Hwan Jeon and Jongwoo Lim and Ayoung Kim },
-		TITLE = { Unbiased Estimator for Distorted Conic in Camera Calibration },
-		BOOKTITLE = { IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) },
-		YEAR = { 2024 },
-		MONTH = { June. },
-		ADDRESS = { Seattle },
-	}
