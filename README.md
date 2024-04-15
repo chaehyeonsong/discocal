@@ -1,9 +1,9 @@
-# Unbiased Estimator for Distorted Conics in Camera Calibration (CVPR24, ***highlight***)
+docs/docs/figs# Unbiased Estimator for Distorted Conics in Camera Calibration (CVPR24, ***highlight***)
 
 For decades, the checkerboard pattern has been the go-to method for camera calibration, providing only pixel-level precision. But what if we could improve accuracy even further? This paper reveals the power of the circular pattern: a game-changer offering subpixel precision to meet challenges even from unconventional visual sensors.
 
 
-[[Paper]](https://arxiv.org/abs/2403.04583) [[Video]](https://youtu.be/87_R7Qkpczo) 
+[[Paper]](https://arxiv.org/abs/2403.04583) [[Video]](https://youtu.be/87_R7Qkpczo)
 
 ```
 @INPROCEEDINGS{chsong-2024-cvpr,  
@@ -22,18 +22,18 @@ Sub-pixel accuracy and detection robustness are virtues of the conic features. B
 
 > :cry: Conic is ***not*** conic anymore under distortion!!
 
-As shown below, the circle center is not projected to the centroid of the distorted ellipse under perspective transformation and distortion. 
+As shown below, the circle center is not projected to the centroid of the distorted ellipse under perspective transformation and distortion.
 
-<img src="./Figs/overview.png" width="600" height="300">
+<img src="./docs/figs/overview.png" width="600" height="300">
 
-Without considering geometery of the distorted ellipse, existing circular pattern-based calibration methods are biased, which leads low calibration accuracy than a checkerboard pattern. 
+Without considering geometery of the distorted ellipse, existing circular pattern-based calibration methods are biased, which leads low calibration accuracy than a checkerboard pattern.
 
 > :pushpin: **Our unbiased estimator completes the missing piece in the conic-based calibration pipeline**
 
 ## Calibration parameters in camera model
 
 We assume pin-hole camera model with radial distortion.
-<img src="./Figs/camera_model.png" width="600" height="200">
+<img src="./docs/figs/camera_model.png" width="600" height="200">
 
 Calibration results: fx, fy, cx, cy, skew, d1, d2, ... dn
 
@@ -67,8 +67,8 @@ Or build a docker image using the dockerfile.
 
 ## Important: Circle detection
 **To get high-quality results, plz check all pixels in the circle are correctly detected like this.**
-<!-- ![sample](./Figs/detection_sample.png){: width="100" height="100"} -->
-<img src="./Figs/detection_sample.png" width="400" height="300">
+<!-- ![sample](./docs/figs/detection_sample.png){: width="100" height="100"} -->
+<img src="./docs/figs/detection_sample.png" width="400" height="300">
 
 If you don’t want to verify images, turn off the “check_detection_results” option in "main.cpp".
 
@@ -81,3 +81,8 @@ Our circle detector finds the elliptical blobs in the image with the color value
 - **eccentricity_threshold**: the length ratio between a blob's major and minor axis.
 You can refine these parameters in the TargetDetector class.
 
+## Application: Thermal Camera calibration
+
+We can leverage the detection robustness of the circular patterns, particularly for unconventional cameras, such as thermal cameras.
+
+<img src="./docs/figs/thermal.jpg" width="400" height="300">
