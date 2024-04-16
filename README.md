@@ -16,7 +16,7 @@ For decades, the checkerboard pattern has been the go-to method for camera calib
 }
 ```
 
-Are you looking for a korean explantion? [Click here](https://github.com/chaehyeonsong/discocal/blob/main/docs/Paper_in_Kor.md)
+Are you looking for a korean explanation? [Click here](https://github.com/chaehyeonsong/discocal/blob/main/docs/Paper_in_Kor.md)
 
 ## The core limitation for conic in camera calibration
 
