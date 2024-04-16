@@ -16,6 +16,8 @@ For decades, the checkerboard pattern has been the go-to method for camera calib
 }
 ```
 
+Are you looking for a korean explantion? [Click here](https://github.com/chaehyeonsong/discocal/blob/main/docs/Paper_in_Kor.md)
+
 ## The core limitation for conic in camera calibration
 
 Sub-pixel accuracy and detection robustness are virtues of the conic features. But why do we use a checkerboard, not a circular pattern?
