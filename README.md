@@ -3,8 +3,9 @@
 For decades, the checkerboard pattern has been the go-to method for camera calibration, providing only pixel-level precision. But what if we could improve accuracy even further? This paper reveals the power of the circular pattern: a game-changer offering subpixel precision to meet challenges even from unconventional visual sensors.
 
 
-[[Paper]](https://arxiv.org/abs/2403.04583) [[Video]](https://youtu.be/87_R7Qkpczo)
+[[Paper]](https://arxiv.org/abs/2403.04583) [[Video]](https://youtu.be/87_R7Qkpczo) [[BibTex]](#bibtex)
 
+[![](https://youtu.be/87_R7Qkpczo/0.jpg)](https://youtu.be/87_R7Qkpczo "Click to play on Youtube.com")
 
 ## News
 - 24.04.17. We update circular pattern detector! Now, you don't need to tune hyperparameters for detections
@@ -38,13 +39,13 @@ Calibration results: fx, fy, cx, cy, skew, d1, d2, ... dn
 - [Eigen3](https://eigen.tuxfamily.org/dox/index.html)
 - opencv4
 
-We also furnish official docker image.
-
-	docker pull chaehyeonsong/discocal:latest
-
-Or build a docker image using the dockerfile.
+(Recommend) Build a docker image using the dockerfile.
 
 	docker build -t chaehyeonsong/discocal .  -f dockerfile
+
+(Only for Ubuntu) or use official docker image. 
+
+	docker pull chaehyeonsong/discocal:latest
 
 ## Bulid and Run
 	## Build
@@ -56,7 +57,7 @@ Or build a docker image using the dockerfile.
 
 	## Run
 	./main.out [n_x] [n_y] [n_d] [img_dir_path] [radius(m)] [circle distance(m)]
-	(ex) ./main.out 4 3 3 ../imgs/ 0.035 0.05
+	(ex) ./main.out 4 3 3 ../imgs/ 0.035 0.09
 
 ## :open_mouth: Caution: Check detection results!
 **To get high-quality results, plz check all pixels in the circle are correctly detected like this.**
@@ -64,7 +65,7 @@ Or build a docker image using the dockerfile.
 <img src="./docs/figs/detection_sample.png" width="400" height="300">
 
 
-If you don’t want to verify images, turn off the “check_detection_results” option in "main.cpp".
+If you don’t want to check images, turn off the “check_detection_results” option in "main.cpp".
 
 
 **Parameters(for experts)**:
