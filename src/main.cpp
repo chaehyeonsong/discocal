@@ -15,7 +15,7 @@
 
 using namespace std;
 
-class WrongPathException: public std::exception{
+class DeficientImagesException: public std::exception{
     public:
         const char* what(){
             return "Image path is wrong or number of images is lower than six";
@@ -36,7 +36,7 @@ vector<T> split(string str, char Delimiter) {
     return result;
 }
 
-void do_calibration(string img_dir, string type, int mode, int n_x, int n_y, int n_d, double r, double distance, bool check_detection_result, bool is_thermal, bool save_pose){
+void do_calibration(string img_dir, string type, int mode, int n_x, int n_y, int n_d, double r, double distance, bool check_detection_result, bool save_pose){
 
     vector<string> imgs;
 
@@ -47,14 +47,11 @@ void do_calibration(string img_dir, string type, int mode, int n_x, int n_y, int
             imgs.push_back(s);
         }
     }
-    if(imgs.size()<6){
-        throw WrongPathException();
-    }
 
     sort(imgs.begin(),imgs.end());
     int max_scene = imgs.size();
 
-    TargetDetector detector(n_x, n_y,is_thermal,check_detection_result);
+    TargetDetector detector(n_x, n_y,check_detection_result);
     pair<bool,vector<cv::Point2f>> result;
     int count=0;
     Calibrator calibrator = Calibrator(n_x,n_y,n_d,r,distance,max_scene);
@@ -62,14 +59,7 @@ void do_calibration(string img_dir, string type, int mode, int n_x, int n_y, int
     for(int i=0; i<max_scene;i++){
         string path = imgs[i];
         cv::Mat img, img2;
-        if (is_thermal){
-            img2 = cv::imread(path, cv::IMREAD_GRAYSCALE);
-            cv::bilateralFilter(img2,img,-1,10,10);
-        }
-        else{
-            img = cv::imread(path, cv::IMREAD_GRAYSCALE);
-        }
-        
+        img = cv::imread(path, cv::IMREAD_GRAYSCALE);
         if(img.rows == 0){
             throw exception();
         }
@@ -82,6 +72,10 @@ void do_calibration(string img_dir, string type, int mode, int n_x, int n_y, int
         else cout<<path<<": detection failed"<<endl;
 
     }
+    if(calibrator.get_num_scene()<6){
+        throw DeficientImagesException();
+    }
+
     Params final_params;
 
     if(type=="circle"){
@@ -103,10 +97,9 @@ int main(int argc, char** argv){
     // int n_x = 4;
     // int n_y= 3;
     // int n_d = 3;
-    // string img_dir= "../imgs/easy/";
+    // string img_dir= "../imgs/circle_0/";
     // double r = 0.035; 
     // double distance = 0.09; 
-    // bool is_thermal =  false;
 
 
     int n_x = atoi(argv[1]);
@@ -115,7 +108,6 @@ int main(int argc, char** argv){
     string img_dir(argv[4]);
     double r  = atof(argv[5]);
     double distance  = atof(argv[6]);
-    bool is_thermal= (1== atoi(argv[7])); //0: rgb, 1:theraml
 
 
     cout<<img_dir<<endl;
@@ -126,7 +118,7 @@ int main(int argc, char** argv){
     bool check_detection_result = true;
     bool save_pose = false;
     int mode = 0;
-    do_calibration(img_dir,type,mode, n_x, n_y, n_d, r,distance,check_detection_result,is_thermal,save_pose);
+    do_calibration(img_dir,type,mode, n_x, n_y, n_d, r,distance,check_detection_result,save_pose);
     finish = clock();
     double duration = (double)(finish - start) / CLOCKS_PER_SEC;
     printf("%f초\n", duration);
