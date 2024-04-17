@@ -18,7 +18,7 @@ using namespace std;
 class DeficientImagesException: public std::exception{
     public:
         const char* what(){
-            return "Image path is wrong or number of images is lower than six";
+            return "Image path is wrong or the number of images is lower than six";
         }
 };
 
@@ -58,9 +58,9 @@ void do_calibration(string img_dir, string type, int mode, int n_x, int n_y, int
 
     for(int i=0; i<max_scene;i++){
         string path = imgs[i];
-        cv::Mat bgr_img, gray_img;
-        bgr_img = cv::imread(path, cv::IMREAD_COLOR);
-        cv::fastNlMeansDenoisingColored(bgr_img, bgr_img, 10, 10, 7, 21);
+        cv::Mat bgr_img, gray_img, bgr_img2;
+        bgr_img2 = cv::imread(path, cv::IMREAD_COLOR);
+        cv::bilateralFilter(bgr_img2,bgr_img,-1,10,10);
         cv::cvtColor(bgr_img, gray_img, cv::COLOR_BGR2GRAY);
         if(gray_img.rows == 0){
             throw exception();
@@ -95,12 +95,13 @@ int main(int argc, char** argv){
 
     clock_t start, finish;
     start = clock();
-    // user parameter
+
+    // user parameter example
     int n_x = 4;
     int n_y= 3;
-    int n_d = 3;
-    string img_dir= "../imgs/circle_0/";
-    double r = 0.035; 
+    int n_d = 4;
+    string img_dir= "../imgs/thr_test/";
+    double r = 0.03; 
     double distance = 0.09; 
 
 
@@ -117,7 +118,7 @@ int main(int argc, char** argv){
 
     string type = "circle";
     
-    bool check_detection_result = true;
+    bool check_detection_result = false;
     bool save_pose = false;
     int mode = 0;
     do_calibration(img_dir,type,mode, n_x, n_y, n_d, r,distance,check_detection_result,save_pose);

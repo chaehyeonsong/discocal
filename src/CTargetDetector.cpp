@@ -107,7 +107,8 @@ void TargetDetector::sortTarget(vector<cv::Point2f>&source, vector<cv::Point2f>&
 
 bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, bool debug){
 
-    cv::Mat img_origin, img_blur, img_thresh, img_contour, img_output;
+    cv::Mat img_origin, img_blur, img_thresh, img_morph, img_contour, img_output;
+
     img_origin = img.clone();
     img_output = img_origin.clone();
     cvtColor(img_output, img_output, cv::COLOR_GRAY2BGR);
@@ -118,15 +119,15 @@ bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, boo
     cv::GaussianBlur(img_origin, img_blur, cv::Size(5, 5), 0);
     for (int bs = 3; bs <= 19; bs += 2)
     {
-
+        cv::adaptiveThreshold(img_blur, img_thresh, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY_INV, bs, 2);
         for (int s = 1; s <= 5; s += 2)
         {
-            cv::adaptiveThreshold(img_blur, img_thresh, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY_INV, bs, 2);
+            
             cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(s, s));
-            cv::morphologyEx(img_thresh, img_thresh, cv::MORPH_CLOSE, kernel);
+            cv::morphologyEx(img_thresh, img_morph, cv::MORPH_CLOSE, kernel);
 
             std::vector<std::vector<cv::Point>> contours;
-            cv::findContours(img_thresh, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+            cv::findContours(img_morph, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
             for (size_t i = 0; i < contours.size(); i++)
             {
@@ -159,6 +160,7 @@ bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, boo
             if (dist < 5.)
             {
                 isnew = false;
+
                 if(m1.m00 >= m2.m00){
                     circle_moments[j] = m1;
                     circle_contours[j] = circle_contour_candidates[i];
@@ -210,6 +212,3 @@ bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, boo
     return result;
 
 }
-
-
-
