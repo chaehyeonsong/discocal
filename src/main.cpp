@@ -36,7 +36,7 @@ vector<T> split(string str, char Delimiter) {
     return result;
 }
 
-void do_calibration(string img_dir, string type, int mode, int n_x, int n_y, int n_d, double r, double distance, bool check_detection_result, bool is_thermal, bool save_pose){
+void do_calibration(string img_dir, string type, int mode, int n_x, int n_y, int n_d, double r, double distance, bool check_detection_result, bool save_pose){
 
     vector<string> imgs;
 
@@ -51,7 +51,7 @@ void do_calibration(string img_dir, string type, int mode, int n_x, int n_y, int
     sort(imgs.begin(),imgs.end());
     int max_scene = imgs.size();
 
-    TargetDetector detector(n_x, n_y,is_thermal,check_detection_result);
+    TargetDetector detector(n_x, n_y,check_detection_result);
     pair<bool,vector<cv::Point2f>> result;
     int count=0;
     Calibrator calibrator = Calibrator(n_x,n_y,n_d,r,distance,max_scene);
@@ -59,14 +59,7 @@ void do_calibration(string img_dir, string type, int mode, int n_x, int n_y, int
     for(int i=0; i<max_scene;i++){
         string path = imgs[i];
         cv::Mat img, img2;
-        if (is_thermal){
-            img2 = cv::imread(path, cv::IMREAD_GRAYSCALE);
-            cv::bilateralFilter(img2,img,-1,10,10);
-        }
-        else{
-            img = cv::imread(path, cv::IMREAD_GRAYSCALE);
-        }
-        
+        img = cv::imread(path, cv::IMREAD_GRAYSCALE);
         if(img.rows == 0){
             throw exception();
         }
@@ -101,22 +94,20 @@ int main(int argc, char** argv){
     clock_t start, finish;
     start = clock();
     // user parameter
-    // int n_x = 4;
-    // int n_y= 3;
-    // int n_d = 3;
-    // string img_dir= "../imgs/circle_0/";
-    // double r = 0.035; 
-    // double distance = 0.09; 
-    // bool is_thermal =  false;
+    int n_x = 4;
+    int n_y= 3;
+    int n_d = 3;
+    string img_dir= "../imgs/circle_0/";
+    double r = 0.035; 
+    double distance = 0.09; 
 
 
-    int n_x = atoi(argv[1]);
-    int n_y = atoi(argv[2]);
-    int n_d = atoi(argv[3]);
-    string img_dir(argv[4]);
-    double r  = atof(argv[5]);
-    double distance  = atof(argv[6]);
-    bool is_thermal= (1== atoi(argv[7])); //0: rgb, 1:theraml
+    // int n_x = atoi(argv[1]);
+    // int n_y = atoi(argv[2]);
+    // int n_d = atoi(argv[3]);
+    // string img_dir(argv[4]);
+    // double r  = atof(argv[5]);
+    // double distance  = atof(argv[6]);
 
 
     cout<<img_dir<<endl;
@@ -127,7 +118,7 @@ int main(int argc, char** argv){
     bool check_detection_result = true;
     bool save_pose = false;
     int mode = 0;
-    do_calibration(img_dir,type,mode, n_x, n_y, n_d, r,distance,check_detection_result,is_thermal,save_pose);
+    do_calibration(img_dir,type,mode, n_x, n_y, n_d, r,distance,check_detection_result,save_pose);
     finish = clock();
     double duration = (double)(finish - start) / CLOCKS_PER_SEC;
     printf("%f초\n", duration);
