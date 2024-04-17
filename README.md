@@ -10,7 +10,6 @@ For decades, the checkerboard pattern has been the go-to method for camera calib
 - 24.04.17. We update circular pattern detector! Now, you don't need to tune hyperparameters for detections
 - 24.04.05. Discocal is selected for highlight poster. :wave: (11.9% of accepted papers, 2.8% of total submissions.)
 
-# Description
 ## The core limitation for conic in camera calibration
 
 Sub-pixel accuracy and detection robustness are virtues of the conic features. But why do we use a checkerboard, not a circular pattern?
@@ -25,16 +24,15 @@ Without considering geometery of the distorted ellipse, existing circular patter
 
 > :pushpin: **Our unbiased estimator completes the missing piece in the conic-based calibration pipeline**
 
-## Calibration parameters in camera model
+
+
+# How to use
+## Projection model
 
 We assume pin-hole camera model with radial distortion.
 <img src="./docs/figs/camera_model.png" width="600" height="200">
 
 Calibration results: fx, fy, cx, cy, skew, d1, d2, ... dn
-
-
-
-# How to use
 ## Dependency
 - [Ceres-Solver](http://ceres-solver.org/index.html)
 - [Eigen3](https://eigen.tuxfamily.org/dox/index.html)
