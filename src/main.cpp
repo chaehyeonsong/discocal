@@ -58,13 +58,15 @@ void do_calibration(string img_dir, string type, int mode, int n_x, int n_y, int
 
     for(int i=0; i<max_scene;i++){
         string path = imgs[i];
-        cv::Mat img, img2;
-        img = cv::imread(path, cv::IMREAD_GRAYSCALE);
-        if(img.rows == 0){
+        cv::Mat bgr_img, gray_img;
+        bgr_img = cv::imread(path, cv::IMREAD_COLOR);
+        cv::fastNlMeansDenoisingColored(bgr_img, bgr_img, 10, 10, 7, 21);
+        cv::cvtColor(bgr_img, gray_img, cv::COLOR_BGR2GRAY);
+        if(gray_img.rows == 0){
             throw exception();
         }
         cout<<"start detect: "<<path<<endl;
-        result = detector.detect(img, type);
+        result = detector.detect(gray_img, type);
         if(result.first){
             calibrator.inputTarget(result.second);
 
@@ -94,20 +96,20 @@ int main(int argc, char** argv){
     clock_t start, finish;
     start = clock();
     // user parameter
-    // int n_x = 4;
-    // int n_y= 3;
-    // int n_d = 3;
-    // string img_dir= "../imgs/circle_0/";
-    // double r = 0.035; 
-    // double distance = 0.09; 
+    int n_x = 4;
+    int n_y= 3;
+    int n_d = 3;
+    string img_dir= "../imgs/circle_0/";
+    double r = 0.035; 
+    double distance = 0.09; 
 
 
-    int n_x = atoi(argv[1]);
-    int n_y = atoi(argv[2]);
-    int n_d = atoi(argv[3]);
-    string img_dir(argv[4]);
-    double r  = atof(argv[5]);
-    double distance  = atof(argv[6]);
+    // int n_x = atoi(argv[1]);
+    // int n_y = atoi(argv[2]);
+    // int n_d = atoi(argv[3]);
+    // string img_dir(argv[4]);
+    // double r  = atof(argv[5]);
+    // double distance  = atof(argv[6]);
 
 
     cout<<img_dir<<endl;
