@@ -31,7 +31,7 @@ Without considering geometery of the distorted ellipse, existing circular patter
 # How to use
 ## Projection model
 
-We assume pinhole camera model with radial distortion.
+We assume **pinhole camera model** with **radial distortion**.
 ```math
 \begin{aligned}
 s\begin{bmatrix}
@@ -40,7 +40,7 @@ x_n\\ y_n \\ 1
 \end{bmatrix}\begin{bmatrix}
 x_w\\ y_w \\ z_w \\ 1
 \end{bmatrix} \\
-k &= 1+ \sum_{i=1}^{n_d}d_i(x_n^2+y_n^2)^i \hspace{4mm}\text{(distortion model)}\\
+k &= 1+ \sum_{i=1}^{n_d}d_i(x_n^2+y_n^2)^i\\
 \begin{bmatrix}
 u\\ v
 \end{bmatrix} &= \begin{bmatrix}
