@@ -27,9 +27,9 @@ Without considering geometery of the distorted ellipse, existing circular patter
 > :pushpin: **Our unbiased estimator completes the missing piece in the conic-based calibration pipeline**
 
 
-
+------------------
 # How to use
-## Projection model
+## 0. Projection model
 
 We assume **pinhole camera model** with **radial distortion**.
 ```math
@@ -53,12 +53,14 @@ kx_n \\ ky_n \\ 1
 ```
 Calibration results: $f_x, f_y, c_x, c_y, \eta, d_1, d_2, ... d_n$
 
-## Dependency
+## 1. Dependency
+### Option 1: Install bellow packages
 - [Ceres-Solver](http://ceres-solver.org/index.html)
 - [Eigen3](https://eigen.tuxfamily.org/dox/index.html)
 - opencv4
 
-(Recommend) Build a docker image using the dockerfile.
+### Option 2: Use docker
+(Recommended) Build a docker image using the dockerfile.
 
 	docker build -t chaehyeonsong/discocal .  -f dockerfile
 
@@ -66,7 +68,7 @@ Calibration results: $f_x, f_y, c_x, c_y, \eta, d_1, d_2, ... d_n$
 
 	docker pull chaehyeonsong/discocal:latest
 
-## Bulid and Run
+## 2. Bulid and Run
 	## Build
 	cd [your path]/discocal
 	mkdir build
@@ -78,7 +80,7 @@ Calibration results: $f_x, f_y, c_x, c_y, \eta, d_1, d_2, ... d_n$
 	./main.out [n_x] [n_y] [n_d] [img_dir_path] [radius(m)] [circle distance(m)]
 	(ex) ./main.out 4 3 3 ../imgs/ 0.035 0.09
 
-## :open_mouth: Caution: Check detection results!
+### :open_mouth: Caution: Check detection results!
 **To get high-quality results, plz check all pixels in the circle are correctly detected like this.**
 <!-- ![sample](./docs/figs/detection_sample.png){: width="100" height="100"} -->
 <img src="./docs/figs/detection_sample.png" width="400" height="300">
@@ -92,6 +94,7 @@ If you don’t want to check images, turn off the “check_detection_results” 
 - **eccentricity_threshold**: the length ratio between a blob's major and minor axis.
 You can refine these parameters in the TargetDetector class.
 
+---------------------------
 ## Application: Thermal Camera calibration
 
 We can leverage the detection robustness of the circular patterns, particularly for unconventional cameras, such as thermal cameras.
