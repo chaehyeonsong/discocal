@@ -8,8 +8,9 @@ For decades, the checkerboard pattern has been the go-to method for camera calib
 [![](docs/figs/thumbnail3.png)](http://www.youtube.com/watch?v=87_R7Qkpczo "Click to play on Youtube.com")
 
 ## News
-- 24.04.17. We update circular pattern detector! Now, you don't need to tune hyperparameters for detections
-- 24.04.05. Discocal is selected for highlight poster. :wave: (11.9% of accepted papers, 2.8% of total submissions.)
+<!-- :round_pushpin: :Patch notes,    :tada:: awards -->
+- 24.04.17. :round_pushpin:We update circular pattern detector! Now, you don't need to tune hyperparameters for detections
+- 24.04.05. :tada: Discocal is selected for highlight poster. (11.9% of accepted papers, 2.8% of total submissions.)
 
 ## The core limitation for conic in camera calibration
 
@@ -30,10 +31,28 @@ Without considering geometery of the distorted ellipse, existing circular patter
 # How to use
 ## Projection model
 
-We assume pin-hole camera model with radial distortion.
-<img src="./docs/figs/camera_model.png" width="600" height="200">
+We assume pinhole camera model with radial distortion.
+$$
+\begin{aligned}
+s\begin{bmatrix}
+x_n\\ y_n \\ 1
+\end{bmatrix} &= \begin{bmatrix} \boldsymbol{r}_1 & \boldsymbol{r}_2 & \boldsymbol{r}_3 & \boldsymbol{t} 
+\end{bmatrix}\begin{bmatrix}
+x_w\\ y_w \\ z_w \\ 1
+\end{bmatrix} \\
+k &= 1+ \sum_{i=1}^{n_d}d_i(x_n^2+y_n^2)^i \hspace{4mm}\text{(distortion model)}\\
+\begin{bmatrix}
+u\\ v
+\end{bmatrix} &= \begin{bmatrix}
+f_x & \eta & c_x \\
+0 & f_y & c_y
+\end{bmatrix} \begin{bmatrix}
+kx_n \\ ky_n \\ 1
+\end{bmatrix}
+\end{aligned} 
+$$
+Calibration results: $f_x, f_y, c_x, c_y, \eta, d_1, d_2, ... d_n$
 
-Calibration results: fx, fy, cx, cy, skew, d1, d2, ... dn
 ## Dependency
 - [Ceres-Solver](http://ceres-solver.org/index.html)
 - [Eigen3](https://eigen.tuxfamily.org/dox/index.html)
