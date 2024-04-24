@@ -96,22 +96,26 @@ int main(int argc, char** argv){
     clock_t start, finish;
     start = clock();
 
+    int n_x, n_y, n_d;
+    string img_dir;
+    double r, distance;
     // user parameter example
-    int n_x = 4;
-    int n_y= 3;
-    int n_d = 4;
-    string img_dir= "../imgs/thr_test/";
-    double r = 0.03; 
-    double distance = 0.09; 
-
-
-    // int n_x = atoi(argv[1]);
-    // int n_y = atoi(argv[2]);
-    // int n_d = atoi(argv[3]);
-    // string img_dir(argv[4]);
-    // double r  = atof(argv[5]);
-    // double distance  = atof(argv[6]);
-
+    if(argc >1){
+        n_x = atoi(argv[1]);
+        n_y = atoi(argv[2]);
+        n_d = atoi(argv[3]);
+        img_dir = string(argv[4]);
+        r  = atof(argv[5]);
+        distance  = atof(argv[6]);
+    }
+    else{
+        n_x = 4;
+        n_y= 3;
+        n_d = 4;
+        img_dir= "../imgs/extreme/";
+        r = 0.03; 
+        distance = 0.09; 
+    }
 
     cout<<img_dir<<endl;
     printf("%d, %d, %d, %f, %f \n",n_x, n_y, n_d, r, distance);
