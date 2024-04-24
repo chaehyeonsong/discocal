@@ -97,20 +97,20 @@ int main(int argc, char** argv){
     start = clock();
 
     // user parameter example
-    int n_x = 4;
-    int n_y= 3;
-    int n_d = 4;
-    string img_dir= "../imgs/thr_test/";
-    double r = 0.03; 
-    double distance = 0.09; 
+    // int n_x = 4;
+    // int n_y= 3;
+    // int n_d = 4;
+    // string img_dir= "../imgs/thr_test/";
+    // double r = 0.03; 
+    // double distance = 0.09; 
 
 
-    // int n_x = atoi(argv[1]);
-    // int n_y = atoi(argv[2]);
-    // int n_d = atoi(argv[3]);
-    // string img_dir(argv[4]);
-    // double r  = atof(argv[5]);
-    // double distance  = atof(argv[6]);
+    int n_x = atoi(argv[1]);
+    int n_y = atoi(argv[2]);
+    int n_d = atoi(argv[3]);
+    string img_dir(argv[4]);
+    double r  = atof(argv[5]);
+    double distance  = atof(argv[6]);
 
 
     cout<<img_dir<<endl;
