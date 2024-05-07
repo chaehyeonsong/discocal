@@ -11,7 +11,7 @@ TargetDetector::TargetDetector(int n_x, int n_y, bool draw){
     this->eccentricity_threshold = 0.1;
 
     this->draw=draw; 
-    this->drawing_scale= 1.5;
+    this->drawing_scale= 1.0;
 
     this->text_colors;
     text_colors.push_back(cv::Scalar(255,0,0));
