@@ -80,6 +80,9 @@ Calibration results: $f_x, f_y, c_x, c_y, \eta, d_1, d_2, ... d_n$
 	./main.out [n_x] [n_y] [n_d] [img_dir_path] [radius(m)] [circle distance(m)]
 	(ex) ./main.out 4 3 3 ../sample_imgs/rgb12/ 0.035 0.09
 	(ex) ./main.out 4 3 4 ../sample_imgs/tir12/ 0.03 0.09
+
+> **Q. How to decide number of cicles and radius?** 
+The larger the radius of the circle, the more accurate the observations become. The greater the number of circles, the more observations you have, leading to increased robustness. Since these two values are in a trade-off relationship within a limited area, adjust them appropriately. It is recommended not to exceed 7x5 circles.
 ### :open_mouth: Caution: Check detection results!
 **To get high-quality results, plz check all pixels in the circle are correctly detected like this.**
 <!-- ![sample](./docs/figs/detection_sample.png){: width="100" height="100"} -->
