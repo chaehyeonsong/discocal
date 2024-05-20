@@ -127,7 +127,7 @@ int main(int argc, char** argv){
     do_calibration(img_dir,type, n_x, n_y, n_d, r,distance,check_detection_result,save_pose);
     finish = clock();
     double duration = (double)(finish - start) / CLOCKS_PER_SEC;
-    printf("%f초\n", duration);
+    printf("%fsec\n", duration);
 
     return 0;
 };
