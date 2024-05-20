@@ -36,14 +36,14 @@ vector<T> split(string str, char Delimiter) {
     return result;
 }
 
-void do_calibration(string img_dir, string type, int mode, int n_x, int n_y, int n_d, double r, double distance, bool check_detection_result, bool save_pose){
+void do_calibration(string img_dir, string type, int n_x, int n_y, int n_d, double r, double distance, bool check_detection_result, bool save_pose){
 
     vector<string> imgs;
 
     for (const auto & file : std::filesystem::directory_iterator(img_dir)){
         string s = file.path();
         string path = split<string>(s,'/').back();
-        if (path.find(type) != string::npos && path.find(".png") != string::npos){
+        if (path.find(".png") != string::npos || path.find(".PNG") != string::npos || path.find(".jpeg") != string::npos || path.find(".jpg") != string::npos){
             imgs.push_back(s);
         }
     }
@@ -124,8 +124,7 @@ int main(int argc, char** argv){
     
     bool check_detection_result = true;
     bool save_pose = false;
-    int mode = 0;
-    do_calibration(img_dir,type,mode, n_x, n_y, n_d, r,distance,check_detection_result,save_pose);
+    do_calibration(img_dir,type, n_x, n_y, n_d, r,distance,check_detection_result,save_pose);
     finish = clock();
     double duration = (double)(finish - start) / CLOCKS_PER_SEC;
     printf("%f초\n", duration);

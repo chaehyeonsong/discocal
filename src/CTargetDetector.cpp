@@ -206,6 +206,9 @@ bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, boo
     if(debug)
     {
         cv::resize(img_output, img_output, cv::Size(img_output.cols*drawing_scale, img_output.rows*drawing_scale));
+        float bottom = img_output.rows*0.95;
+        float left = img_output.cols*0.05;
+        cv::putText(img_output,"save: 1, ignore: 0",cv::Point2f(left,bottom),0,2,cv::Scalar(0,0,255),5);
         cv::imshow("input_image",img_output);
     }
     
