@@ -13,14 +13,15 @@ TargetDetector::TargetDetector(int n_x, int n_y, bool draw){
     this->draw=draw; 
     this->drawing_scale= 1.0;
 
-    this->text_colors;
-    text_colors.push_back(cv::Scalar(255,0,0));
-    text_colors.push_back(cv::Scalar(0,255,0));
-    text_colors.push_back(cv::Scalar(0,0,255));
-    text_colors.push_back(cv::Scalar(255,255,0));
-    text_colors.push_back(cv::Scalar(255,0,255));
-    text_colors.push_back(cv::Scalar(0,255,255));
-    text_colors.push_back(cv::Scalar(255,255,255));
+    for(int i=0; i<(n_y+6)/7;i++){
+        text_colors.push_back(cv::Scalar(255,0,0));
+        text_colors.push_back(cv::Scalar(0,255,0));
+        text_colors.push_back(cv::Scalar(0,0,255));
+        text_colors.push_back(cv::Scalar(255,255,0));
+        text_colors.push_back(cv::Scalar(255,0,255));
+        text_colors.push_back(cv::Scalar(0,255,255));
+        text_colors.push_back(cv::Scalar(255,255,255));
+    }
 }
 
 pair<bool,vector<cv::Point2f>> TargetDetector::detect(cv::Mat img, string type){
