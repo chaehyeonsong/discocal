@@ -53,13 +53,24 @@ kx_n \\ ky_n \\ 1
 ```
 Calibration results: $f_x, f_y, c_x, c_y, \eta, d_1, d_2, ... d_n$
 
-## 1. Dependency
-### Option 1: Install bellow packages
+## 1. Calibration Target
+<img src="./docs/figs/board2.png" width="60%">
+
+Our method needs a planer white board on which black circle grid patterns are printed. 
+You can easily design these patterns in this [site](https://calib.io/pages/camera-calibration-pattern-generator).
+
+**Previous methods prefer to reduce the size of the circles to minimize bias, but our method is not limited to this. In fact, the larger the circles, the more accurate the measurements.**
+
+> **Q. How to decide the number of cicles and the radius size?** 
+The larger the radius of the circle, the more accurate the observations become. The greater the number of circles, the more observations you have, leading to increased robustness. Since these two values are in a trade-off relationship within a limited area, adjust them appropriately. It is recommended not to exceed 7x5 circles.
+
+## 2. Dependency
+### Option 1) Install bellow packages
 - [Ceres-Solver](http://ceres-solver.org/index.html)
 - [Eigen3](https://eigen.tuxfamily.org/dox/index.html)
 - opencv4
 
-### Option 2: Use docker
+### Option 2) Use docker
 (Recommended) Build a docker image using the dockerfile.
 
 	docker build -t chaehyeonsong/discocal .  -f dockerfile
@@ -68,7 +79,7 @@ Calibration results: $f_x, f_y, c_x, c_y, \eta, d_1, d_2, ... d_n$
 
 	docker pull chaehyeonsong/discocal:latest
 
-## 2. Bulid and Run
+## 3. Bulid and Run
 	## Build
 	cd [your path]/discocal
 	mkdir build
@@ -81,8 +92,7 @@ Calibration results: $f_x, f_y, c_x, c_y, \eta, d_1, d_2, ... d_n$
 	(ex) ./main.out 4 3 3 ../sample_imgs/rgb12/ 0.035 0.09
 	(ex) ./main.out 4 3 4 ../sample_imgs/tir12/ 0.03 0.09
 
-> **Q. How to decide the number of cicles and the radius size?** 
-The larger the radius of the circle, the more accurate the observations become. The greater the number of circles, the more observations you have, leading to increased robustness. Since these two values are in a trade-off relationship within a limited area, adjust them appropriately. It is recommended not to exceed 7x5 circles.
+
 ### :open_mouth: Caution: Check detection results!
 **To get high-quality results, plz check all pixels in the circle are correctly detected like this.**
 <!-- ![sample](./docs/figs/detection_sample.png){: width="100" height="100"} -->
