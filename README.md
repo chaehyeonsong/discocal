@@ -54,7 +54,7 @@ kx_n \\ ky_n \\ 1
 Calibration results: $f_x, f_y, c_x, c_y, \eta, d_1, d_2, ... d_n$
 
 ## 1. Calibration Target
-<img src="./docs/figs/board2.png" width="60%">
+<img src="./docs/figs/board.png" width="60%">
 
 Our method needs a planer white board on which black circle grid patterns are printed. 
 You can easily design these patterns in this [site](https://calib.io/pages/camera-calibration-pattern-generator).
@@ -88,7 +88,7 @@ The larger the radius of the circle, the more accurate the observations become. 
 	make
 
 	## Run
-	./main.out [n_x] [n_y] [n_d] [img_dir_path] [radius(m)] [circle distance(m)]
+	./main.out [n_x] [n_y] [n_d] [img_dir_path] [radius(m)] [distance(m)]
 	(ex) ./main.out 4 3 3 ../sample_imgs/rgb12/ 0.035 0.09
 	(ex) ./main.out 4 3 4 ../sample_imgs/tir12/ 0.03 0.09
 
