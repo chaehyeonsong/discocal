@@ -54,7 +54,7 @@ kx_n \\ ky_n \\ 1
 Calibration results: $f_x, f_y, c_x, c_y, \eta, d_1, d_2, ... d_n$
 
 ## 1. Calibration Target
-<img src="./docs/figs/board.png" width="60%">
+<img src="./docs/figs/board2.png" width="60%">
 
 Our method needs a planer white board on which black circle grid patterns are printed. 
 You can easily design these patterns in this [site](https://calib.io/pages/camera-calibration-pattern-generator).
