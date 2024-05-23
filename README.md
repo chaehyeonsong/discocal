@@ -62,7 +62,7 @@ You can easily design these patterns in this [site](https://calib.io/pages/camer
 **Previous methods prefer to reduce the size of the circles to minimize bias, but our method is not limited to this. In fact, the larger the circles, the more accurate the measurements.**
 
 > **Q. How to decide the number of cicles and the radius size?** 
-The larger the radius of the circle, the more accurate the observations become. The greater the number of circles, the more observations you have, leading to increased robustness. Since these two values are in a trade-off relationship within a limited area, adjust them appropriately. It is recommended not to exceed 7x5 circles.
+The larger the radius of the circle, the more accurate the observations become. The greater the number of circles, the more observations you have, leading to increased robustness. Since these two values are in a trade-off relationship within a limited area, adjust them appropriately. It is recommended that a circle contains more than 400 pixels in a image.
 
 ## 2. Dependency
 ### Option 1) Install bellow packages
