@@ -335,7 +335,7 @@ double Calibrator::cal_reprojection_error(std::vector<int> sample,Params params,
     vector<double> ds = {1, params.d[0], params.d[1],params.d[2],params.d[3]};
     Eigen::Matrix3d E, E_inv, Qn;
 
-    MomentumTracker* tracker = new MomentumTracker(n_d);
+    MomentsTracker* tracker = new MomentsTracker(n_d);
 
     double error_total=0;
     int n = sample.size();

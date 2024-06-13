@@ -5,3 +5,4 @@ backup*/
 build/
 imgs/*
 .Ds_Store
+results/*

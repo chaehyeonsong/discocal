@@ -1,6 +1,6 @@
-#include "CMomentumTracker.h"
+#include "CMomentsTracker.h"
 
-MomentumTracker::MomentumTracker(int dim)
+MomentsTracker::MomentsTracker(int dim)
 {
     this-> max_dim = dim;
     this->max_n = max_dim*3;
@@ -8,17 +8,17 @@ MomentumTracker::MomentumTracker(int dim)
     init();
 }
 
-MomentumTracker::MomentumTracker(){
+MomentsTracker::MomentsTracker(){
     this-> max_dim = 4;
     this->max_n = max_dim*3;
     this->comb_max = max_n*2+1;
     init();
 }
-MomentumTracker::~MomentumTracker()
+MomentsTracker::~MomentsTracker()
 {
 }
 
-void MomentumTracker::init(){
+void MomentsTracker::init(){
     comb_buffer.reserve(comb_max+1);
     for(int i=0; i<comb_max+1;i++){
         vector<int> temp(i+1,0);
@@ -45,11 +45,11 @@ void MomentumTracker::init(){
 
 }
 
-double MomentumTracker::nCr(int n, int r){
-    if(n> comb_max || n<r) throw MomentumTrackerError();
+double MomentsTracker::nCr(int n, int r){
+    if(n> comb_max || n<r) throw MomentsTrackerError();
     return (double)(comb_buffer[n][r]);
 }
-double MomentumTracker::_M_2i2j(int i, int j){
+double MomentsTracker::_M_2i2j(int i, int j){
     // a, b == 1
     double den= nCr(2*(i+j),i+j)*nCr(i+j,i);
     double num= nCr(2*(i+j),2*i)*(i+j+1)*pow(2,2*(i+j));
@@ -57,18 +57,18 @@ double MomentumTracker::_M_2i2j(int i, int j){
     return den/num;
     
 }
-double MomentumTracker::M_2i2j(int i, int j){
-    if(i> max_n || j>max_n) throw MomentumTrackerError();
+double MomentsTracker::M_2i2j(int i, int j){
+    if(i> max_n || j>max_n) throw MomentsTrackerError();
     else return moment_buffer[i][j];
     
 }
-double MomentumTracker::M_2i2j(int i, int j, double a, double b){
+double MomentsTracker::M_2i2j(int i, int j, double a, double b){
     // return M^{2i2j}
     return M_2i2j(i,j)*pow(a,2*i)*pow(b,2*j);
 }
 
 
-array<double ,3> MomentumTracker::intSn(int n,double a, double b, double tx, double ty, double alpha){
+array<double ,3> MomentsTracker::intSn(int n,double a, double b, double tx, double ty, double alpha){
     // is validated by wolframAlpha
     double tx_s = cos(alpha)*tx+sin(alpha)*ty;
     double ty_s = -sin(alpha)*tx+cos(alpha)*ty;
@@ -102,7 +102,7 @@ array<double ,3> MomentumTracker::intSn(int n,double a, double b, double tx, dou
     return results;
 
 }
-double MomentumTracker::C0n(int n,vector<double> ds){
+double MomentsTracker::C0n(int n,vector<double> ds){
     double result=0;
     int n_d =max_dim;
     for(int i=max(0,n-n_d);i<min(n,n_d)+1;i++){
@@ -110,7 +110,7 @@ double MomentumTracker::C0n(int n,vector<double> ds){
     }
     return result;
 }
-double MomentumTracker::C1n(int n,vector<double> ds){
+double MomentsTracker::C1n(int n,vector<double> ds){
     double result=0;
     int n_d =max_dim;
     for(int i=max(0,n-n_d*2);i<min(n,n_d)+1;i++){
@@ -123,7 +123,7 @@ double MomentumTracker::C1n(int n,vector<double> ds){
     return result;
 }
 
-array<double, 5> MomentumTracker::ellipse2array(Eigen::Matrix3d Q){
+array<double, 5> MomentsTracker::ellipse2array(Eigen::Matrix3d Q){
     double a=Q(0,0), b=Q(0,1), c=Q(1,1), d=Q(0,2), e=Q(1,2), f=Q(2,2);
     double x,y,m0,m1,v0,v1;
     double det_Q = Q.determinant();
@@ -152,7 +152,7 @@ array<double, 5> MomentumTracker::ellipse2array(Eigen::Matrix3d Q){
     return result;
 }
 
-Point MomentumTracker::ne2dp(Eigen::Matrix3d Q, vector<double> ds){
+Point MomentsTracker::ne2dp(Eigen::Matrix3d Q, vector<double> ds){
     /*
     input: ellips in normal plane and distortion parameter
     output: centor point of region of distorted ellipse
@@ -184,7 +184,7 @@ Point MomentumTracker::ne2dp(Eigen::Matrix3d Q, vector<double> ds){
     return Point(x_d, y_d);
 }
 
-Point MomentumTracker::distort_Point(Point pn, vector<double> ds){
+Point MomentsTracker::distort_Point(Point pn, vector<double> ds){
     double x, s, y, k;
     x = pn.x;
     y = pn.y;

@@ -9,6 +9,7 @@ For decades, the checkerboard pattern has been the go-to method for camera calib
 
 ## News
 <!-- :round_pushpin: :Patch notes,    :tada:: awards -->
+- 24.06.17. Add a description of how to undisort images using our method.
 - 24.04.17. :round_pushpin:We update circular pattern detector! Now, you don't need to tune hyperparameters for detections
 - 24.04.05. :tada: Discocal is selected for highlight poster. (11.9% of accepted papers, 2.8% of total submissions.)
 
@@ -40,7 +41,7 @@ x_n\\ y_n \\ 1
 \end{bmatrix}\begin{bmatrix}
 x_w\\ y_w \\ z_w \\ 1
 \end{bmatrix} \\
-k &= 1+ \sum_{i=1}^{n_d}d_i(x_n^2+y_n^2)^i\\
+k &= 1+ \sum_{i=1}^{n_d}k_i(x_n^2+y_n^2)^i\\
 \begin{bmatrix}
 u\\ v
 \end{bmatrix} &= \begin{bmatrix}
@@ -51,7 +52,23 @@ kx_n \\ ky_n \\ 1
 \end{bmatrix}
 \end{aligned} 
 ```
-Calibration results: $f_x, f_y, c_x, c_y, \eta, d_1, d_2, ... d_n$
+Calibration results: $f_x, f_y, c_x, c_y, \eta, k_1, k_2, ... k_n$
+
+### How do you undisort images using this model?
+#### Option 1) Use cv::undistort function(Only n_d <=3)
+Our model is compatible to OpenCV pin-hole camera model. **Set p1 and p2 as zero**.
+
+```
+distcoeff=(cv::Mat1d(1, 5) << k_1, k_2, 0., 0., k_3);
+cv::initUndistortRectifyMap(camera_matrix, distcoeff, cv::Mat(), camera_matrix, imageSize, CV_32FC1, mapx, mapy);
+cv::remap(image,undist_image, mapx, mapy, cv::INTER_LINEAR);
+```
+#### Option 2) Use Imagehandler class (General case)
+We provide a class that has an "undistort" function. This class can deal with n_d>3 cases. Please refer to the “CImagehander.cpp” files for details.
+```
+Imagehandler imagehandler(width, height, total_params, n_d);
+cv::Mat undist_image = imagehandler.undist(image);
+```
 
 ## 1. Calibration Target
 <img src="./docs/figs/board2.png" width="60%">
@@ -62,7 +79,7 @@ You can easily design these patterns in this [site](https://calib.io/pages/camer
 **Previous methods prefer to reduce the size of the circles to minimize bias, but our method is not limited to this. In fact, the larger the circles, the more accurate the measurements.**
 
 > **Q. How to decide the number of cicles and the radius size?** 
-The larger the radius of the circle, the more accurate the observations become. The greater the number of circles, the more observations you have, leading to increased robustness. Since these two values are in a trade-off relationship within a limited area, adjust them appropriately. It is recommended that a circle contains more than 400 pixels in a image and not to exceed 7x5 circles.
+The larger the radius of the circle, the more accurate the observations become. The greater the number of circles, the more observations you have, leading to increased robustness. Since these two values are in a trade-off relationship within a limited area, adjust them appropriately. It is recommended that every circle contains more than 400 pixels in images and not to exceed 7x5 circles.
 
 ## 2. Dependency
 ### Option 1) Install bellow packages
@@ -107,7 +124,7 @@ If you don’t want to check images, turn off the “check_detection_results” 
 - **eccentricity_threshold**: the length ratio between a blob's major and minor axis.
 You can refine these parameters in the TargetDetector class.
 
----------------------------
+----------------------------
 ## Application: Thermal Camera calibration
 
 We can leverage the detection robustness of the circular patterns, particularly for unconventional cameras, such as thermal cameras.
@@ -117,12 +134,12 @@ We can leverage the detection robustness of the circular patterns, particularly 
 ## BibTex
 ```
 @INPROCEEDINGS{chsong-2024-cvpr,  
-    AUTHOR = { Chaehyeon Song and Jaeho Shin and Myung-Hwan Jeon and Jongwoo Lim and Ayoung Kim },  
-    TITLE = { Unbiased Estimator for Distorted Conic in Camera Calibration },  
-    BOOKTITLE = { IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) },  
-    YEAR = { 2024 },  
-    MONTH = { June. },  
-    ADDRESS = { Seattle },  
+    author    = {Song, Chaehyeon and Shin, Jaeho and Jeon, Myung-Hwan and Lim, Jongwoo and Kim, Ayoung},
+    title     = {Unbiased Estimator for Distorted Conics in Camera Calibration},
+    booktitle = {IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+    month     = {June},
+    year      = {2024},
+    pages     = {373-381}
 }
 ```
 ## Patent

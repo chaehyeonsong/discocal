@@ -9,7 +9,7 @@
 
 #include "ceres/ceres.h"
 #include "glog/logging.h"
-#include "CMomentumTracker.h"
+#include "CMomentsTracker.h"
 #include "CLieAlgebra.h"
 
 using namespace std;
@@ -21,15 +21,6 @@ using ceres::Problem;
 using ceres::Solver;
 using ceres::Solve;
 
-struct Params{
-    double fx;
-    double fy;
-    double cx;
-    double cy;
-    double skew;
-    double d[4];
-    double radius;
-};
 
 class CalibratorError: public std::exception{
     public:
@@ -43,7 +34,7 @@ struct CalibrationFunctor {
         this->origin_target = origin_target;
         this->target = target;
         this->mode = mode;
-        this->tracker = new MomentumTracker(n_d);
+        this->tracker = new MomentsTracker(n_d);
     }
 
     template <typename T>
@@ -101,7 +92,7 @@ struct CalibrationFunctor {
         int mode;
         vector<Point> origin_target;
         vector<Point> target;
-        MomentumTracker* tracker;
+        MomentsTracker* tracker;
 };
 
 class Calibrator{

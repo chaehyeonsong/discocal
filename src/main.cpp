@@ -12,6 +12,7 @@
 
 #include "CCalibrator.h"
 #include "CTargetDetector.h"
+#include "CImagehandler.h"
 
 using namespace std;
 
@@ -56,10 +57,16 @@ void do_calibration(string img_dir, string type, int n_x, int n_y, int n_d, doub
     int count=0;
     Calibrator calibrator = Calibrator(n_x,n_y,n_d,r,distance,max_scene);
 
+    
+    int width, height;
+    Params final_params;
+    
     for(int i=0; i<max_scene;i++){
         string path = imgs[i];
         cv::Mat bgr_img, gray_img, bgr_img2;
         bgr_img2 = cv::imread(path, cv::IMREAD_COLOR);
+        height = bgr_img2.rows;
+        width = bgr_img2.cols;
         cv::bilateralFilter(bgr_img2,bgr_img,-1,10,10);
         cv::cvtColor(bgr_img, gray_img, cv::COLOR_BGR2GRAY);
         if(gray_img.rows == 0){
@@ -77,9 +84,6 @@ void do_calibration(string img_dir, string type, int n_x, int n_y, int n_d, doub
     if(calibrator.get_num_scene()<6){
         throw DeficientImagesException();
     }
-
-    Params final_params;
-
     if(type=="circle"){
         final_params=calibrator.calibrate(0);
         if(save_pose) calibrator.get_extrinsic(img_dir+"est_pose_c0.txt");
@@ -88,8 +92,19 @@ void do_calibration(string img_dir, string type, int n_x, int n_y, int n_d, doub
         final_params=calibrator.calibrate(2);
         if(save_pose) calibrator.get_extrinsic(img_dir+"est_pose_s.txt");
     }
-};
 
+
+    Imagehandler imagehandler(width, height,final_params, n_d); 
+    for (const auto & file : std::filesystem::directory_iterator(img_dir)){
+        string s = file.path();
+        cv::Mat bgr_img = cv::imread(s, cv::IMREAD_COLOR);
+        cv::Mat ud_img = imagehandler.undistort(bgr_img);
+        string path = split<string>(s,'/').back();
+        string ud_img_path = "../results/"+path;
+        cv::imwrite(ud_img_path,ud_img);
+
+    }
+}
 
 int main(int argc, char** argv){
 
@@ -111,8 +126,8 @@ int main(int argc, char** argv){
     else{
         n_x = 4;
         n_y= 3;
-        n_d = 4;
-        img_dir= "../imgs/extreme/";
+        n_d = 3;
+        img_dir= "../imgs/easy/";
         r = 0.03; 
         distance = 0.09; 
     }

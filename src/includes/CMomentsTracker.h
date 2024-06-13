@@ -1,5 +1,5 @@
-#ifndef __CMOMENTUMTRACKER_H__
-#define __CMOMENTUMTRACKER_H__
+#ifndef __CMOMENTSTRACKER_H__
+#define __CMOMENTSTRACKER_H__
 
 #include <vector>
 #include <array>
@@ -7,21 +7,18 @@
 #include "math.h"
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Dense>
+#include "utils.h"
 using namespace std;
 
 
-class MomentumTrackerError: public std::exception{
+class MomentsTrackerError: public std::exception{
     public:
         const char* what(){
             return "Value exceed the range";
         }
 };
-struct Point{
-    double x;
-    double y;
-    Point(double _x, double _y) : x(_x), y(_y){};
-};
-class MomentumTracker
+
+class MomentsTracker
 {
 private:
     /* data */
@@ -36,9 +33,9 @@ private:
     
     
 public:
-    MomentumTracker(int dim);
-    MomentumTracker();
-    ~MomentumTracker();
+    MomentsTracker(int dim);
+    MomentsTracker();
+    ~MomentsTracker();
 
     double I_2i2j(int i, int j);
     
