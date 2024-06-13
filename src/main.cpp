@@ -102,8 +102,8 @@ void do_calibration(string img_dir, string type, int n_x, int n_y, int n_d, doub
         string path = split<string>(s,'/').back();
         string ud_img_path = "../results/"+path;
         cv::imwrite(ud_img_path,ud_img);
-
     }
+    cout<<"undistorted images are saved in ./results/ folder"<<endl;
 }
 
 int main(int argc, char** argv){

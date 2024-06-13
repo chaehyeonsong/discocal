@@ -54,7 +54,7 @@ kx_n \\ ky_n \\ 1
 ```
 Calibration results: $f_x, f_y, c_x, c_y, \eta, k_1, k_2, ... k_n$
 
-### How do you undisort images using this model?
+### Q. How do you undisort images using this model?
 #### Option 1) Use cv::undistort function(Only n_d <=3)
 Our model is compatible to OpenCV pin-hole camera model. **Set p1 and p2 as zero**.
 
