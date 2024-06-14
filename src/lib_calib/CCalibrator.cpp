@@ -479,7 +479,7 @@ Params Calibrator::calibrate(int mode){
 
     printf("<start optimization>\n");
     if(mode==0){
-        final_params= batch_optimize(sample, initial_params,0,2); // phase, mode
+        final_params= batch_optimize(sample, initial_params,0,2); // phase(fix parameter), mode(point, moment,...)
         printf(">coarse ");
         printParams(final_params,true);
 

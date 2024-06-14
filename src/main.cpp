@@ -126,8 +126,8 @@ int main(int argc, char** argv){
     else{
         n_x = 4;
         n_y= 3;
-        n_d = 3;
-        img_dir= "../imgs/easy/";
+        n_d = 4;
+        img_dir= "../sample_imgs/tir12/";
         r = 0.03; 
         distance = 0.09; 
     }
