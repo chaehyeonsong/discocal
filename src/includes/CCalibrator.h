@@ -55,11 +55,13 @@ struct CalibrationFunctor {
             vector<double> ds = {1, distorsion[0], distorsion[1],distorsion[2],distorsion[3]};
             Point dp(0,0);
             if(mode ==0){
+                // moment based
                 E_inv=  E.inverse();
                 Qn = E_inv.transpose()*Cw*E_inv;
                 dp = tracker->ne2dp(Qn,ds);
             }
             else if(mode == 1){
+                // conic based
                 E_inv=  E.inverse();
                 Qn = E_inv.transpose()*Cw*E_inv;
                 array<double,5> ellipse_n= tracker->ellipse2array(Qn);
@@ -67,6 +69,7 @@ struct CalibrationFunctor {
                 dp = tracker->distort_Point(pn,ds);
             }
             else if(mode == 2){
+                // point based
                 Eigen::Vector3d Pw{wx,wy,1};
                 Eigen::Vector3d Pn = E*Pw;
                 Point pn(Pn[0]/Pn[2],Pn[1]/Pn[2]);
@@ -103,7 +106,7 @@ class Calibrator{
         void inputTarget(vector<cv::Point2f> target);
         void init();
         bool cal_initial_params(Params* inital_params);
-        Params calibrate(int mode);
+        Params calibrate(int mode, int width, int height);
         void printParams(Params p, bool full);
         int get_num_scene();
         void get_extrinsic(string root_dir);
@@ -140,7 +143,7 @@ class Calibrator{
         void update_extrinsic(Params intrinsic);
 
         std::vector<int> get_randomSample(int range, int n);
-        Params batch_optimize(std::vector<int> sample, Params initial_params,int phase, int mode);
+        Params batch_optimize(std::vector<int> sample, Params initial_params,bool fix_radius, int mode);
 };
 
 

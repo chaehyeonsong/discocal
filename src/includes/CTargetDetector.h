@@ -36,5 +36,6 @@ class TargetDetector{
         bool detect_circles(cv::Mat img, vector<cv::Point2f>&target, bool debug=false);
         bool ellipse_test(const cv::Moments &moments);
         void sortTarget(vector<cv::Point2f>&source, vector<cv::Point2f>&dist);
+        std::vector<int> get_randomSample(int range, int n);
 };
 #endif

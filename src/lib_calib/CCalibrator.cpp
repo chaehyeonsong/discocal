@@ -274,13 +274,13 @@ std::vector<int> Calibrator::get_randomSample(int range, int n){
     return sampledData;
 }
 
-Params Calibrator::batch_optimize(std::vector<int> sample, Params initial_params,int phase, int mode){
+Params Calibrator::batch_optimize(std::vector<int> sample, Params initial_params,bool fix_radus, int mode){
     /*
     phase: set const
      0: default
      1: optimize radius
     */  
-    
+    curr_r =original_r;
     double fs[]={initial_params.fx, initial_params.fy};
     double cs[]={initial_params.cx, initial_params.cy};
     double skew = initial_params.skew;
@@ -299,15 +299,12 @@ Params Calibrator::batch_optimize(std::vector<int> sample, Params initial_params
 
     }
 
-    if(phase==0){
-
+    if(fix_radus){
         problem.SetParameterBlockConstant(&curr_r);
     }
-    else if(phase!=1){
-        printf("phase error\n");
-        Params results;
-        return results;
-    }
+    // else{
+    //     problem.SetParameterLowerBound(&curr_r, 0, 0);
+    // }
 
 
     // Run the solver!
@@ -322,6 +319,7 @@ Params Calibrator::batch_optimize(std::vector<int> sample, Params initial_params
     Solve(options, &problem, &summary);
     // printf("final error: %f\n",summary.final_cost);
     // std::cout<<summary.FullReport()<<std::endl;
+    if(curr_r<0) curr_r = -curr_r;
     Params results={fs[0],fs[1],cs[0],cs[1],skew,distorsion[0],distorsion[1],distorsion[2],distorsion[3]};
     results.radius = curr_r;
 
@@ -457,47 +455,71 @@ void Calibrator::printParams(Params p, bool full){
 
 }
 
-Params Calibrator::calibrate(int mode){
-    printf("----------calibration mode: %d-------------\n", mode);
-    init();
+Params Calibrator::calibrate(int mode, int width , int height){
 
     double alpha;
     std::cout.precision(12);
     Params initial_params{0.};
-    Params final_params;
-    
-   
-    bool result= cal_initial_params(&initial_params);
-    
+
+    printf("----------calibration mode: %d-------------\n", mode);
+    init();
     printf("<before optimization>\n");
     printf("initial ");
+    
+    double fov= 90;
+    bool result= cal_initial_params(&initial_params);
+    if(initial_params.cx<0 || initial_params.cy <0){
+        initial_params.fx = width/(2*tan(fov*M_PI/360));
+        initial_params.fy = width/(2*tan(fov*M_PI/360));
+        initial_params.skew= 0;
+        initial_params.cx = width/2;
+        initial_params.cy = height/2;
+        initial_params.radius=original_r;
+    }
     printParams(initial_params,true);
 
-    
     set_inital_Es(initial_params);
     std::vector<int> sample = get_randomSample(num_scene,num_scene);
 
     printf("<start optimization>\n");
+    Params final_params;
+    double rperror;
     if(mode==0){
-        final_params= batch_optimize(sample, initial_params,0,2); // phase(fix parameter), mode(point, moment,...)
+        initial_params= batch_optimize(sample, initial_params,true,2); // phase(fix parameter), mode(point, moment,...)
         printf(">coarse ");
-        printParams(final_params,true);
+        printParams(initial_params,true);
 
         printf("It will take few minites.....\n");
-        final_params= batch_optimize(sample, final_params,1,mode);
+        final_params= batch_optimize(sample, initial_params,false,mode);
+        printf(">fine ");
+        printParams(final_params,true);
+
+        rperror = cal_reprojection_error(sample,final_params,mode);
+        // double quality_logit = abs(1- final_params.radius/original_r);
+        // double quality = 100*exp(-quality_logit);
+        double quality = 100/(1+abs(log(final_params.radius/original_r)));
+        printf("Calibration Quality: %f %%\n", quality);
+        printf("Estimated radius: %f, Reprojection error: %f\n",final_params.radius,rperror);
+
+        if(quality<80){
+            cout<< "Warning: Calibration quality is so low!!"<<endl;
+            cout<< "Check" <<endl;
+            cout<< "\t1.Image qualites\t 2.Camera model"<<endl;
+            cout<< "Start fixed-radius version..." <<endl;
+            final_params= batch_optimize(sample, initial_params,true,mode);
+            printf(">final ");
+            printParams(final_params,true);
+            rperror = cal_reprojection_error(sample,final_params,mode);
+            printf("Fixed radius: %f, Reprojection error: %f\n",final_params.radius,rperror);
+        }
 
     }
     else{
-        final_params= batch_optimize(sample, initial_params,0,mode);
-        
+        final_params= batch_optimize(sample, initial_params,true,mode);
+        printf(">fine ");
+        printParams(final_params,true);
+        rperror = cal_reprojection_error(sample,final_params,mode);
+        printf("Reprojection error: %f\n",rperror);
     }
-    printf(">fine ");
-    printParams(final_params,true);
-    double rperror = cal_reprojection_error(sample,final_params,mode);
-    double quality = abs(1- final_params.radius/original_r);
-    printf("Calibration Quality: %f %%\n", 100*exp(-quality));
-    printf("Estimated radius: %f, Reprojection error: %f\n",final_params.radius,rperror);
-
-
     return final_params;
 }

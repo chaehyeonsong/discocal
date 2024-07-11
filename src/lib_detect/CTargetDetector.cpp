@@ -11,7 +11,7 @@ TargetDetector::TargetDetector(int n_x, int n_y, bool draw){
     this->eccentricity_threshold = 0.1;
 
     this->draw=draw; 
-    this->drawing_scale= 1.0;
+    this->drawing_scale= 0.5;
 
     for(int i=0; i<(n_y+6)/7;i++){
         text_colors.push_back(cv::Scalar(255,0,0));
@@ -106,18 +106,36 @@ void TargetDetector::sortTarget(vector<cv::Point2f>&source, vector<cv::Point2f>&
     return;
 }
 
+std::vector<int> TargetDetector::get_randomSample(int range, int n){
+    std::vector<bool> data(range);
+    fill(data.begin(),data.end(), true);
+
+    std::vector<int> sampledData;
+    srand((unsigned int)time(NULL));
+    while(n>0){
+        int num =rand()%range;
+        if(data[num]){
+            sampledData.push_back(num);
+            data[num]=false;
+            n--;
+        }
+    }
+    return sampledData;
+}
+
 bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, bool debug){
 
-    cv::Mat img_origin, img_blur, img_thresh, img_morph, img_contour, img_output;
+    cv::Mat img_origin, img_blur, img_thresh, img_morph, img_output;
 
     img_origin = img.clone();
     img_output = img_origin.clone();
     cvtColor(img_output, img_output, cv::COLOR_GRAY2BGR);
 
     // collect all circular bolb candidates //
+    int blur_size = min(img_origin.rows, img_origin.cols)/500*2+1;
     std::vector<std::vector<cv::Point>> circle_contour_candidates;
     std::vector<cv::Moments> circle_moments_candidates;
-    cv::GaussianBlur(img_origin, img_blur, cv::Size(5, 5), 0);
+    cv::GaussianBlur(img_origin, img_blur, cv::Size(blur_size, blur_size), 0);
     for (int bs = 3; bs <= 19; bs += 2)
     {
         cv::adaptiveThreshold(img_blur, img_thresh, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY_INV, bs, 2);
@@ -177,17 +195,54 @@ bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, boo
         }
     }
 
-    // sorting and filltering blobs to a grid structure //
+    //remove outliers using size based on RANSAC
+
+    float size_standard=0;
+    int max_inlier=0;
+    int n_temp=circle_moments.size();
+    int total_iter = 10;
+    int sample_number=3;
+    for(int i=0; i<total_iter;i++){
+        float size_mean=0;
+        int inlier=0;
+        vector<int> samples= get_randomSample(n_temp, sample_number);
+        for(int index: samples){
+            size_mean+= circle_moments[index].m00;
+        }
+        size_mean = size_mean/sample_number;
+
+        for(cv::Moments m : circle_moments){
+            float ratio = m.m00/size_mean;
+            if(ratio>0.5 && ratio<2) inlier++;
+        }
+        if(inlier>max_inlier){
+            max_inlier=inlier;
+            size_standard = size_mean;
+        }
+    }
+    std::vector<std::vector<cv::Point>> final_circle_contours;
     std::vector<cv::Point2f> source;
     cv::Point2f pt;
+    int remove_count=0;
     for(size_t i =0; i<circle_moments.size();i++){
         cv::Moments m1 = circle_moments[i];
-        pt.x = (float) m1.m10/m1.m00, 
-        pt.y = (float) m1.m01/m1.m00;
-        source.push_back(pt);
+        float ratio = m1.m00/size_standard;
+        if(ratio>0.5 && ratio<2){
+            pt.x = (float) m1.m10/m1.m00, 
+            pt.y = (float) m1.m01/m1.m00;
+            source.push_back(pt);
+        }
+        else circle_contours.erase(circle_contours.begin()+i-remove_count);
+
     }
     
-    if(debug) cv::drawContours(img_output, circle_contours, -1, cv::Scalar(100, 0, 0), cv::FILLED);
+    // sorting and filltering blobs to a grid structure //
+    if(debug) {
+        cv::drawContours(img_output, circle_contours, -1, cv::Scalar(100, 0, 0), cv::FILLED);
+        cv::Mat img_output2;
+        cvtColor(img_origin, img_output2, cv::COLOR_GRAY2BGR);
+        img_output = img_output*0.5 + img_output2*0.5;
+    }
 
     sortTarget(source,target);
     bool result=false;
@@ -209,7 +264,8 @@ bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, boo
         cv::resize(img_output, img_output, cv::Size(img_output.cols*drawing_scale, img_output.rows*drawing_scale));
         float bottom = img_output.rows*0.95;
         float left = img_output.cols*0.05;
-        cv::putText(img_output,"save: 1, ignore: 0",cv::Point2f(left,bottom),0,2,cv::Scalar(0,0,255),5);
+        if(result) cv::putText(img_output,"save: 1, ignore: 0",cv::Point2f(left,bottom),0,2,cv::Scalar(0,0,255),5);
+        else cv::putText(img_output,"detection fail, press any key",cv::Point2f(left,bottom),0,2,cv::Scalar(0,0,255),5);
         cv::imshow("input_image",img_output);
     }
     

@@ -60,13 +60,13 @@ void do_calibration(string img_dir, string type, int n_x, int n_y, int n_d, doub
     
     int width, height;
     Params final_params;
-    
     for(int i=0; i<max_scene;i++){
         string path = imgs[i];
         cv::Mat bgr_img, gray_img, bgr_img2;
         bgr_img2 = cv::imread(path, cv::IMREAD_COLOR);
         height = bgr_img2.rows;
         width = bgr_img2.cols;
+
         cv::bilateralFilter(bgr_img2,bgr_img,-1,10,10);
         cv::cvtColor(bgr_img, gray_img, cv::COLOR_BGR2GRAY);
         if(gray_img.rows == 0){
@@ -84,12 +84,14 @@ void do_calibration(string img_dir, string type, int n_x, int n_y, int n_d, doub
     if(calibrator.get_num_scene()<6){
         throw DeficientImagesException();
     }
+
+
     if(type=="circle"){
-        final_params=calibrator.calibrate(0);
+        final_params=calibrator.calibrate(0, width, height);
         if(save_pose) calibrator.get_extrinsic(img_dir+"est_pose_c0.txt");
     }
     else{
-        final_params=calibrator.calibrate(2);
+        final_params=calibrator.calibrate(2, width, height);
         if(save_pose) calibrator.get_extrinsic(img_dir+"est_pose_s.txt");
     }
 
@@ -103,7 +105,7 @@ void do_calibration(string img_dir, string type, int n_x, int n_y, int n_d, doub
         string ud_img_path = "../results/"+path;
         cv::imwrite(ud_img_path,ud_img);
     }
-    cout<<"undistorted images are saved in ./results/ folder"<<endl;
+    cout<<"undistorted images are saved in ./results folder"<<endl;
 }
 
 int main(int argc, char** argv){
@@ -114,8 +116,9 @@ int main(int argc, char** argv){
     int n_x, n_y, n_d;
     string img_dir;
     double r, distance;
+    double fov=-1;
     // user parameter example
-    if(argc >1){
+    if(argc ==7){
         n_x = atoi(argv[1]);
         n_y = atoi(argv[2]);
         n_d = atoi(argv[3]);
@@ -123,13 +126,16 @@ int main(int argc, char** argv){
         r  = atof(argv[5]);
         distance  = atof(argv[6]);
     }
-    else{
+    else if (argc ==1){
         n_x = 4;
         n_y= 3;
         n_d = 4;
-        img_dir= "../sample_imgs/tir12/";
-        r = 0.03; 
-        distance = 0.09; 
+        img_dir= "../imgs/temp/";
+        r = 0.1; 
+        distance = 0.27;
+    }
+    else{
+        cout<< "wrong number of arguments"<<endl;
     }
 
     cout<<img_dir<<endl;
