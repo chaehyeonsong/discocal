@@ -213,7 +213,7 @@ bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, boo
 
         for(cv::Moments m : circle_moments){
             float ratio = m.m00/size_mean;
-            if(ratio>0.5 && ratio<2) inlier++;
+            if(ratio>0.25 && ratio<4) inlier++;
         }
         if(inlier>max_inlier){
             max_inlier=inlier;
@@ -227,7 +227,7 @@ bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, boo
     for(size_t i =0; i<circle_moments.size();i++){
         cv::Moments m1 = circle_moments[i];
         float ratio = m1.m00/size_standard;
-        if(ratio>0.5 && ratio<2){
+        if(ratio>0.25 && ratio<4){
             pt.x = (float) m1.m10/m1.m00, 
             pt.y = (float) m1.m01/m1.m00;
             source.push_back(pt);
