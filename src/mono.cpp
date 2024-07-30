@@ -62,13 +62,12 @@ void do_calibration(string img_dir, string type, int n_x, int n_y, int n_d, doub
     Params final_params;
     for(int i=0; i<max_scene;i++){
         string path = imgs[i];
-        cv::Mat bgr_img, gray_img, bgr_img2;
-        bgr_img2 = cv::imread(path, cv::IMREAD_COLOR);
-        height = bgr_img2.rows;
-        width = bgr_img2.cols;
+        cv::Mat bgr_img, gray_img;
+        bgr_img = cv::imread(path, cv::IMREAD_COLOR);
+        height = bgr_img.rows;
+        width = bgr_img.cols;
 
-        cv::bilateralFilter(bgr_img2,bgr_img,-1,10,10);
-        cv::cvtColor(bgr_img, gray_img, cv::COLOR_BGR2GRAY);
+        gray_img = TargetDetector::preprocessing(bgr_img);
         if(gray_img.rows == 0){
             throw exception();
         }

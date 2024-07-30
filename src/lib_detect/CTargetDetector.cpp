@@ -24,6 +24,22 @@ TargetDetector::TargetDetector(int n_x, int n_y, bool draw){
     }
 }
 
+cv::Mat TargetDetector::preprocessing(cv::Mat img){
+    cv::Mat filltered_img, gray_img;
+    cv::bilateralFilter(img,filltered_img,-1,10,10);
+    if(filltered_img.channels()==3){
+        cv::cvtColor(filltered_img, gray_img, cv::COLOR_BGR2GRAY);
+        return gray_img;
+    }
+    else if(filltered_img.channels()==1){
+        return filltered_img;
+    }
+    else{
+        throw WrongTypeException();
+    }
+    
+}
+
 pair<bool,vector<cv::Point2f>> TargetDetector::detect(cv::Mat img, string type){
     bool ret;
     vector<cv::Point2f> target;
@@ -122,6 +138,9 @@ std::vector<int> TargetDetector::get_randomSample(int range, int n){
     }
     return sampledData;
 }
+bool TargetDetector::circle_compare( circle_info circle1,  circle_info circle2){
+    return circle1.first.m00>circle2.first.m00;
+}
 
 bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, bool debug){
 
@@ -133,8 +152,7 @@ bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, boo
 
     // collect all circular bolb candidates //
     int blur_size = min(img_origin.rows, img_origin.cols)/500*2+1;
-    std::vector<std::vector<cv::Point>> circle_contour_candidates;
-    std::vector<cv::Moments> circle_moments_candidates;
+    vector<circle_info> circle_candidates;
     cv::GaussianBlur(img_origin, img_blur, cv::Size(blur_size, blur_size), 0);
     for (int bs = 3; bs <= 19; bs += 2)
     {
@@ -152,27 +170,25 @@ bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, boo
             {
                 cv::Moments moments = cv::moments(contours[i]);
                 if(ellipse_test(moments)){
-                    circle_moments_candidates.push_back(moments);
-                    circle_contour_candidates.push_back(contours[i]);
+                    circle_candidates.push_back(circle_info(moments, contours[i]));
                 }
             }
         }
     }
     
     // merge same blobs //
-    std::vector<cv::Moments> circle_moments;
-    std::vector<std::vector<cv::Point>> circle_contours;
-    for (size_t i = 0; i < circle_moments_candidates.size(); i++)
+    vector<circle_info> circles;
+    for (size_t i = 0; i < circle_candidates.size(); i++)
     {
-        cv::Moments m1 = circle_moments_candidates[i];
+        cv::Moments m1 = circle_candidates[i].first;
+        cv::Point m1_c = cv::Point(int(m1.m10 / m1.m00), int(m1.m01 / m1.m00));
 
         bool isnew=true;
 
-        for (size_t j = 0; j < circle_moments.size(); j++)
+        for (size_t j = 0; j < circles.size(); j++)
         {
-            cv::Moments m2 = circle_moments[j];
+            cv::Moments m2 = circles[j].first;
 
-            cv::Point m1_c = cv::Point(int(m1.m10 / m1.m00), int(m1.m01 / m1.m00));
             cv::Point m2_c = cv::Point(int(m2.m10 / m2.m00), int(m2.m01 / m2.m00));
 
             float dist = sqrt(pow(m1_c.x - m2_c.x, 2) + pow(m1_c.y - m2_c.y, 2));
@@ -181,8 +197,8 @@ bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, boo
                 isnew = false;
 
                 if(m1.m00 >= m2.m00){
-                    circle_moments[j] = m1;
-                    circle_contours[j] = circle_contour_candidates[i];
+                    circles[j].first = m1;
+                    circles[j].second = circle_candidates[i].second;
                 }
                 break;
             }  
@@ -190,51 +206,24 @@ bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, boo
         }
             
         if(isnew)  {
-            circle_moments.push_back(m1);
-            circle_contours.push_back(circle_contour_candidates[i]);
+            circles.push_back(circle_candidates[i]);
         }
     }
 
-    //remove outliers using size based on RANSAC
-
-    float size_standard=0;
-    int max_inlier=0;
-    int n_temp=circle_moments.size();
-    int total_iter = 10;
-    int sample_number=3;
-    for(int i=0; i<total_iter;i++){
-        float size_mean=0;
-        int inlier=0;
-        vector<int> samples= get_randomSample(n_temp, sample_number);
-        for(int index: samples){
-            size_mean+= circle_moments[index].m00;
-        }
-        size_mean = size_mean/sample_number;
-
-        for(cv::Moments m : circle_moments){
-            float ratio = m.m00/size_mean;
-            if(ratio>0.25 && ratio<4) inlier++;
-        }
-        if(inlier>max_inlier){
-            max_inlier=inlier;
-            size_standard = size_mean;
-        }
-    }
-    std::vector<std::vector<cv::Point>> final_circle_contours;
+    // select largest n_x * n_y blobs // 
+    sort(circles.begin(), circles.end(), circle_compare);
     std::vector<cv::Point2f> source;
-    cv::Point2f pt;
-    int remove_count=0;
-    for(size_t i =0; i<circle_moments.size();i++){
-        cv::Moments m1 = circle_moments[i];
-        float ratio = m1.m00/size_standard;
-        if(ratio>0.25 && ratio<4){
-            pt.x = (float) m1.m10/m1.m00, 
-            pt.y = (float) m1.m01/m1.m00;
-            source.push_back(pt);
-        }
-        else circle_contours.erase(circle_contours.begin()+i-remove_count);
+    std::vector<std::vector<cv::Point>> circle_contours;
+    for(int i =0;i< n_x*n_y;i++){
+        cv::Moments m1 = circles[i].first;
+        cv::Point2f pt;
+        pt.x = (float) m1.m10/m1.m00, 
+        pt.y = (float) m1.m01/m1.m00;
+        source.push_back(pt);
 
+        circle_contours.push_back(circles[i].second);
     }
+
     
     // sorting and filltering blobs to a grid structure //
     if(debug) {
