@@ -488,8 +488,8 @@ Params Calibrator::calibrate(int mode, int width , int height){
         initial_params= batch_optimize(sample, initial_params,true,2); // phase(fix parameter), mode(point, moment,...)
         printf(">coarse ");
         printParams(initial_params,true);
-        rperror = cal_reprojection_error(sample,initial_params,2);
-        printf("Estimated radius: %f, Reprojection error: %f\n",initial_params.radius,rperror);
+        // rperror = cal_reprojection_error(sample,initial_params,2);
+        // printf("Estimated radius: %f, Reprojection error: %f\n",initial_params.radius,rperror);
 
         printf("It will take few minites.....\n");
         final_params= batch_optimize(sample, initial_params,false,mode);
