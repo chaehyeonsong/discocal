@@ -1,73 +1,84 @@
 #include <iostream>
-#include "time.h"
 #include <string>
 #include <fstream>
-#include <sstream>
-#include <filesystem>
-#include <algorithm>
-#include <string>
-
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
+#include <opencv2/calib3d.hpp>
+#include <filesystem>
+#include <algorithm>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Dense>
+#include <sstream>
+#include <yaml-cpp/yaml.h>
 
+#include "time.h"
+#include "CMomentsTracker.h"
 #include "CCalibrator.h"
 #include "CTargetDetector.h"
-#include "CImagehandler.h"
+#include "CLieAlgebra.h"
+#include "utils.h"
 
 using namespace std;
 
-class DeficientImagesException: public std::exception{
-    public:
-        const char* what(){
-            return "Image path is wrong or the number of images is lower than six";
-        }
-};
+void do_calibration(YAML::Node node){
+// argparsing
+    YAML::Node camera_node = node["camera"];
+    string img_dir = camera_node["img_dir"].as<string>();
+    int n_d = camera_node["n_d"].as<int>();
+    string detection_mode = camera_node["detection_mode"].as<string>();
 
-template <typename T>
-vector<T> split(string str, char Delimiter) {
-    istringstream iss(str);             
-    string buffer;                      
-    vector<T> result;
-    while (getline(iss, buffer, Delimiter)) {
-        std::stringstream value(buffer);
-        T d;
-        value>>d;
-        result.push_back(d);               
-    }
-    return result;
-}
+    YAML::Node target_node =node["target"];
+    int n_x = target_node["n_x"].as<int>();
+    int n_y = target_node["n_y"].as<int>();
+    string type = target_node["type"].as<string>();
+    double r = target_node["radius"].as<double>();
+    double distance;
+    if(type == "circle") distance = target_node["c_distance"].as<double>();
+    else distance = target_node["s_distance"].as<double>();
+   
+    YAML::Node option_node =node["options"];
+    int max_scene= option_node["max_scene"].as<int>();
+    int sigma= option_node["sigma"].as<int>();
+    bool visualize = option_node["visualize"].as<bool>();
+    bool save_pose = option_node["save_pose"].as<bool>();
+    bool save_rep= option_node["save_rep"].as<bool>();
+    bool save_jacob= option_node["save_jacob"].as<bool>();
+    bool fix_radius= option_node["fix_radius"].as<bool>();
+    // end parsing
 
-void do_calibration(string img_dir, string type, int n_x, int n_y, int n_d, double r, double distance, bool check_detection_result, bool save_pose){
 
     vector<string> imgs;
 
     for (const auto & file : std::filesystem::directory_iterator(img_dir)){
         string s = file.path();
         string path = split<string>(s,'/').back();
-        if (path.find(".png") != string::npos || path.find(".PNG") != string::npos || path.find(".jpeg") != string::npos || path.find(".jpg") != string::npos){
-            imgs.push_back(s);
+        // if (path.find(type) == string::npos) continue;
+        if(path.find(".png") != string::npos || path.find(".PNG") != string::npos || path.find(".jpeg") != string::npos || path.find(".jpg") != string::npos){
+                imgs.push_back(s);
         }
     }
-
     sort(imgs.begin(),imgs.end());
-    int max_scene = imgs.size();
+    if(max_scene==0) max_scene=imgs.size();
 
-    TargetDetector detector(n_x, n_y,check_detection_result);
-    pair<bool,vector<cv::Point2f>> result;
+    TargetDetector detector(n_x, n_y,visualize);
+    pair<bool,vector<Shape>> result;
     int count=0;
-    Calibrator calibrator = Calibrator(n_x,n_y,n_d,r,distance,max_scene);
+    Calibrator calibrator = Calibrator(n_x,n_y,n_d,r,distance,max_scene,img_dir);
 
-    
-    int width, height;
-    Params final_params;
-    for(int i=0; i<max_scene;i++){
+    for(int i=0; i<imgs.size();i++){
+        if(calibrator.get_num_scene()==max_scene) break;
         string path = imgs[i];
-        cv::Mat bgr_img, gray_img;
-        bgr_img = cv::imread(path, cv::IMREAD_COLOR);
-        height = bgr_img.rows;
-        width = bgr_img.cols;
+        cv::Mat img, img2;
 
-        gray_img = TargetDetector::preprocessing(bgr_img);
+        // img = cv::imread(path, cv::IMREAD_GRAYSCALE);
+        cv::Mat bgr_img, gray_img,hsv_img;
+        bgr_img = cv::imread(path, cv::IMREAD_COLOR);
+        gray_img = TargetDetector::preprocessing(bgr_img,detection_mode);
+
+        if(sigma>0) {
+            cv::GaussianBlur(gray_img,gray_img,cv::Size(0, 0), sigma); // blur
+        }
+        
         if(gray_img.rows == 0){
             throw exception();
         }
@@ -75,82 +86,38 @@ void do_calibration(string img_dir, string type, int n_x, int n_y, int n_d, doub
         result = detector.detect(gray_img, type);
         if(result.first){
             calibrator.inputTarget(result.second);
-
         }
-        else cout<<path<<": detection failed"<<endl;
+        else{
+            cout<<path<<": detection failed"<<endl;
+        }
 
     }
-    if(calibrator.get_num_scene()<6){
-        throw DeficientImagesException();
-    }
+    
+    Params final_params;
 
-
+    // 0: moment, 1: conic, 2: point, 4: numerical, 5: iterative
     if(type=="circle"){
-        final_params=calibrator.calibrate(0, width, height);
-        if(save_pose) calibrator.get_extrinsic(img_dir+"est_pose_c0.txt");
+        final_params=calibrator.calibrate(0,fix_radius,save_jacob);
+        if(save_pose) calibrator.save_extrinsic(img_dir+"est_pose_c0.txt");
     }
     else{
-        final_params=calibrator.calibrate(2, width, height);
-        if(save_pose) calibrator.get_extrinsic(img_dir+"est_pose_s.txt");
+        final_params=calibrator.calibrate(2,fix_radius,save_jacob);
+        if(save_pose) calibrator.save_extrinsic(img_dir+"est_pose_s.txt");
     }
 
-
-    Imagehandler imagehandler(width, height,final_params, n_d); 
-    for (const auto & file : std::filesystem::directory_iterator(img_dir)){
-        string s = file.path();
-        cv::Mat bgr_img = cv::imread(s, cv::IMREAD_COLOR);
-        cv::Mat ud_img = imagehandler.undistort(bgr_img);
-        string path = split<string>(s,'/').back();
-        string ud_img_path = "../results/"+path;
-        cv::imwrite(ud_img_path,ud_img);
-    }
-    cout<<"undistorted images are saved in ./results folder"<<endl;
 }
 
 int main(int argc, char** argv){
-
+    // omp_set_nested(1);
     clock_t start, finish;
     start = clock();
 
-    int n_x, n_y, n_d;
-    string img_dir;
-    double r, distance;
-    double fov=-1;
-    // user parameter example
-    if(argc ==7){
-        n_x = atoi(argv[1]);
-        n_y = atoi(argv[2]);
-        n_d = atoi(argv[3]);
-        img_dir = string(argv[4]);
-        r  = atof(argv[5]);
-        distance  = atof(argv[6]);
-    }
-    else if (argc ==1){
-        n_x = 4;
-        n_y= 3;
-        n_d = 4;
-        img_dir= "../imgs/temp/";
-        r = 0.1; 
-        distance = 0.27;
-    }
-    else{
-        cout<< "wrong number of arguments"<<endl;
-    }
-
-    cout<<img_dir<<endl;
-    printf("%d, %d, %d, %f, %f \n",n_x, n_y, n_d, r, distance);
-
-    string type = "circle";
-    
-    bool check_detection_result = true;
-    bool save_pose = false;
-    do_calibration(img_dir,type, n_x, n_y, n_d, r,distance,check_detection_result,save_pose);
+    YAML::Node node = YAML::LoadFile("../config/mono.yaml");
+    do_calibration(node);
     finish = clock();
     double duration = (double)(finish - start) / CLOCKS_PER_SEC;
-    printf("%fsec\n", duration);
+    printf("%f초\n", duration);
 
     return 0;
-};
-
-
+}
 

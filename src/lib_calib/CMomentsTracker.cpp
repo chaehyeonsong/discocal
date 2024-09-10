@@ -195,3 +195,242 @@ Point MomentsTracker::distort_Point(Point pn, vector<double> ds){
     }
     return Point(k*x, k*y);
 }
+
+Point MomentsTracker::wc2dp_Numerical(Eigen::Matrix3d Cw, Eigen::Matrix3d H, vector<double> ds, int total_iter){
+    /*
+    input: ellips in normal plane and distortion parameter
+    output: centor point of region of distorted ellipse
+    */
+
+    // int total_iter =pow(5,2);
+    int iter = (int)(sqrt(total_iter));
+    double A_d=0; // =Ad/An
+    double x_d=0;
+    double y_d=0;
+
+    double t_x = -Cw(0,2);
+    double t_y = -Cw(1,2);
+    double R = sqrt(-Cw(2,2)+pow(t_x,2)+pow(t_y,2));
+    double r_step = 1.0/iter;
+    double t_step = 2*M_PI/iter; // t == theta
+
+
+
+    for(int i=0;i<iter+1;i++){
+        for(int j=0;j<iter+1;j++){
+            // int scale_i=2;
+            // int scale_j=2;
+            // if(i==0 || i==iter) scale_i=1;
+            // if(j==0 || j==iter) scale_j=1;
+            // double r = r_step*(i);
+            // double t = t_step*(j);
+            double r = r_step*(i+0.5);
+            double t = t_step*(j+0.5);
+
+            double x_w = t_x + R*r*cos(t);
+            double y_w = t_y + R*r*sin(t);
+            double f = H(0,0)*x_w + H(0,1)*y_w + H(0,2);
+            double g = H(1,0)*x_w + H(1,1)*y_w + H(1,2);
+            double h = H(2,0)*x_w + H(2,1)*y_w + H(2,2);
+            double x_n = f/h;
+            double y_n = g/h;
+
+            double H02 = H(1,0)*H(2,1)-H(1,1)*H(2,0);
+            double H12 = H(0,0)*H(2,1)-H(0,1)*H(2,0);
+            double H22 = H(0,0)*H(1,1)-H(0,1)*H(1,0);
+
+            double Jwrt = R*R*r;
+
+            double Jnw = (H02*f/h -H12*g/h+H22)/pow(h,2);
+
+            // double x_n = tx+a*r*cos(alpha)*cos(t)-b*r*sin(alpha)*sin(t);
+            // double y_n = ty+a*r*sin(alpha)*cos(t)+b*r*cos(alpha)*sin(t);
+            double s_n = pow(x_n,2)+pow(y_n,2);
+            double tmp1=0;
+            double tmp2=0;
+            for(int k=0;k<max_dim+1;k++){
+                tmp1+= ds[k]*pow(s_n,k);
+                tmp2+= (2*k+1)*ds[k]*pow(s_n,k);
+            }
+            double Jdn = tmp1*tmp2;
+            
+
+            double x_d_t = tmp1*x_n;
+            double y_d_t = tmp1*y_n;
+
+            double J = Jdn*Jnw*Jwrt;
+
+            // A_d += J*r_step*t_step*scale_i*scale_j/4;
+            // x_d += x_d_t*J*r_step*t_step*scale_i*scale_j/4;
+            // y_d += y_d_t*J*r_step*t_step*scale_i*scale_j/4;
+            A_d += J*r_step*t_step;
+            x_d += x_d_t*J*r_step*t_step;
+            y_d += y_d_t*J*r_step*t_step;
+        }
+    }
+
+    x_d = x_d/A_d;
+    y_d = y_d/A_d;
+    return Point(x_d, y_d);
+}
+
+
+Point MomentsTracker::ne2dp_Numerical(Eigen::Matrix3d Q, vector<double> ds){
+    /*
+    input: ellips in normal plane and distortion parameter
+    output: centor point of region of distorted ellipse
+    */
+
+    int total_iter =100;
+    int iter = (int)(sqrt(total_iter));
+    array<double, 5> ellipse = ellipse2array(Q);
+    
+
+    double a,b,tx,ty,alpha;
+    tx = ellipse[0];
+    ty = ellipse[1];
+    a = ellipse[2];
+    b = ellipse[3];
+    alpha = ellipse[4];
+    double A_d=0; // =Ad/An
+    double x_d=0;
+    double y_d=0;
+
+    double r_step = 1.0/iter;
+    double t_step = 2*M_PI/iter; // t == theta
+
+    // for(int i=0;i<iter+1;i++){
+    //     for(int j=0;j<iter+1;j++){
+    //         int scale_i=4;
+    //         int scale_j=4;
+    //         if(i==0 || i==iter) scale_i=1;
+    //         else if( i%2==0) scale_i=2;
+    //         if(j==0 || j==iter) scale_j=1;
+    //         else if( j%2==0) scale_j=2;
+    //         double r = r_step*(i);
+    //         double t = t_step*(j);
+
+    //         double x_n = tx+a*r*cos(alpha)*cos(t)-b*r*sin(alpha)*sin(t);
+    //         double y_n = ty+a*r*sin(alpha)*cos(t)+b*r*cos(alpha)*sin(t);
+    //         double s_n = pow(x_n,2)+pow(y_n,2);
+    //         double tmp1=0;
+    //         double tmp2=0;
+    //         for(int k=0;k<max_dim+1;k++){
+    //             tmp1+= ds[k]*pow(s_n,k);
+    //             tmp2+= (2*k+1)*ds[k]*pow(s_n,k);
+    //         }
+    //         double Jdn = tmp1*tmp2;
+    //         double Jnrt = a*b*r;
+
+    //         double x_d_t = tmp1*x_n;
+    //         double y_d_t = tmp1*y_n;
+
+    //         A_d += Jdn*Jnrt*r_step*t_step*scale_i*scale_j/9;
+    //         x_d += x_d_t*Jdn*Jnrt*r_step*t_step*scale_i*scale_j/9;
+    //         y_d += y_d_t*Jdn*Jnrt*r_step*t_step*scale_i*scale_j/9;
+    //     }
+    // }
+
+    for(int i=0;i<iter+1;i++){
+        for(int j=0;j<iter+1;j++){
+            int scale_i=2;
+            int scale_j=2;
+            if(i==0 || i==iter) scale_i=1;
+            if(j==0 || j==iter) scale_j=1;
+            double r = r_step*(i);
+            double t = t_step*(j);
+
+            double x_n = tx+a*r*cos(alpha)*cos(t)-b*r*sin(alpha)*sin(t);
+            double y_n = ty+a*r*sin(alpha)*cos(t)+b*r*cos(alpha)*sin(t);
+            double s_n = pow(x_n,2)+pow(y_n,2);
+            double tmp1=0;
+            double tmp2=0;
+            for(int k=0;k<max_dim+1;k++){
+                tmp1+= ds[k]*pow(s_n,k);
+                tmp2+= (2*k+1)*ds[k]*pow(s_n,k);
+            }
+            double Jdn = tmp1*tmp2;
+            double Jnrt = a*b*r;
+
+            double x_d_t = tmp1*x_n;
+            double y_d_t = tmp1*y_n;
+
+            A_d += Jdn*Jnrt*r_step*t_step*scale_i*scale_j/4;
+            x_d += x_d_t*Jdn*Jnrt*r_step*t_step*scale_i*scale_j/4;
+            y_d += y_d_t*Jdn*Jnrt*r_step*t_step*scale_i*scale_j/4;
+        }
+    }
+    // for(int i=0;i<iter;i++){
+    //     for(int j=0;j<iter;j++){
+    //         double r = r_step*(i+0.5);
+    //         double t = t_step*(j+0.5);
+
+    //         double x_n = tx+a*r*cos(alpha)*cos(t)-b*r*sin(alpha)*sin(t);
+    //         double y_n = ty+a*r*sin(alpha)*cos(t)+b*r*cos(alpha)*sin(t);
+    //         double s_n = pow(x_n,2)+pow(y_n,2);
+    //         double tmp1=0;
+    //         double tmp2=0;
+    //         for(int k=0;k<max_dim+1;k++){
+    //             tmp1+= ds[k]*pow(s_n,k);
+    //             tmp2+= (2*k+1)*ds[k]*pow(s_n,k);
+    //         }
+    //         double Jdn = tmp1*tmp2;
+    //         double Jnrt = a*b*r;
+
+    //         double x_d_t = tmp1*x_n;
+    //         double y_d_t = tmp1*y_n;
+
+    //         A_d += Jdn*Jnrt*r_step*t_step;
+    //         x_d += x_d_t*Jdn*Jnrt*r_step*t_step;
+    //         y_d += y_d_t*Jdn*Jnrt*r_step*t_step;
+    //     }
+    // }
+    x_d = x_d/A_d;
+    y_d = y_d/A_d;
+    return Point(x_d, y_d);
+}
+
+
+Point MomentsTracker::project(double wx, double wy, double r,Params intrinsic, Eigen::Matrix3d E, int mode){
+    Eigen::Matrix3d Cw;
+    Cw <<   1.0, 0.0, -wx,
+            0.0, 1.0, -wy,
+            -wx, -wy, pow(wx,2)+pow(wy,2)-pow(r,2);
+
+    vector<double> ds = {1, intrinsic.d[0], intrinsic.d[1],intrinsic.d[2],intrinsic.d[3]};
+    Point dp(0,0);
+    if(mode ==0){
+        Eigen::Matrix3d E_inv=  E.inverse();
+        Eigen::Matrix3d Qn = E_inv.transpose()*Cw*E_inv;
+        dp = ne2dp(Qn,ds);
+    }
+    else if(mode == 1){
+        Eigen::Matrix3d E_inv=  E.inverse();
+        Eigen::Matrix3d Qn = E_inv.transpose()*Cw*E_inv;
+        array<double,5> ellipse_n= ellipse2array(Qn);
+        Point pn(ellipse_n[0],ellipse_n[1]);
+        dp = distort_Point(pn,ds);
+    }
+    else if(mode == 2){
+        Eigen::Vector3d Pw{wx,wy,1};
+        Eigen::Vector3d Pn = E*Pw;
+        Point pn(Pn[0]/Pn[2],Pn[1]/Pn[2]);
+        dp = distort_Point(pn,ds);
+    }
+    else if(mode == 3){
+        Eigen::Matrix3d E_inv=  E.inverse();
+        Eigen::Matrix3d Qn = E_inv.transpose()*Cw*E_inv;
+        dp = ne2dp_Numerical(Qn,ds);
+    }
+    else if(mode == 4){
+        dp = wc2dp_Numerical(Cw,E,ds);
+    }
+    else{
+        throw MomentsTrackerError();
+    }
+
+    double u_e = dp.x*intrinsic.fx+dp.y*intrinsic.skew+intrinsic.cx; 
+    double v_e = dp.y*intrinsic.fy+intrinsic.cy;
+
+    return Point(u_e, v_e);
+}

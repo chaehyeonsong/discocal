@@ -4,14 +4,15 @@ TargetDetector::TargetDetector(int n_x, int n_y, bool draw){
     this->n_x = n_x;    
     this->n_y = n_y;
     
-    this->size_threshold = 400;
+    this->size_threshold = 100; //default 100
 
     //for conic test
-    this->fullfill_threshold = 0.01;
-    this->eccentricity_threshold = 0.1;
+    this->fullfill_threshold = 0.01; //default 0.01
+    this->eccentricity_threshold = 0.9; //default 0.9
+    this->distance_threshold = 10; // minimum pixels between two circles
 
     this->draw=draw; 
-    this->drawing_scale= 0.5;
+    this->drawing_scale= 1.0;
 
     for(int i=0; i<(n_y+6)/7;i++){
         text_colors.push_back(cv::Scalar(255,0,0));
@@ -24,11 +25,20 @@ TargetDetector::TargetDetector(int n_x, int n_y, bool draw){
     }
 }
 
-cv::Mat TargetDetector::preprocessing(cv::Mat img){
+cv::Mat TargetDetector::preprocessing(cv::Mat img, string detection_mode){
     cv::Mat filltered_img, gray_img;
     cv::bilateralFilter(img,filltered_img,-1,10,10);
+    
     if(filltered_img.channels()==3){
-        cv::cvtColor(filltered_img, gray_img, cv::COLOR_BGR2GRAY);
+        if(detection_mode == "saturation"){
+            cv::Mat hsv_img;
+            cv::cvtColor(filltered_img, hsv_img, cv::COLOR_BGR2HSV);
+            cv::extractChannel(hsv_img, gray_img, 1);
+        }
+        else{
+            cv::cvtColor(filltered_img, gray_img, cv::COLOR_BGR2GRAY);
+        }
+        
         return gray_img;
     }
     else if(filltered_img.channels()==1){
@@ -40,25 +50,27 @@ cv::Mat TargetDetector::preprocessing(cv::Mat img){
     
 }
 
-pair<bool,vector<cv::Point2f>> TargetDetector::detect(cv::Mat img, string type){
+pair<bool,vector<Shape>> TargetDetector::detect(cv::Mat img, string type){
     bool ret;
-    vector<cv::Point2f> target;
+    vector<Shape> control_shapes;
     if (type == "square"){
         // 순서 : y 높은순 ->  x 높은순
-        ret = cv::findChessboardCorners(img,cv::Size(n_x,n_y), target); //flag????
+        vector<cv::Point2f> corners;
+        ret = cv::findChessboardCorners(img,cv::Size(n_x,n_y), corners); //flag????
         if(draw&&ret){
             cv::Mat bgr_img;
             cv::cvtColor(img,bgr_img, cv::COLOR_GRAY2BGR);
-            cv::drawChessboardCorners(bgr_img, cv::Size(n_x,n_y),target,ret);
+            cv::drawChessboardCorners(bgr_img, cv::Size(n_x,n_y),corners,ret);
             cv::imshow("hi",bgr_img);
             cv::waitKey(0);
         }
-        reverse(target.begin(), target.end());
+        reverse(corners.begin(), corners.end());
+        for(int i=0;i<corners.size();i++) control_shapes.push_back(Shape(corners[i].x,corners[i].y));
     }
     else if(type == "circle"){
 
         if(this->draw){
-            ret= detect_circles(img, target, true);
+            ret= detect_circles(img, control_shapes, true);
             printf("save: 1, ignore: 0\n");
             char key = cv::waitKey(0);
             while(key != '0' && key!='1'){
@@ -71,14 +83,14 @@ pair<bool,vector<cv::Point2f>> TargetDetector::detect(cv::Mat img, string type){
             }
         }
         else{
-            ret= detect_circles(img, target);
+            ret= detect_circles(img, control_shapes);
         }
     }
     else{
         throw WrongTypeException();
     }
 
-    return make_pair(ret, target);
+    return make_pair(ret, control_shapes);
 }
 
 bool TargetDetector::ellipse_test(const cv::Moments &moments){
@@ -100,14 +112,16 @@ bool TargetDetector::ellipse_test(const cv::Moments &moments){
     double m0 = sqrt(f0);
     double m1 = sqrt(f1);
 
+    double ratio1 = abs(1-m1/m0);
     double ratio2 = abs(1- m0*m1*4*M_PI/area);
+    // printf("ratio1: %f, ratio2: %f\n",ratio1, ratio2);
 
     if(ratio2>fullfill_threshold) {
         // if(draw) printf("fial ratio2: %f\n",ratio2);
         return false;
     }
 
-    if(m1/m0<eccentricity_threshold) {
+    if(ratio1>eccentricity_threshold) {
         // if(draw) printf("fial ratio3: %f\n",m1/m0);
         return false;
     }
@@ -116,7 +130,8 @@ bool TargetDetector::ellipse_test(const cv::Moments &moments){
 }
 
 void TargetDetector::sortTarget(vector<cv::Point2f>&source, vector<cv::Point2f>&dist){
-    CircleGridFinder gridfinder(false);
+    bool isAsymmetricGrid=false;
+    CircleGridFinder gridfinder(isAsymmetricGrid);
     gridfinder.findGrid(source, cv::Size(n_x,n_y),dist);
     reverse(dist.begin(), dist.end());
     return;
@@ -142,7 +157,7 @@ bool TargetDetector::circle_compare( circle_info circle1,  circle_info circle2){
     return circle1.first.m00>circle2.first.m00;
 }
 
-bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, bool debug){
+bool TargetDetector::detect_circles(cv::Mat img, vector<Shape>&target, bool debug){
 
     cv::Mat img_origin, img_blur, img_thresh, img_morph, img_output;
 
@@ -192,7 +207,7 @@ bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, boo
             cv::Point m2_c = cv::Point(int(m2.m10 / m2.m00), int(m2.m01 / m2.m00));
 
             float dist = sqrt(pow(m1_c.x - m2_c.x, 2) + pow(m1_c.y - m2_c.y, 2));
-            if (dist < 5.)
+            if (dist < distance_threshold)
             {
                 isnew = false;
 
@@ -209,18 +224,17 @@ bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, boo
             circles.push_back(circle_candidates[i]);
         }
     }
-
+    
     // select largest n_x * n_y blobs // 
     sort(circles.begin(), circles.end(), circle_compare);
     std::vector<cv::Point2f> source;
     std::vector<std::vector<cv::Point>> circle_contours;
-    for(int i =0;i< n_x*n_y;i++){
+    for(int i =0;i< min((int)circles.size(),n_x*n_y);i++){
         cv::Moments m1 = circles[i].first;
         cv::Point2f pt;
         pt.x = (float) m1.m10/m1.m00, 
         pt.y = (float) m1.m01/m1.m00;
         source.push_back(pt);
-
         circle_contours.push_back(circles[i].second);
     }
 
@@ -233,28 +247,53 @@ bool TargetDetector::detect_circles(cv::Mat img, vector<cv::Point2f>&target, boo
         img_output = img_output*0.5 + img_output2*0.5;
     }
 
-    sortTarget(source,target);
+    vector<cv::Point2f>dest;
+    sortTarget(source,dest);
+    for(int i=0; i<dest.size();i++){
+        double u(dest[i].x), v(dest[i].y);
+        for(int j=0; j<circles.size();j++){
+            cv::Moments m_t = circles[j].first;
+            double x = m_t.m10/m_t.m00;
+            double y = m_t.m01/m_t.m00;
+            double dist = sqrt(pow(x - u, 2) + pow(y - v, 2));
+            if (dist < distance_threshold){
+                double Kxx = m_t.m20/m_t.m00-x*x;
+                double Kxy = m_t.m11/m_t.m00-x*y;
+                double Kyy = m_t.m02/m_t.m00-y*y;
+                target.push_back(Shape(x,y,Kxx,Kxy,Kyy,m_t.m00));
+                break;
+            }
+        }
+    }
+
     bool result=false;
     if(target.size()==n_x*n_y){
         result=true;
         if(debug){
             for(int i=0;i<target.size();i++)
             {
-                cv::Point2f pt = target[i];
+                cv::Point2f pt(target[i].x,target[i].y);
                 for (int j=0;j<n_x;j++)
                 {
-                    if(i/n_x == j ) cv::putText(img_output,to_string(i%n_x),pt,0,1,text_colors[j],2);
+                    if(i/n_x == j ) {
+                        string message = to_string(i%n_x);
+                        cv::putText(img_output,message,pt,0,1,text_colors[j],2);
+                    }
                 }
             }
         }
     }
     if(debug)
     {
-        cv::resize(img_output, img_output, cv::Size(img_output.cols*drawing_scale, img_output.rows*drawing_scale));
+        int output_col= img_output.cols*drawing_scale;
+        int output_row = img_output.rows*drawing_scale;
+        cv::resize(img_output, img_output, cv::Size(output_col, output_row));
         float bottom = img_output.rows*0.95;
         float left = img_output.cols*0.05;
-        if(result) cv::putText(img_output,"save: 1, ignore: 0",cv::Point2f(left,bottom),0,2,cv::Scalar(0,0,255),5);
-        else cv::putText(img_output,"detection fail, press any key",cv::Point2f(left,bottom),0,2,cv::Scalar(0,0,255),5);
+        double fontscale = min(output_row,output_col)/500.0;
+        int thickness = min(output_row,output_col)/300+1;
+        if(result) cv::putText(img_output,"save: 1, ignore: 0",cv::Point2f(left,bottom),0,fontscale,cv::Scalar(0,0,255),thickness);
+        else cv::putText(img_output,"detection fail, press any key",cv::Point2f(left,bottom),0,fontscale,cv::Scalar(0,0,255),thickness);
         cv::imshow("input_image",img_output);
     }
     

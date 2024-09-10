@@ -18,6 +18,12 @@ struct se3{
     Eigen::Vector3d rot;
     Eigen::Vector3d trans;
     se3(Eigen::Vector3d _rot, Eigen::Vector3d _trans) : rot(_rot), trans(_trans){};
+    se3() : rot(Eigen::Vector3d::Zero()), trans(Eigen::Vector3d::Zero()){};
+    std::string to_string(){
+        std::string message = std::to_string(rot(0))+"\t"+std::to_string(rot(1))+"\t"+std::to_string(rot(2))+
+        "\t"+std::to_string(trans(0))+"\t"+std::to_string(trans(1))+"\t"+std::to_string(trans(2));
+        return message;
+    }
 };
 
 using namespace std;

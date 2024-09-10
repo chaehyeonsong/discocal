@@ -93,11 +93,12 @@ The larger the radius of the circle, the more accurate the observations become. 
 
 	docker build -t chaehyeonsong/discocal .  -f dockerfile
 
-(Only for Ubuntu) or use official docker image. 
+## 3. Revise config files
+You can change calibration options using yaml files in the config folder.
 
-	docker pull chaehyeonsong/discocal:latest
+mono.yaml for intrinsic calibration and stereo.yaml for extrinsic calibration
 
-## 3. Bulid and Run
+## 4. Bulid and Run
 	## Build
 	cd [your path]/discocal
 	mkdir build
@@ -105,10 +106,9 @@ The larger the radius of the circle, the more accurate the observations become. 
 	cmake ..
 	make
 
-	## Run
-	./main.out [n_x] [n_y] [n_d] [img_dir_path] [radius(m)] [distance(m)]
-	(ex) ./main.out 4 3 3 ../sample_imgs/rgb12/ 0.035 0.09
-	(ex) ./main.out 4 3 4 ../sample_imgs/tir12/ 0.03 0.09
+	## Run (chose one of out files)
+	./mono.out #intrinsic calibration
+	./stereo.out #extrinsic calibration for multi cameras
 
 
 ### :open_mouth: Caution: Check detection results!

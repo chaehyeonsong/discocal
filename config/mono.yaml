@@ -1,0 +1,26 @@
+camera:
+  img_dir : "../sample_imgs/rgb12/right/"
+  n_d: 2
+  detection_mode: ""
+
+target:
+  type: "circle"
+  n_x: 4 
+  n_y: 3
+
+  # rgb
+  radius: 0.035
+  c_distance: 0.09
+  # s_distance: 0.07\
+
+options:
+  max_scene: 0
+  sigma: 0
+  visualize : true
+  fix_radius : false
+  save_pose : false 
+  save_rep : false
+  save_jacob: false
+  
+
+

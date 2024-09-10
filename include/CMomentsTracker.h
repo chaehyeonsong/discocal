@@ -29,24 +29,25 @@ private:
     double _M_2i2j(int i, int j);
     double C0n(int n, vector<double> ds);
     double C1n(int n, vector<double> ds);
+    double nCr(int i, int j);
+    double I_2i2j(int i, int j);
+    double M_2i2j(int i, int j);
+    double M_2i2j(int i, int j, double a, double b);
+    array<double ,3> intSn(int n,double a, double b, double tx, double ty,double alpha);
     
-    
-    
+
 public:
     MomentsTracker(int dim);
     MomentsTracker();
     ~MomentsTracker();
 
-    double I_2i2j(int i, int j);
-    
-    double M_2i2j(int i, int j);
-    double M_2i2j(int i, int j, double a, double b);
-    array<double ,3> intSn(int n,double a, double b, double tx, double ty,double alpha );
-    Point ne2dp(Eigen::Matrix3d Q, vector<double> ds);
-    Point distort_Point(Point pn, vector<double> ds);
-    double nCr(int i, int j);
 
+    Point ne2dp(Eigen::Matrix3d Q, vector<double> ds);
+    Point wc2dp_Numerical(Eigen::Matrix3d Cw,Eigen::Matrix3d H, vector<double> ds,int total_iter=1600);
+    Point ne2dp_Numerical(Eigen::Matrix3d Q, vector<double> ds);
+    Point project(double wx, double wy, double r,Params intrinsic, Eigen::Matrix3d E, int mode);
     array<double, 5> ellipse2array(Eigen::Matrix3d Q);
+    Point distort_Point(Point pn, vector<double> ds);
 };
 
 

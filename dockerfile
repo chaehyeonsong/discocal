@@ -22,5 +22,9 @@ RUN apt-get -y update \
 	python3-opencv\
 && apt-get autoclean
 
+##install Ceres
 RUN mkdir /temp && cd /temp && wget http://ceres-solver.org/ceres-solver-2.2.0.tar.gz && tar zxf ceres-solver-2.2.0.tar.gz
 RUN mkdir /temp/ceres-bin && cd /temp/ceres-bin && cmake ../ceres-solver-2.2.0 && make -j4 && make test && make install
+
+##install yaml-cpp
+RUN cd /temp && git clone https://github.com/jbeder/yaml-cpp.git && cd yaml-cpp/ && mkdir build && cd build && cmake -DCMAKE_INSTALL_PREFIX=/usr/local ../ && make && make install
