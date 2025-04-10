@@ -7,6 +7,10 @@ For decades, the checkerboard pattern has been the go-to method for camera calib
 
 <img src="./docs/figs/shorts1.gif">
 
+# Early access
+New version (more accuarte and robust) is now accessible (refer to the v2 branch)!!
+
+
 ## News
 <!-- :round_pushpin: :Patch notes,    :tada:: awards -->
 - 24.07.19. :tada: This work is invited to [OpenCV Webinar](https://www.youtube.com/live/MTMMoN6ogcY?si=22DAdrzM3p9kDQK4)
