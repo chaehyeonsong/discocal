@@ -1,0 +1,29 @@
+camera:
+  img_dir : "../sample_imgs/tir12/"
+  n_d: 2
+  detection_mode: ""
+
+target:
+  type: "circle"
+  n_x: 4 
+  n_y: 3
+
+  #rgb
+  # radius: 0.035
+  # c_distance: 0.09
+  
+  #tir
+  radius: 0.03
+  c_distance: 0.09
+
+options:
+  max_scene: 0
+  visualize : true
+  visualize_scale : 1.5
+  save_pose : false 
+  save_rep : false
+  fix_intrinsic : false
+  save_jacob: false
+  
+
+

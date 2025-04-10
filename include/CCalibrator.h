@@ -34,57 +34,6 @@ class CalibratorError: public std::exception{
         }
 };
 
-struct CalibrationFunctor {
-    CalibrationFunctor(const vector<Shape> & origin_target,const vector<Shape>& target, int n_d, int mode, bool use_weight=false){
-        this->origin_target = origin_target;
-        this->target = target;
-        this->mode = mode;
-        this-> use_weight = use_weight;
-        this->tracker = new MomentsTracker(n_d);
-    }
-
-    template <typename T>
-    bool operator()(const T* const p_radius,const T* const fs,const T* const cs, const T* const p_skew, const T* const distorsion, const T* const rot, const T* const trans,T* residual) const {
-        for(int i=0;i<origin_target.size();i++){
-            double wx = origin_target[i].x;
-            double wy = origin_target[i].y;
-            // double radius = 0.05;
-            Params params = {fs[0],fs[1],cs[0],cs[1], *p_skew, distorsion[0],distorsion[1],distorsion[2],distorsion[3]};
-            Eigen::Matrix3d E, E_inv, Qn;
-            Eigen::Vector3d rot_vector{rot[0],rot[1],rot[2]};            
-            E= LieAlgebra::to_E(se3(rot_vector,Eigen::Vector3d(trans[0],trans[1],trans[2])));
-
-            Point p_i = tracker->project(wx, wy, *p_radius, params, E,mode);
-            double u_e = p_i.x;
-            double v_e = p_i.y;
-
-            double u_o = target[i].x;
-            double v_o = target[i].y;
-
-            double i_x = 1;
-            double i_y = 1;
-            if(use_weight){
-                i_x = sqrt(target[i].Kxx);
-                i_y = sqrt(target[i].Kyy);
-                // i_x = sqrt(target[i].area);
-                // i_y = sqrt(target[i].area);
-            }
-
-            residual[2*i]= (u_o-u_e)*i_x;
-            residual[2*i+1]= (v_o-v_e)*i_y;                
-        }
-        
-        return true;
-    }
-    private:
-        int mode;
-        // double distance_ratio,radius_ratio;
-        bool use_weight;
-        vector<Shape> origin_target;
-        vector<Shape> target;
-        MomentsTracker* tracker;
-        // bool normalize;
-};
 
 class Calibrator{
     public:
@@ -96,14 +45,14 @@ class Calibrator{
         void inputTarget(vector<Shape> target);
         
         bool cal_initial_params(Params* inital_params);
-        Params calibrate(int mode, bool fix_radius=true, bool save_jacob = false);
+        Params calibrate(int mode, bool save_jacob = false);
         
-        void printParams(Params p, bool full);
+        void printParams(Params p);
         int get_num_scene();
         void save_extrinsic(string root_dir);
         void save_extrinsic();
         vector<se3> get_extrinsic();
-        void update_Es(Params inital_params, int mode, bool fix_radius=true, bool save_jacob= false);
+        void update_Es(Params inital_params, int mode, bool save_jacob);
 
         Params calibrate_test(int mode,Params initial_params);
         
@@ -111,7 +60,7 @@ class Calibrator{
         
 
         // for exp
-        void batch_calibrate(int mode);
+        void batch_calibrate(int mode,int batch_scene, int total_iter);
         void visualize_rep(string path, Params params, int mode);
         // Params calibrate();
 
@@ -126,7 +75,7 @@ class Calibrator{
         int n_x, n_y, n_d;
         double distance;
         double original_r;
-        double curr_r;
+        // double curr_r;
         // vector<double> rs;
         double thr_homography;
 
@@ -142,8 +91,10 @@ class Calibrator{
         array<double, 4> ori_ms; //original_mean_sigma
 
 
-        Params batch_optimize(std::vector<int> sample, Params initial_params, int mode, bool fix_r=true, bool save_jacob = false, bool fix_intrinsic=false); //unc 반영
+        Params batch_optimize(std::vector<int> sample, Params initial_params, int mode, bool save_jacob = false, bool fix_intrinsic=false); //unc 반영
         double cal_reprojection_error(std::vector<int> sample,Params params, int mode);
+        double cal_calibration_quality(std::vector<int> sample,Params params, int mode);
+        void save_data_for_gpr(std::vector<int> sample,Params params, int mode);
         void set_origin_target();
         void normalize_Es();
 
@@ -160,7 +111,68 @@ class Calibrator{
         void update_control_point(std::vector<int> real_sample, Params results);
 };
 
+struct CalibrationFunctor {
+    CalibrationFunctor(const vector<Shape> & origin_target,const vector<Shape>& target, double radius, int n_d, int mode, bool use_weight=false){
+        this->origin_target = origin_target;
+        this->target = target;
+        this->radius= radius;
+        this->mode = mode;
+        this-> use_weight = use_weight;
+        this->tracker = new MomentsTracker(n_d);
+    }
+
+    template <typename T>
+    bool operator()(const T* const fcs, const T* const distorsion, const T* const rot, const T* const trans,T* residual) const {
+        for(int i=0;i<origin_target.size();i++){
+            double wx = origin_target[i].x;
+            double wy = origin_target[i].y;
+            // double radius = 0.05;
+            Params params = {fcs[0],fcs[1],fcs[2],fcs[3], fcs[4], distorsion[0],distorsion[1],distorsion[2],distorsion[3]};
+            Eigen::Matrix3d E, E_inv, Qn;
+            Eigen::Vector3d rot_vector{rot[0],rot[1],rot[2]};  
+            rot_vector = LieAlgebra::normalize_so3(rot_vector);
+            E= LieAlgebra::to_E(se3(rot_vector,Eigen::Vector3d(trans[0],trans[1],trans[2])));
+
+            Point p_i = tracker->project(wx, wy, radius, params, E,mode);
+            double u_e = p_i.x;
+            double v_e = p_i.y;
+
+            double u_o = target[i].x;
+            double v_o = target[i].y;
+
+            double c1 = 1;
+            double c2 = 0;
+            double c3 = 1;
+
+            if(use_weight){
+                Eigen::Matrix2d cov;
+                cov<<target[i].Kxx , target[i].Kxy , target[i].Kxy , target[i].Kyy;
+                Eigen::LLT<Eigen::Matrix2d> lltOfA(cov.inverse()); // compute the Cholesky decomposition of A
+                Eigen::Matrix2d L = lltOfA.matrixL(); 
+                c1= L(0,0);
+                c2= L(1,0);
+                c3= L(1,1);
+            }
+
+            residual[2*i]= c1*(u_o-u_e)+c2*(v_o-v_e);
+            residual[2*i+1]= c3*(v_o-v_e);  
 
 
+
+              
+        }
+        
+        return true;
+    }
+    private:
+        int mode;
+        // double distance_ratio,radius_ratio;
+        bool use_weight;
+        double radius;
+        vector<Shape> origin_target;
+        vector<Shape> target;
+        MomentsTracker* tracker;
+        // bool normalize;
+};
 
 #endif

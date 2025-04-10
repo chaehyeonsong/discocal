@@ -9,6 +9,7 @@ For decades, the checkerboard pattern has been the go-to method for camera calib
 
 ## News
 <!-- :round_pushpin: :Patch notes,    :tada:: awards -->
+- 24.04.10. :round_pushpin: (Early access) New version (more accuarte and robust) is now accessable (refer to the v2 branch)
 - 24.07.19. :tada: This work is invited to [OpenCV Webinar](https://www.youtube.com/live/MTMMoN6ogcY?si=22DAdrzM3p9kDQK4)
 - 24.06.17. :round_pushpin:Add a description of how to undisort images using our method.
 - 24.04.17. :round_pushpin:We update circular pattern detector! Now, you don't need to tune hyperparameters for detections
@@ -82,7 +83,7 @@ You can easily design these patterns in this [site](https://calib.io/pages/camer
 > **Q. How to decide the number of cicles and the radius size?** 
 The larger the radius of the circle, the more accurate the observations become. The greater the number of circles, the more observations you have, leading to increased robustness. Since these two values are in a trade-off relationship within a limited area, adjust them appropriately. It is recommended that every circle contains more than 400 pixels in images and not to exceed 7x5 circles.
 
-## 2. Dependency
+## 2. Install dependency
 ### Option 1) Install bellow packages
 - [Ceres-Solver](http://ceres-solver.org/index.html)
 - [Eigen3](https://eigen.tuxfamily.org/dox/index.html)
@@ -93,12 +94,17 @@ The larger the radius of the circle, the more accurate the observations become. 
 
 	docker build -t chaehyeonsong/discocal .  -f dockerfile
 
-## 3. Revise config files
+## 3. Clone the repository
+```bash
+git clone -recursive https://github.com/chaehyeonsong/discocal_dev.git
+```
+
+## 4. Revise config files
 You can change calibration options using yaml files in the config folder.
 
-mono.yaml for intrinsic calibration and stereo.yaml for extrinsic calibration
+Refer to the config_example folder. mono.yaml for intrinsic calibration and stereo.yaml for extrinsic calibration
 
-## 4. Bulid and Run
+## 5. Bulid and Run
 	## Build
 	cd [your path]/discocal
 	mkdir build
@@ -107,25 +113,10 @@ mono.yaml for intrinsic calibration and stereo.yaml for extrinsic calibration
 	make
 
 	## Run (chose one of out files)
-	./mono.out #intrinsic calibration
-	./stereo.out #extrinsic calibration for multi cameras
+	./mono.out [config path]
+	./stereo.out [config path]
 
 
-### :open_mouth: Caution: Check detection results!
-**To get high-quality results, plz check all pixels in the circle are correctly detected like this.**
-<!-- ![sample](./docs/figs/detection_sample.png){: width="100" height="100"} -->
-<img src="./docs/figs/detection_sample.png" width="400" height="300">
-
-
-If you don’t want to check images, turn off the “check_detection_results” option in "main.cpp".
-
-
-**Parameters(for experts)**:
-- **fullfill_threshold**: the difference between real area and estimated area resulting from ellipse fitting
-- **eccentricity_threshold**: the length ratio between a blob's major and minor axis.
-You can refine these parameters in the TargetDetector class.
-
-----------------------------
 ## Application: Thermal Camera calibration
 
 We can leverage the detection robustness of the circular patterns, particularly for unconventional cameras, such as thermal cameras.

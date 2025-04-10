@@ -14,6 +14,9 @@ class LieAlgebraError: public std::exception{
             return "LieAlgebra error";
         }
 };
+struct so3{
+    Eigen::Vector3d w;
+};
 struct se3{
     Eigen::Vector3d rot;
     Eigen::Vector3d trans;
@@ -32,9 +35,9 @@ class LieAlgebra{
     public:
         // transformation between matrix form and screw vector fom
         static Eigen::Matrix3d randomE(Eigen::Vector3d standard, double delta);
-        
         static Eigen::Vector3d to_so3(const Eigen::Matrix3d &R);
-        static Eigen::Matrix3d to_SO3(const Eigen::Vector3d &v);
+        static Eigen::Vector3d normalize_so3(const Eigen::Vector3d &_w);
+        static Eigen::Matrix3d to_SO3(const Eigen::Vector3d &_w);
         static Eigen::Matrix3d to_E(se3 se3);
         static Eigen::Matrix4d to_SE3(se3 se3);
         static se3 to_se3(const Eigen::Matrix4d &T);
