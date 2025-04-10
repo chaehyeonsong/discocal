@@ -9,7 +9,7 @@ For decades, the checkerboard pattern has been the go-to method for camera calib
 
 ## News
 <!-- :round_pushpin: :Patch notes,    :tada:: awards -->
-- 24.04.10. :round_pushpin: (Early access) New version (more accuarte and robust) is now accessable (refer to the v2 branch)
+- 24.04.10. :round_pushpin: (Early access) New version (more accuarte and robust) is now accessible (refer to the v2 branch)
 - 24.07.19. :tada: This work is invited to [OpenCV Webinar](https://www.youtube.com/live/MTMMoN6ogcY?si=22DAdrzM3p9kDQK4)
 - 24.06.17. :round_pushpin:Add a description of how to undisort images using our method.
 - 24.04.17. :round_pushpin:We update circular pattern detector! Now, you don't need to tune hyperparameters for detections
