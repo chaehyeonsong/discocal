@@ -1,6 +1,8 @@
 FROM ubuntu:20.04
 
-MAINTAINER chaehyeon.song
+LABEL name="chaehyeon.song"
+LABEL email="chaehyeon@snu.ac.kr"
+LABEL version="2.0"
 
 ARG DEBIAN_FRONTEND=noninteractive
 
