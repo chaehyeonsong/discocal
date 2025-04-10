@@ -73,7 +73,7 @@ cv::Mat undist_image = imagehandler.undist(image);
 ```
 
 ## 1. Calibration Target
-<img src="./docs/figs/board2.png" width="60%">
+<img src="./docs/figs/board2.png" width="40%">
 
 Our method needs a planer white board on which black circle grid patterns are printed. 
 You can easily design these patterns in this [site](https://calib.io/pages/camera-calibration-pattern-generator).
@@ -83,7 +83,12 @@ You can easily design these patterns in this [site](https://calib.io/pages/camer
 > **Q. How to decide the number of cicles and the radius size?** 
 The larger the radius of the circle, the more accurate the observations become. The greater the number of circles, the more observations you have, leading to increased robustness. Since these two values are in a trade-off relationship within a limited area, adjust them appropriately. It is recommended that every circle contains more than 400 pixels in images and not to exceed 7x5 circles.
 
-## 2. Install dependency
+## 2. Clone the repository
+```bash
+git clone -recursive https://github.com/chaehyeonsong/discocal_dev.git
+```
+The recursive option is needed for pybind
+## 3. Install dependency
 ### Option 1) Install bellow packages
 - [Ceres-Solver](http://ceres-solver.org/index.html)
 - [Eigen3](https://eigen.tuxfamily.org/dox/index.html)
@@ -91,12 +96,17 @@ The larger the radius of the circle, the more accurate the observations become. 
 
 ### Option 2) Use docker
 (Recommended) Build a docker image using the dockerfile.
-
-	docker build -t chaehyeonsong/discocal .  -f dockerfile
-
-## 3. Clone the repository
 ```bash
-git clone -recursive https://github.com/chaehyeonsong/discocal_dev.git
+docker build -t chaehyeonsong/discocal .  -f dockerfile
+```
+For visualization
+```bash
+xhost +local:docker
+```
+Run container (mount your discoal path to /mnt in docker container)
+```bash
+docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -v [your repository path]:/mnt chaehyeonsong/discocal
+[In docker container]$ cd /mnt
 ```
 
 ## 4. Revise config files
@@ -106,7 +116,7 @@ Refer to the config_example folder. mono.yaml for intrinsic calibration and ster
 
 ## 5. Bulid and Run
 	## Build
-	cd [your path]/discocal
+	cd [discocal folder]
 	mkdir build
 	cd build
 	cmake ..
