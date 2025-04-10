@@ -6,4 +6,4 @@ build/
 imgs/*
 .Ds_Store
 results/*
-pybind11/*
+config/*

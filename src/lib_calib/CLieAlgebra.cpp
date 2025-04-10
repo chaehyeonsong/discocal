@@ -26,14 +26,32 @@ Eigen::Vector3d LieAlgebra::to_so3(const Eigen::Matrix3d &R)
     return skew_v;
 }
 
-Eigen::Matrix3d LieAlgebra::to_SO3(const Eigen::Vector3d &v)
+Eigen::Vector3d LieAlgebra::normalize_so3(const Eigen::Vector3d &_w)
 {
-    double theta = v.norm();
+    Eigen::Vector3d w = _w;
+    double scale = w.norm()/M_PI;
+    if(scale>1){
+        int share = int(scale);
+        if(share%2 ==0){
+            w = w/scale*(scale-share);
+        }
+        else{
+            w = w/scale*(scale-share-1);
+        }
+    }
+    return w;
+}
+
+Eigen::Matrix3d LieAlgebra::to_SO3(const Eigen::Vector3d & _w)
+{
+    Eigen::Vector3d w = normalize_so3(_w);
+    // Eigen::Vector3d w = _w;
+    double theta = w.norm();
     if (theta == double(0))
         return Eigen::Matrix3d::Identity();
 
-    Eigen::Matrix3d v_hat = skew_symmetric_matrix(v);
-    Eigen::Matrix3d mat = Eigen::Matrix3d::Identity() + (sin(theta) / theta) * v_hat + ((1.0 - cos(theta)) / (theta * theta)) * (v_hat * v_hat);
+    Eigen::Matrix3d w_hat = skew_symmetric_matrix(w);
+    Eigen::Matrix3d mat = Eigen::Matrix3d::Identity() + (sin(theta) / theta) * w_hat + ((1.0 - cos(theta)) / (theta * theta)) * (w_hat * w_hat);
 
     return mat;
 }
