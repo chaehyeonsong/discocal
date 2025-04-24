@@ -75,30 +75,34 @@ void MonoCalibration::print_process(int count, int MAX, string prefix){
 
 void MonoCalibration::mono_calibration(YAML::Node node){
     // argparsing
-    YAML::Node option_node =node["options"];
-    int max_scene= option_node["max_scene"].as<int>();
-    bool visualize = option_node["visualize"].as<bool>();
-    float visualize_scale = option_node["visualize_scale"].as<float>();
-    bool save_pose = option_node["save_pose"].as<bool>();
-    bool save_rep= option_node["save_rep"].as<bool>();
-    bool save_jacob= option_node["save_jacob"].as<bool>();
-    // bool consider_skew= option_node["consider_skew"].as<bool>();
-    bool fix_intrinsic= option_node["fix_intrinsic"].as<bool>();
 
     YAML::Node camera_node = node["camera"];
     string img_dir = camera_node["img_dir"].as<string>();
     int n_d = camera_node["n_d"].as<int>();
     string detection_mode = camera_node["detection_mode"].as<string>();
 
-    YAML::Node target_node =node["target"];
-    int n_x = target_node["n_x"].as<int>();
-    int n_y = target_node["n_y"].as<int>();
-    string type = target_node["type"].as<string>();
-    double r = target_node["radius"].as<double>();
-    double distance;
-    if(type == "circle") distance = target_node["c_distance"].as<double>();
-    else distance = target_node["s_distance"].as<double>();
-   
+    int n_x = camera_node["n_x"].as<int>();
+    int n_y = camera_node["n_y"].as<int>();
+    string type = camera_node["type"].as<string>();
+    double r = camera_node["radius"].as<double>();
+    double distance = camera_node["distance"].as<double>();
+
+
+    YAML::Node option_node =node["options"];
+    int max_scene = 0;
+    if(option_node["max_scene"]) max_scene= option_node["max_scene"].as<int>();
+    bool visualize = true;
+    if(option_node["visualize"]) visualize= option_node["visualize"].as<bool>();
+    float visualize_scale = 1.0;
+    if(option_node["visualize_scale"]) visualize_scale = option_node["visualize_scale"].as<float>();
+    bool save_pose = false;
+    if( option_node["save_pose"]) save_pose = option_node["save_pose"].as<bool>();
+    bool save_rpe= false;
+    if(option_node["save_rpe"]) save_rpe= option_node["save_rpe"].as<bool>();
+    bool save_jacob= false;
+    if(option_node["save_jacob"]) save_jacob= option_node["save_jacob"].as<bool>();
+    bool fix_intrinsic= false;
+    if(option_node["fix_intrinsic"])fix_intrinsic= option_node["fix_intrinsic"].as<bool>();
 
     // end parsing
 
@@ -175,16 +179,16 @@ void MonoCalibration::mono_calibration(YAML::Node node){
             final_params = Params(camera_node);
             tabulate::Table table =  final_params.to_table(false, true);
             cout<<table <<endl;
-            calibrator.update_Es(final_params,0,save_jacob);
+            calibrator.update_Es(final_params,0);
         }
         else final_params=calibrator.calibrate(0,save_jacob);
         if(save_pose) calibrator.save_extrinsic(img_dir+"est_pose_c0.txt");
-        if(save_rep) calibrator.visualize_rep(img_dir+"rep_c0.txt",final_params,0);
+        if(save_rpe) calibrator.visualize_rep(img_dir+"rpe_c0.txt",final_params,0);
     }
     else{
         final_params=calibrator.calibrate(2,save_jacob);
         if(save_pose) calibrator.save_extrinsic(img_dir+"est_pose_s.txt");
-        if(save_rep) calibrator.visualize_rep(img_dir+"rep_s.txt",final_params,2);
+        if(save_rpe) calibrator.visualize_rep(img_dir+"rpe_s.txt",final_params,2);
     }
 
 }

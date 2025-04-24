@@ -52,7 +52,7 @@ class Calibrator{
         void save_extrinsic(string root_dir);
         void save_extrinsic();
         vector<se3> get_extrinsic();
-        void update_Es(Params inital_params, int mode, bool save_jacob);
+        void update_Es(Params inital_params, int mode);
 
         Params calibrate_test(int mode,Params initial_params);
         
@@ -60,7 +60,6 @@ class Calibrator{
         
 
         // for exp
-        void batch_calibrate(int mode,int batch_scene, int total_iter);
         void visualize_rep(string path, Params params, int mode);
         // Params calibrate();
 

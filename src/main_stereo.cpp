@@ -2,7 +2,7 @@
 #include "stereo.hpp"
 
 int main(int argc, char** argv){
-    string yaml_path="../config/stereo.yaml";
+    string yaml_path="../config_example/stereo.yaml";
     if(argc ==2){
         yaml_path = string(argv[1]);
     }

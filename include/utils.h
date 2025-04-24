@@ -11,6 +11,12 @@ class OutofRangeError: public std::exception{
             return "Value exceed the range";
         }
 };
+class YamlfileError: public std::exception{
+    public:
+        const char* what(){
+            return "Wrong yaml field";
+        }
+};
 
 template <typename T>
 static std::vector<T> split(std::string str, char Delimiter) {
@@ -92,16 +98,16 @@ struct Params{
     double cy;
     double skew;
     double d[4];
-    double radius;
+    // double radius;
     double s_fx;
     double s_fy;
     double s_cx;
     double s_cy;
     double s_skew;
     double s_d[4];
-    double s_radius;
+    // double s_radius;
 
-    Params(double _fx=0, double _fy=0, double _cx=0, double _cy=0, double _skew=0, double _d1=0, double _d2=0, double _d3=0, double _d4=0, double _radius=0){
+    Params(double _fx=0, double _fy=0, double _cx=0, double _cy=0, double _skew=0, double _d1=0, double _d2=0, double _d3=0, double _d4=0){
         fx = _fx;
         fy = _fy;
         cx = _cx;
@@ -111,7 +117,7 @@ struct Params{
         d[1] = _d2;
         d[2] = _d3;
         d[3] = _d4;
-        radius = _radius;
+        // radius = _radius;
         initialize_unc();
     }
     Params(YAML::Node camera_node){
@@ -124,10 +130,9 @@ struct Params{
         d[1] = camera_node["d2"].as<double>();
         d[2] = camera_node["d3"].as<double>();
         d[3] = camera_node["d4"].as<double>();
-        radius=-1;
         initialize_unc();
     }
-    void update_unc(std::array<double,10> params_cov){
+    void update_unc(std::array<double,9> params_cov){
         s_fx = params_cov[0];
         s_fy = params_cov[1];
         s_cx = params_cov[2];
@@ -137,11 +142,9 @@ struct Params{
         s_d[1] = params_cov[6];
         s_d[2] = params_cov[7];
         s_d[3] = params_cov[8];
-        s_radius = params_cov[9];
-
     }
     void initialize_unc(){
-        std::array<double,10> params_cov{0,};
+        std::array<double,9> params_cov{0,};
         update_unc(params_cov);
     }
     int get_precision(double s){
@@ -162,9 +165,9 @@ struct Params{
         return to_stringf(x,n)+"\u00B1"+to_stringf(toralance*s_x,n+1);
     }
     std::string to_string(){
-        std::string str = "fx\tfy\tcx\tcy\tskew\td1\td2\td3\td4\tradius\n"
+        std::string str = "fx\tfy\tcx\tcy\tskew\td1\td2\td3\td4\n"
         +std::to_string(fx) + "\t"+std::to_string(fy) + "\t"+std::to_string(cx) + "\t"+std::to_string(cy) + "\t"+std::to_string(skew) 
-        + "\t"+std::to_string(d[0]) + "\t"+std::to_string(d[1]) + "\t"+std::to_string(d[2]) + "\t"+std::to_string(d[3]) + "\t"+std::to_string(radius);
+        + "\t"+std::to_string(d[0]) + "\t"+std::to_string(d[1]) + "\t"+std::to_string(d[2]) + "\t"+std::to_string(d[3]);
         return str;
     }
     tabulate::Table to_table(bool only_intrinsic = false,  bool details = false){
