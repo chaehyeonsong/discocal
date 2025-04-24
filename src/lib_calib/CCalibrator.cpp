@@ -109,7 +109,6 @@ Params Calibrator::batch_optimize(std::vector<int> sample, Params initial_params
 
     double fcs[5]={initial_params.fx, initial_params.fy, initial_params.cx, initial_params.cy, initial_params.skew};
     double distorsion[4]={initial_params.d[0],initial_params.d[1],initial_params.d[2],initial_params.d[3]};
-    double circle_radius = initial_params.radius;
 
     bool use_weight= true;
     Problem problem; 
@@ -121,7 +120,7 @@ Params Calibrator::batch_optimize(std::vector<int> sample, Params initial_params
         int num_residual= targets.at(index).size()*2;
 
         CostFunction* cost_function = new NumericDiffCostFunction<CalibrationFunctor,ceres::CENTRAL, ceres::DYNAMIC,5,4,3,3>(
-            new CalibrationFunctor(origin_target,targets[index],circle_radius,n_d,projection_mode,use_weight), ceres::TAKE_OWNERSHIP, num_residual
+            new CalibrationFunctor(origin_target,targets[index],original_r,n_d,projection_mode,use_weight), ceres::TAKE_OWNERSHIP, num_residual
         );
 
         problem.AddResidualBlock(cost_function, loss_function, fcs, distorsion, Es.at(index).rot.data(),Es.at(index).trans.data() );
@@ -158,7 +157,7 @@ Params Calibrator::batch_optimize(std::vector<int> sample, Params initial_params
     Solve(options, &problem, &summary);
     normalize_Es();
 
-    Params results(fcs[0],fcs[1],fcs[2],fcs[3],fcs[4],distorsion[0],distorsion[1],distorsion[2],distorsion[3],circle_radius);
+    Params results(fcs[0],fcs[1],fcs[2],fcs[3],fcs[4],distorsion[0],distorsion[1],distorsion[2],distorsion[3]);
 
     
 
@@ -176,7 +175,7 @@ Params Calibrator::batch_optimize(std::vector<int> sample, Params initial_params
         use_weight =false;
 
         CostFunction* cost_function = new NumericDiffCostFunction<CalibrationFunctor,ceres::CENTRAL, ceres::DYNAMIC, 5,4,3,3>(
-            new CalibrationFunctor(origin_target,targets[index],circle_radius,n_d,projection_mode,use_weight), ceres::TAKE_OWNERSHIP, num_residual
+            new CalibrationFunctor(origin_target,targets[index],original_r,n_d,projection_mode,use_weight), ceres::TAKE_OWNERSHIP, num_residual
         );
         problem2.AddResidualBlock(cost_function, new ceres::TrivialLoss(),fcs, distorsion,Es.at(index).rot.data(),Es.at(index).trans.data() );
 
@@ -228,7 +227,7 @@ Params Calibrator::batch_optimize(std::vector<int> sample, Params initial_params
     Eigen::MatrixXd info_matrix(n_col_real, n_col_real);
     info_matrix = J_real.transpose() *M_cov.inverse()* J_real;
     Eigen::MatrixXd  cov_matrix = info_matrix.inverse();
-    array<double, 10> params_cov{0,};
+    array<double, 9> params_cov{0,};
     for(int i=0; i<5+n_d;i++){
         params_cov[i] = sqrt(cov_matrix(i,i));
     }
@@ -278,7 +277,6 @@ void Calibrator::visualize_rep(string path,Params params, int mode){
     // int scale = 20;
 
     double fx{params.fx}, fy{params.fy}, cx{params.cx}, cy{params.cy}, skew{params.skew};
-    double circle_radius = params.radius;
     vector<double> ds = {1, params.d[0], params.d[1],params.d[2],params.d[3]};
     Eigen::Matrix3d E, E_inv, Qn;
 
@@ -293,7 +291,7 @@ void Calibrator::visualize_rep(string path,Params params, int mode){
         for(int j=0;j<origin_target.size();j++){
             double wx = origin_target[j].x;
             double wy = origin_target[j].y;
-            Point p_i = tracker->project(wx,wy,circle_radius,params,E,mode);
+            Point p_i = tracker->project(wx,wy,original_r,params,E,mode);
             double u_o = targets[index][j].x;
             double v_o = targets[index][j].y;
             buffer.push_back(array<double,4>{u_o,v_o,p_i.x,p_i.y});
@@ -338,7 +336,7 @@ void Calibrator::save_data_for_gpr(std::vector<int> sample,Params params, int mo
             Eigen::Matrix3d Cw;
             Cw <<   1.0, 0.0, -wx,
                     0.0, 1.0, -wy,
-                    -wx, -wy, pow(wx,2)+pow(wy,2)-pow(params.radius,2);
+                    -wx, -wy, pow(wx,2)+pow(wy,2)-pow(original_r,2);
 
             Point dp(0,0);
             if(mode ==0){
@@ -399,7 +397,7 @@ double Calibrator::cal_reprojection_error(std::vector<int> sample,Params params,
         for(int j=0;j<origin_target.size();j++){
             double wx = origin_target[j].x;
             double wy = origin_target[j].y;
-            Point p_i = tracker->project(wx,wy,params.radius,params,E,mode);
+            Point p_i = tracker->project(wx,wy,original_r,params,E,mode);
 
             double u_e = p_i.x; 
             double v_e = p_i.y;
@@ -434,7 +432,7 @@ double Calibrator::cal_calibration_quality(std::vector<int> sample,Params params
         for(int j=0;j<origin_target.size();j++){
             double wx = origin_target[j].x;
             double wy = origin_target[j].y;
-            Point p_i = tracker->project(wx,wy,params.radius,params,E,mode);
+            Point p_i = tracker->project(wx,wy,original_r,params,E,mode);
 
             double u_e = p_i.x; 
             double v_e = p_i.y;
@@ -491,41 +489,34 @@ vector<se3> Calibrator::get_extrinsic(){
     return Es;
 }
 
-void Calibrator::update_Es(Params intrinsic, int mode,bool save_jacob){
+void Calibrator::update_Es(Params intrinsic, int mode){
     init();
     set_inital_Es(intrinsic);
     std::vector<int> sample = sorted_random_sampling(num_scene,num_scene);
-    batch_optimize(sample, intrinsic,mode,save_jacob,true);
-    string path = root_dir + "calibration_result.yaml";
-    std::ofstream writeFile(path.data());
-    if(writeFile.is_open()){
-        writeFile<<"img_dir: \""<<root_dir <<"\"\n";  
-        writeFile<<"n_d: "<<n_d <<"\n";  
-        writeFile<<"mode: "<<mode <<"\n";
-        writeFile<<"radius: " << intrinsic.radius << "\n";
-        writeFile<<"distance: " << distance << "\n";
-        writeFile<<"fx: " << intrinsic.fx << "\n";
-        writeFile<<"fy: " << intrinsic.fy << "\n";
-        writeFile<<"cx: " << intrinsic.cx << "\n";
-        writeFile<<"cy: " << intrinsic.cy << "\n";
-        writeFile<<"skew: " << intrinsic.skew << "\n";
-        writeFile<<"d1: " << intrinsic.d[0] << "\n";
-        writeFile<<"d2: " << intrinsic.d[1] << "\n";
-        writeFile<<"d3: " << intrinsic.d[2] << "\n";
-        writeFile<<"d4: " << intrinsic.d[3] << "\n";
-        writeFile<<"sfx: " << intrinsic.s_fx << "\n";
-        writeFile<<"sfy: " << intrinsic.s_fy << "\n";
-        writeFile<<"scx: " << intrinsic.s_cx << "\n";
-        writeFile<<"scy: " << intrinsic.s_cy << "\n";
-        writeFile<<"sd1: " << intrinsic.s_d[0] << "\n";
-        writeFile<<"sd2: " << intrinsic.s_d[1] << "\n";
-        writeFile<<"sd3: " << intrinsic.s_d[2] << "\n";
-        writeFile<<"sd4: " << intrinsic.s_d[3] << "\n";
-        // writeFile<<"final_radius: " << intrinsic.radius << "\n";
-    } 
-    writeFile.close();
-    double rperror = cal_reprojection_error(sample,intrinsic,mode);
-    printf("Reprojection error: %f\n",rperror);
+    double fcs[5]={intrinsic.fx, intrinsic.fy, intrinsic.cx, intrinsic.cy, intrinsic.skew};
+    double distorsion[4]={intrinsic.d[0],intrinsic.d[1],intrinsic.d[2],intrinsic.d[3]};
+    bool use_weight= true;
+    Problem problem; 
+    ceres::LossFunction* loss_function;
+    loss_function = new ceres::TrivialLoss();
+    for(int i=0;i<sample.size();i++){
+        int index =sample.at(i);
+        int num_residual= targets.at(index).size()*2;
+        CostFunction* cost_function = new NumericDiffCostFunction<CalibrationFunctor,ceres::CENTRAL, ceres::DYNAMIC,5,4,3,3>(
+            new CalibrationFunctor(origin_target,targets[index],original_r,n_d,mode,use_weight), ceres::TAKE_OWNERSHIP, num_residual
+        );
+        problem.AddResidualBlock(cost_function, loss_function, fcs, distorsion, Es.at(index).rot.data(),Es.at(index).trans.data() );
+
+    }
+    problem.SetParameterBlockConstant(fcs);
+    problem.SetParameterBlockConstant(distorsion);
+
+    Solver::Options options;
+    options.linear_solver_type = ceres::DENSE_SCHUR;
+    options.minimizer_progress_to_stdout = false;
+    Solver::Summary summary;
+    Solve(options, &problem, &summary);
+    normalize_Es();
 }
 
 
@@ -543,7 +534,7 @@ Params Calibrator::calibrate(int mode, bool save_jacob){
     //  if(debug) cout<< initial_params.to_table(true)<<endl;
     // if(debug) printParams(initial_params,true);
     
-    printf("optimization mode: %d\n", mode);
+    printf("radius: %f, distance : %f, optimization mode: %d\n",original_r, distance, mode);
 
     // 0: all, 2: w/o r
     struct timeval  tv;
@@ -578,7 +569,7 @@ Params Calibrator::calibrate(int mode, bool save_jacob){
         writeFile<<"img_dir: \""<<root_dir <<"\"\n";  
         writeFile<<"n_d: "<<n_d <<"\n";  
         writeFile<<"mode: "<<mode <<"\n";
-        writeFile<<"radius: " << initial_params.radius << "\n";
+        writeFile<<"radius: " << original_r << "\n";
         writeFile<<"distance: " << distance << "\n";
         writeFile<<"fx: " << final_params.fx << "\n";
         writeFile<<"fy: " << final_params.fy << "\n";
@@ -601,6 +592,7 @@ Params Calibrator::calibrate(int mode, bool save_jacob){
     } 
 
     writeFile.close();
+    cout << "calibration results are saved at: "<< path<<endl;
 
     // undistort_total_images(final_params);
     gettimeofday(&tv, NULL);
@@ -611,125 +603,6 @@ Params Calibrator::calibrate(int mode, bool save_jacob){
     return final_params;
 }
 
-
-void Calibrator::batch_calibrate(int mode,int batch_scene, int total_iter){
-    std::cout.precision(12);
-    Params initial_params;
-    Params final_params;
-    
-
-    array<vector<double>,9> buffer;
-    std::vector<int> real_sample;
-    int t_fail;
-    double total_fail{0};
-
-    bool result= cal_initial_params(&initial_params);
-
-    // clock_t start_t, finish_t;
-    struct timeval  tv;
-	double begin, end;
-    vector<double> durations;
-
-    for(int i=0; i<total_iter;i++){
-        // start_t = clock();
-        gettimeofday(&tv, NULL);
-	    begin = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000 ;
-
-        init();
-        set_inital_Es(initial_params);
-        std::vector<int> sample = sorted_random_sampling(max_scene,batch_scene,i+1);
-        real_sample.clear();
-        t_fail=0;
-        cout << "sample: ";
-        for(int j=0; j<batch_scene;j++){
-            if(sample[j]<num_scene) {
-                printf(" %d",sample[j]);
-                real_sample.push_back(sample[j]);
-            }
-            else {
-                t_fail++;
-            }
-        }
-        cout<<endl;
-        // for(int k=0; k<batch_scene;k++) printf("%d\t",sample[k]);
-        // printf("\n");
-
-        if(mode==0){
-            final_params= batch_optimize(real_sample, initial_params,2);
-            final_params= batch_optimize(real_sample, final_params,mode);
-        }
-        else if (mode ==5){
-            double error = 10;
-            int iter=0;
-            for(int iter =0;iter<10;iter++){
-                Params prev_params = final_params;
-                final_params= batch_optimize(real_sample, final_params,2);
-                error = sqrt(pow(final_params.fx-prev_params.fx,2)+pow(final_params.fy-prev_params.fy,2)+pow(final_params.cx-prev_params.cx,2)+pow(final_params.cy-prev_params.cy,2));
-                printf(">> %d semi-iter--> error: %f\n",iter, error);
-                if(error<0.01) break;
-                update_control_point(real_sample, final_params);
-            }
-        }
-        else{
-            final_params= batch_optimize(real_sample, initial_params,mode);
-        }
-        buffer[0].push_back(final_params.fx);
-        buffer[1].push_back(final_params.fy);
-        buffer[2].push_back(final_params.cx);
-        buffer[3].push_back(final_params.cy);
-        buffer[4].push_back(final_params.skew);
-        buffer[5].push_back(final_params.d[0]);
-        buffer[6].push_back(final_params.d[1]);
-        buffer[7].push_back(final_params.d[2]);
-        buffer[8].push_back(final_params.d[3]);
-        total_fail+= t_fail;
-        
-        // finish_t = clock();
-        // double duration = (double)(finish_t - start_t) / CLOCKS_PER_SEC;
-        gettimeofday(&tv, NULL);
-	    end = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000 ;
-        double duration =(end - begin) / 1000;
-        printf("iter %d finishied. Runtime: %.2f\n", i+1,duration);
-        durations.push_back(duration);
-    }
-
-    
-
-    array<double, 9> means, stds;
-    double time_m{0}, time_s{0};
-    for(int i=0;i<total_iter;i++){
-        time_m += durations[i];
-        time_s += pow(durations[i],2);
-    }
-    time_m /= total_iter;
-    time_s = sqrt(time_s/total_iter - pow(time_m,2));
-
-    for(int i=0;i<9;i++){
-        means[i]=0;
-        stds[i]=0;
-        for(int j=0;j<total_iter;j++){
-            means[i]+= buffer[i][j];
-            stds[i] += pow( buffer[i][j],2);
-        }
-        means[i] /= total_iter;
-        stds[i] = sqrt(stds[i]/total_iter - pow(means[i],2));
-        // printf("mean: %f, std: %f\n",means[i],stds[i]);
-    }
-    printf("----------optimization mode: %d----------\n", mode);
-    printf("mean: %f, %f, %f, %f, %f, %f, %f\n",means[0],means[1],means[2],means[3],means[4],means[5],means[6]);
-    printf("std: %f, %f, %f, %f, %f, %f, %f\n",stds[0],stds[1],stds[2],stds[3],stds[4],stds[5],stds[6]);
-
-    // printf("latex: %.1f$\\pm$%.2f &%.1f$\\pm$%.2f &%.1f$\\pm$%.2f &%.1f$\\pm$%.2f &%.1f$\\pm$%.2f &%.1f$\\pm$%.2f \n",means[0],stds[0],means[1],stds[1],means[2],stds[2],means[3],stds[3],means[4],stds[4],means[5],stds[5]);
-    printf("mean_fail: %f\n", total_fail/total_iter);
-
-    printf("duration mean & std: %.2f , %.4f\n",time_m, time_s);
-
-    Params intrinsic(means[0],means[1],means[2],means[3],means[4],means[5],means[6],means[7],means[8],original_r);
-    update_Es(intrinsic, 0,false);
-
-
-
-}
 
 //---------------------------------------------------------------------------------------------------------------------------------//
 
@@ -801,7 +674,7 @@ void Calibrator::update_control_point(std::vector<int> real_sample,Params result
                 Point dp = tracker.distort_Point(p_n,distortion);
                 double u_e = dp.x*results.fx+dp.y*results.skew+results.cx; 
                 double v_e = dp.y*results.fy+results.cy;
-                target2.push_back(Shape(u_e,v_e, M_PI*results.radius*results.radius));
+                target2.push_back(Shape(u_e,v_e, M_PI*original_r*original_r));
                 // printf("x: %f, y: %f\n",u_e,v_e);
             }
             targets[i]=target2;
@@ -979,7 +852,6 @@ bool Calibrator::cal_initial_params(Params* inital_params){
             inital_params->cx = cx;
             inital_params->cy= cy;
             inital_params->skew = skew;
-            inital_params->radius = original_r;
             return true;
         }
         else{

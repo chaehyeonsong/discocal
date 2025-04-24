@@ -42,10 +42,10 @@ Without considering geometery of the distorted ellipse, existing circular patter
 ## 0. Check the camera model
 
 We assume **pinhole camera model** with **radial distortion**.
-<!-- <p align="center">
+<p align="center">
   <img src="./docs/figs/camera_model.png" width="40%">
-</p> -->
-```math
+</p>
+<!-- ```math
 \begin{aligned}
 s\begin{bmatrix}
 x_n\\ y_n \\ 1
@@ -63,7 +63,7 @@ f_x & \eta & c_x \\
 kx_n \\ ky_n \\ 1
 \end{bmatrix}
 \end{aligned} 
-```
+``` -->
 Calibration results: $f_x, f_y, c_x, c_y, \eta, d_1, d_2, ... d_n$
 
 ### Q. How do you undisort images using this model?
@@ -95,7 +95,7 @@ The larger the radius of the circle, the more accurate the observations become. 
 
 ## 2. Clone the repository
 ```bash
-git clone --recursive https://github.com/chaehyeonsong/discocal_dev.git
+git clone --recursive https://github.com/chaehyeonsong/discocal.git
 ```
 The recursive option is needed for pybind
 ## 3. Install dependency

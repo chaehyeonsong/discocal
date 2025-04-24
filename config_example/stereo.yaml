@@ -1,0 +1,43 @@
+cameras:
+  - img_dir: "../sample_imgs/rgb12/left/"
+    cal_intrinsic: false
+    type: "circle"
+    n_x: 4 
+    n_y: 3
+    radius: 0.03
+    distance: 0.09
+    detection_mode: ""
+    n_d: 3
+    fx: 440.724
+    fy: 440.698
+    cx: 308.749
+    cy: 247.163
+    skew: 0.0317274
+    d1: -0.424788
+    d2: 0.187974
+    d3: -0.0400919
+    d4: 0
+
+  - img_dir: "../sample_imgs/rgb12/right/"
+    cal_intrinsic: false
+    type: "circle"
+    n_x: 4 
+    n_y: 3
+    radius: 0.03
+    distance: 0.09
+    detection_mode: ""
+    n_d: 3
+    fx: 440.724
+    fy: 440.698
+    cx: 308.749
+    cy: 247.163
+    skew: 0.0317274
+    d1: -0.424788
+    d2: 0.187974
+    d3: -0.0400919
+    d4: 0
+
+options:
+  save_results_path : "../"
+  visualize : true
+  visualize_scale : 1.0
