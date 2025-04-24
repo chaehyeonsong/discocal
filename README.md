@@ -64,6 +64,7 @@ kx_n \\ ky_n \\ 1
 \end{bmatrix}
 \end{aligned} 
 ``` -->
+
 Calibration results: $f_x, f_y, c_x, c_y, \eta, d_1, d_2, ... d_n$
 
 ### Q. How do you undisort images using this model?
