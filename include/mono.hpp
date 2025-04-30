@@ -93,8 +93,6 @@ void MonoCalibration::mono_calibration(YAML::Node node){
     if(option_node["max_scene"]) max_scene= option_node["max_scene"].as<int>();
     bool visualize = true;
     if(option_node["visualize"]) visualize= option_node["visualize"].as<bool>();
-    float visualize_scale = 1.0;
-    if(option_node["visualize_scale"]) visualize_scale = option_node["visualize_scale"].as<float>();
     bool save_pose = false;
     if( option_node["save_pose"]) save_pose = option_node["save_pose"].as<bool>();
     bool save_rpe= false;
@@ -112,14 +110,14 @@ void MonoCalibration::mono_calibration(YAML::Node node){
         string s = file.path();
         string path = split<string>(s,'/').back();
         // if (path.find(type) == string::npos) continue;
-        if(path.find(".png") != string::npos || path.find(".PNG") != string::npos || path.find(".jpeg") != string::npos || path.find(".jpg") != string::npos){
+        if(check_img_path(path)){
                 imgs.push_back(s);
         }
     }
     sort(imgs.begin(),imgs.end());
     if(max_scene==0) max_scene=imgs.size();
 
-    TargetDetector detector(n_x, n_y,visualize,visualize_scale);
+    TargetDetector detector(n_x, n_y,visualize);
     pair<bool,vector<Shape>> result;
     int count=0;
     Calibrator calibrator = Calibrator(n_x,n_y,n_d,r,distance,max_scene,img_dir);

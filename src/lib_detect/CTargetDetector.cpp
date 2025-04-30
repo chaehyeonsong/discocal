@@ -1,5 +1,5 @@
 #include "CTargetDetector.h"
-TargetDetector::TargetDetector(int n_x, int n_y, bool draw, float drawing_scale){
+TargetDetector::TargetDetector(int n_x, int n_y, bool draw){
     this->n_x = n_x;    
     this->n_y = n_y;
     this->numerical_stable = 1e-8;
@@ -12,16 +12,16 @@ TargetDetector::TargetDetector(int n_x, int n_y, bool draw, float drawing_scale)
     this->distance_threshold = 10; // minimum pixels between two circles
 
     this->draw=draw; 
-    this->drawing_scale= drawing_scale;
+    this->drawing_scale= -1;
 
-    for(int i=0; i<(n_y+6)/7;i++){
-        text_colors.push_back(cv::Scalar(255,0,0));
+    for(int i=0; i<(n_y+4)/5;i++){
+        // text_colors.push_back(cv::Scalar(255,0,0));
         text_colors.push_back(cv::Scalar(0,255,0));
         text_colors.push_back(cv::Scalar(0,0,255));
         text_colors.push_back(cv::Scalar(255,255,0));
         text_colors.push_back(cv::Scalar(255,0,255));
         text_colors.push_back(cv::Scalar(0,255,255));
-        text_colors.push_back(cv::Scalar(255,255,255));
+        // text_colors.push_back(cv::Scalar(255,255,255));
     }
 }
 
@@ -88,95 +88,57 @@ void TargetDetector::update_autocorrelation(cv::Mat &src, vector<Shape>& control
 }
 
 pair<bool,vector<Shape>> TargetDetector::detect(cv::Mat& img, string type){
+    if(this->drawing_scale<0){
+        this->drawing_scale = 1000.0/max(img.rows, img.cols);
+    }
     bool ret;
     vector<Shape> control_shapes;
     pair<bool,vector<Shape>> final_result;
-    cv::Mat bgr_img;
+    cv::Mat bgr_img, output_img;
     cv::cvtColor(img,bgr_img, cv::COLOR_GRAY2BGR);
     if (type == "square"){
         // 순서 : y 높은순 ->  x 높은순
         vector<cv::Point2f> corners;
         ret = cv::findChessboardCorners(img,cv::Size(n_x,n_y), corners); //flag????
         if(draw&&ret){
-            cv::drawChessboardCorners(bgr_img, cv::Size(n_x,n_y),corners,ret);
-            // cv::imshow("hi",bgr_img);
-            // cv::waitKey(0);
+            output_img = bgr_img;
+            cv::drawChessboardCorners(output_img, cv::Size(n_x,n_y),corners,ret);
         }
         reverse(corners.begin(), corners.end());
         for(int i=0; i<corners.size();i++) control_shapes.push_back(Shape(corners[i].x,corners[i].y,0));
         update_autocorrelation(img, control_shapes);
     }
     else if(type == "circle"){
-        // ret= detect_circles_banilar(img, bgr_img,control_shapes, draw);
-        ret= detect_circles(img, bgr_img,control_shapes, draw);
+        int output_col= img.cols*this->drawing_scale;
+        int output_row = img.rows*this->drawing_scale;
+        cv::resize(bgr_img, output_img, cv::Size(output_col, output_row));
+        
+        ret= detect_circles(img, output_img,control_shapes, draw);
     }
     else{
         throw WrongTypeException();
     }
     final_result.first = ret;
     final_result.second = control_shapes;
-    // cv::imwrite("../results/original.png",img);
-    if(this->draw) visualize_result(bgr_img, final_result);
+
+    if(this->draw) visualize_result(output_img, final_result);
     return final_result;
 }
-bool TargetDetector::detect_circles_banilar(cv::Mat& img, cv::Mat& img_output,vector<Shape>&target, bool debug){
-    cv::SimpleBlobDetector::Params params;
-    params.minThreshold = 55;
-    params.maxThreshold = 200;
-    params.blobColor = 0; 
-    params.filterByArea = false;
-    // params.minArea = size_threshold;
-    // params.maxArea = 90000;
-    params.filterByCircularity = true;
-    params.minCircularity = 0.5;
-    params.filterByConvexity = true;
-    params.minConvexity = 0.9;
-    params.filterByInertia = true;// Change thresholds
-    params.minInertiaRatio = 0.1;
 
-    cv::Ptr<cv::SimpleBlobDetector> detector = cv::SimpleBlobDetector::create(params);
-    std::vector<cv::KeyPoint> keypoints;
-
-    cv::Mat img_blur;
-    // int blur_size = min(img.rows, img.cols)/400*2+1; //should be odd/
-    cv::GaussianBlur(img,img_blur,cv::Size(0, 0), 3); // rgb 13, thr 3
-    // img_blur = img;
-    detector->detect(img_blur,keypoints);
-
-    
-    cv::drawKeypoints(img, keypoints, img_output,cv::Scalar(255, 0, 0),cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-    // cv::imwrite("../results/sample.png",img_output);
-
-    std::vector<cv::Point2f> source;
-    vector<cv::Point2f>dest;
-    for(cv::KeyPoint keypoint : keypoints){
-        source.push_back(keypoint.pt);
-    }
-    sortTarget(source,dest);
-    for(cv::Point2f pt: dest){
-        target.push_back(Shape(pt.x,pt.y,0));
-    }
-
-    // visualize
-    bool result=false;
-    if(target.size()==n_x*n_y) result=true;    
-    return result;
-
-}
 
 void TargetDetector::visualize_result(cv::Mat& img_output, pair<bool,vector<Shape>> &result){
     // visualize
-    int scale= 100;
+    int scale= 100/this->drawing_scale;
     if(result.first){
         for(int i=0;i< result.second.size();i++)
         {
             Shape shape = result.second[i];
-            cv::Point2f pt(shape.x,shape.y);
+            cv::Point2f pt(shape.x*this->drawing_scale,shape.y*this->drawing_scale);
             for (int j=0;j<n_x;j++)
             {
                 if(i/n_x == j ) {
                     string message = to_string(i);
-                    // cv::putText(img_output,message,pt,0,1,text_colors[j],2);
+                    cv::putText(img_output,message,pt,0,1,text_colors[j],2);
                 }
             }
             //draw covariance
@@ -185,22 +147,20 @@ void TargetDetector::visualize_result(cv::Mat& img_output, pair<bool,vector<Shap
                 double a{ellipse[0]}, b{ellipse[1]}, angle{ellipse[2]};
                 // a = a*10;
                 // b = b*10;
-                cv::RotatedRect rRect = cv::RotatedRect(cv::Point2f(shape.x,shape.y), cv::Size2f(a*scale,b*scale), angle);
+                cv::RotatedRect rRect = cv::RotatedRect(pt, cv::Size2f(a*scale,b*scale), angle);
                 cv::ellipse(img_output, rRect,  cv::Scalar(0,255,255));
                 cv::String message = cv::format("%.2f, %.2f", round(a*100)/100.0, round(b*100)/100.0);
-                cv::putText(img_output,message,cv::Point2f(shape.x-20,shape.y+30),0,0.5,cv::Scalar(0,0,255));
+                cv::putText(img_output,message,cv::Point2f(pt.x-20,pt.y+30),0,0.5,cv::Scalar(0,0,255));
             }
         }
     }
 
-    //adjust image scale
-    int output_col= img_output.cols*drawing_scale;
-    int output_row = img_output.rows*drawing_scale;
-    cv::resize(img_output, img_output, cv::Size(output_col, output_row));
+    int output_col= img_output.cols;
+    int output_row = img_output.rows;
     float bottom = img_output.rows*0.95;
     float left = img_output.cols*0.05;
-    double fontscale = min(output_row,output_col)/500.0;
-    int thickness = min(output_row,output_col)/300+1;
+    double fontscale = 1.2;
+    int thickness = 3;
     if(result.first) cv::putText(img_output,"save: 1, ignore: 0",cv::Point2f(left,bottom),0,fontscale,cv::Scalar(0,0,255),thickness);
     else cv::putText(img_output,"detection fail, press any key",cv::Point2f(left,bottom),0,fontscale,cv::Scalar(0,0,255),thickness);
     
@@ -502,14 +462,13 @@ bool TargetDetector::detect_circles(cv::Mat& img, cv::Mat& img_output,vector<Sha
 
     
     cv::Mat img_thresh, img_morph;
-    int blur_size = min(img_origin.rows, img_origin.cols)/400*2+1; //should be odd
+    int scale_factor = max(img_origin.rows, img_origin.cols)/1000+1;
+    int blur_size = scale_factor*2+3; //should be odd
     cv::GaussianBlur(img_origin, img_blur, cv::Size(blur_size, blur_size), -1);
-    // cv::GaussianBlur(img_origin,img_blur,cv::Size(0, 0), blur_size);
-    // img_blur = img_origin;e
 
     // threshold based
-    vector<int> block_sizes = {7,13,19};
-    vector<int> kernel_sizes = {1,3};
+    vector<int> block_sizes = {6*scale_factor+1,12*scale_factor+1,18*scale_factor+1};
+    vector<int> kernel_sizes = {2*scale_factor-1,4*scale_factor-1};
     for (int bs : block_sizes)
     {
         cv::adaptiveThreshold(img_blur, img_thresh, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY_INV, bs, 2);
@@ -589,7 +548,12 @@ bool TargetDetector::detect_circles(cv::Mat& img, cv::Mat& img_output,vector<Sha
     if(debug) {
         std::vector<std::vector<cv::Point>> circle_contours;
         for(circle_info circle : circles){
-            circle_contours.push_back(circle.second);
+            std::vector<cv::Point> contour = circle.second;
+            for(int i=0;i< contour.size();i++){
+                contour[i].x*= this->drawing_scale;
+                contour[i].y*= this->drawing_scale;
+            }
+            circle_contours.push_back(contour);
         }
         // cv::drawContours(img_output, circle_contours, -1, cv::Scalar(100, 0, 0), cv::FILLED);
         // cv::Mat img_output2;

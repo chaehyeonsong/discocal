@@ -66,8 +66,6 @@ vector<pair<se3,bool>> StereoCalibration::calExtrinsic(YAML::Node args, int came
         if(option_node["max_scene"]) max_scene= option_node["max_scene"].as<int>();
         bool visualize = true;
         if(option_node["visualize"]) visualize= option_node["visualize"].as<bool>();
-        float visualize_scale = 1.0;
-        if(option_node["visualize_scale"]) visualize_scale = option_node["visualize_scale"].as<float>();
         bool save_pose = false;
         if( option_node["save_pose"]) save_pose = option_node["save_pose"].as<bool>();
         bool save_rpe= false;
@@ -81,14 +79,14 @@ vector<pair<se3,bool>> StereoCalibration::calExtrinsic(YAML::Node args, int came
         for (const auto & file : std::filesystem::directory_iterator(img_dir)){
             string s = file.path();
             string path = split<string>(s,'/').back();
-            if(path.find(".png") != string::npos || path.find(".PNG") != string::npos || path.find(".jpeg") != string::npos || path.find(".jpg") != string::npos){
+            if(check_img_path(path)){
                 imgs.push_back(s);
             }
         }
         sort(imgs.begin(),imgs.end());
         if(max_scene==0) max_scene = imgs.size();
 
-        TargetDetector detector(n_x, n_y,visualize,visualize_scale);
+        TargetDetector detector(n_x, n_y,visualize);
         Calibrator calibrator = Calibrator(n_x,n_y,n_d,r,distance,max_scene,img_dir);
         vector<bool> valid_scene; 
 
@@ -133,6 +131,8 @@ vector<pair<se3,bool>> StereoCalibration::calExtrinsic(YAML::Node args, int came
         std::cout<<e.what()<<std::endl;
         // throw YamlfileError();
     }
+    vector<ext> final_results;
+    return final_results;
 }
 
 

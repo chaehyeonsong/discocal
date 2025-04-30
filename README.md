@@ -120,10 +120,12 @@ docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -v [y
 [In docker container]$ cd /mnt
 ```
 
-## 4. Revise config files
+## 4. Revise the config file
 You should change calibration options using yaml files in the config folder.
 
 Refer to the config_example folder (mono.yaml is an example for intrinsic calibration and stereo.yaml is for extrinsic calibration)
+
+If you have a trouble regarding to the visualization, turn off the visualization option in the config file.
 
 ## 5. Bulid and Run
 	## Build

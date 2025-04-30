@@ -254,5 +254,12 @@ static double cdf(double x)
     return 0.5*(1.0 + sign*y);
 }
 
+static bool check_img_path(std::string path){
+    bool check=false;
+    check = path.find(".png") != std::string::npos || path.find(".PNG") != std::string::npos \
+    || path.find(".jpeg") != std::string::npos || path.find(".JPEG") != std::string::npos \
+    || path.find(".jpg") != std::string::npos || path.find(".JPG") != std::string::npos ;
+    return check;
+}
 
 #endif
