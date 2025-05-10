@@ -104,10 +104,6 @@ class Calibrator{
         pair<Eigen::Matrix3d,double> get_H(const vector<Shape> &target); // unc 반영
         Eigen::VectorXd get_absolute_conic();
         Eigen::MatrixXd normalize_matrix(Eigen::MatrixXd matrix);
-        
-
-        // for exp
-        void update_control_point(std::vector<int> real_sample, Params results);
 };
 
 struct CalibrationFunctor {

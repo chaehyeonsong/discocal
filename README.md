@@ -96,9 +96,9 @@ The larger the radius of the circle, the more accurate the observations become. 
 
 ## 2. Clone the repository
 ```bash
-git clone --recursive https://github.com/chaehyeonsong/discocal.git
+git clone https://github.com/chaehyeonsong/discocal.git
 ```
-The recursive option is needed for pybind
+
 ## 3. Install dependency
 ### Option 1) Install bellow packages
 - [Ceres-Solver](http://ceres-solver.org/index.html)

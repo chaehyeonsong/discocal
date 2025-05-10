@@ -165,7 +165,6 @@ void TargetDetector::visualize_result(cv::Mat& img_output, pair<bool,vector<Shap
     else cv::putText(img_output,"detection fail, press any key",cv::Point2f(left,bottom),0,fontscale,cv::Scalar(0,0,255),thickness);
     
     cv::imshow("input_image",img_output);
-    cv::imwrite("../results/temp.png",img_output);
     printf("save: 1, ignore: 0\n");
     char key = cv::waitKey(0);
     while(key != '0' && key!='1'){
