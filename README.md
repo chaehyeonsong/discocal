@@ -38,8 +38,8 @@ Without considering geometery of the distorted ellipse, existing circular patter
 
 
 ------------------
-# How to use
-## 0. Check the camera model
+# Before use
+## 1. Check the camera model
 
 We assume **pinhole camera model** with **radial distortion**.
 <p align="center">
@@ -83,7 +83,7 @@ Imagehandler imagehandler(width, height, total_params, n_d);
 cv::Mat undist_image = imagehandler.undist(image);
 ```
 
-## 1. Prepare a calibration target
+## 2. Prepare a calibration target
 <img src="./docs/figs/board2.png" width="40%">
 
 Our method needs a planer white board on which black circle grid patterns are printed. 
@@ -94,40 +94,54 @@ You can easily design these patterns in this [site](https://calib.io/pages/camer
 > **Q. How to decide the number of cicles and the radius size?** 
 The larger the radius of the circle, the more accurate the observations become. The greater the number of circles, the more observations you have, leading to increased robustness. Since these two values are in a trade-off relationship within a limited area, adjust them appropriately. It is recommended that every circle contains more than 400 pixels in images and not to exceed 7x5 circles.
 
-## 2. Clone the repository
+# How to use
+## Option 1) Use runfile (easy but only works on Ubuntu PC)
+### 1-1) Download runfiles
+* Ubuntu + x86_64 (amd64): 
+[[Download_link]](https://drive.google.com/drive/folders/1vixewjLga-ijLR1AWvRLhydzaLZzNaQc?usp=sharing)
+
+* Ubuntu + Arm64: 
+[[To be uploaded]]()
+### 1-2) Run
 ```bash
-git clone https://github.com/chaehyeonsong/discocal.git
+sudo chmod +x run_mono
+.run_mono [config_path]
+```
+or
+```bash
+sudo chmod +x run_stereo
+.run_stereo [config_path]
 ```
 
-## 3. Install dependency
-### Option 1) Install bellow packages
-- [Ceres-Solver](http://ceres-solver.org/index.html)
-- [Eigen3](https://eigen.tuxfamily.org/dox/index.html)
-- opencv4
+## Option 2) Build with docker (Support all cases)
+- clone the repository
+	```bash
+	git clone https://github.com/chaehyeonsong/discocal.git
+	```
+- build the docker images
+	```bash
+	docker build -t chaehyeonsong/discocal .  -f dockerfile
+	```
+- For visualization
+	```bash
+	xhost +local:docker
+	```
+- Run container (mount your discoal path to /mnt in docker container)
+	```bash
+	docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -v [your repository path]:/mnt chaehyeonsong/discocal
+	[In docker container]$ cd /mnt
+	```
 
-### Option 2) Use docker
-(Recommended) Build a docker image using the dockerfile.
-```bash
-docker build -t chaehyeonsong/discocal .  -f dockerfile
-```
-For visualization
-```bash
-xhost +local:docker
-```
-Run container (mount your discoal path to /mnt in docker container)
-```bash
-docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -v [your repository path]:/mnt chaehyeonsong/discocal
-[In docker container]$ cd /mnt
-```
+- Revise the config file
 
-## 4. Revise the config file
-You should change calibration options using yaml files in the config folder.
+	You should change calibration options using yaml files in the config folder.
+	
+	Refer to the config_example folder (mono.yaml is an example for intrinsic calibration and stereo.yaml is for extrinsic calibration)
 
-Refer to the config_example folder (mono.yaml is an example for intrinsic calibration and stereo.yaml is for extrinsic calibration)
+	If you have a trouble regarding to the visualization, turn off the visualization option in the config file.
 
-If you have a trouble regarding to the visualization, turn off the visualization option in the config file.
-
-## 5. Bulid and Run
+- Bulid and Run (In the docker container)
+	```bash
 	## Build
 	cd [discocal folder]
 	mkdir build
@@ -138,6 +152,7 @@ If you have a trouble regarding to the visualization, turn off the visualization
 	## Run (chose one of out files)
 	./mono.out [config path]
 	./stereo.out [config path]
+	```
 
 
 ## Application: Thermal Camera calibration (Extreme case)
@@ -157,7 +172,7 @@ We can leverage the detection robustness of the circular patterns, particularly 
     pages     = {373-381}
 }
 ```
-## Lisence
+## License
  <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
 
 - This work is protected by a patent.
