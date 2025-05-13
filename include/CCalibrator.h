@@ -2,6 +2,7 @@
 #define __CCALIBRATOR_H__
 
 #include <math.h>
+#include <fstream>
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>

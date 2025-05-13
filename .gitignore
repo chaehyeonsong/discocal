@@ -6,3 +6,5 @@ build/
 imgs/*
 .Ds_Store
 results/*
+outputs/*
+pybind11/*
