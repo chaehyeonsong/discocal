@@ -95,7 +95,7 @@ You can easily design these patterns in this [site](https://calib.io/pages/camer
 The larger the radius of the circle, the more accurate the observations become. The greater the number of circles, the more observations you have, leading to increased robustness. Since these two values are in a trade-off relationship within a limited area, adjust them appropriately. It is recommended that every circle contains more than 400 pixels in images and not to exceed 7x5 circles.
 
 # How to use
-## Option 1) Use runfile (easy but only works on Ubuntu PC)
+## Option 1) Use runfile (Easy but only works on Ubuntu PC)
 ### 1-1) Download runfiles
 * Ubuntu + x86_64 (amd64): 
 [[Download_link]](https://drive.google.com/drive/folders/1vixewjLga-ijLR1AWvRLhydzaLZzNaQc?usp=sharing)
@@ -113,7 +113,7 @@ sudo chmod +x run_stereo
 .run_stereo [config_path]
 ```
 
-## Option 2) Build with docker (Support all cases)
+## Option 2) Build with docker (Supports all cases)
 - clone the repository
 	```bash
 	git clone https://github.com/chaehyeonsong/discocal.git
