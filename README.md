@@ -2,6 +2,7 @@
 
 
 For decades, the checkerboard pattern has been the go-to method for camera calibration, providing only pixel-level precision. But what if we could improve accuracy even further? This paper reveals the power of the circular pattern: a game-changer offering subpixel precision to meet challenges even from unconventional visual sensors.
+
 Paper title: Unbiased Estimator for Distorted Conics in Camera Calibration 
 
 [[Paper]](https://arxiv.org/abs/2403.04583)[[Video]](http://www.youtube.com/watch?v=87_R7Qkpczo)[[Demo]](http://www.youtube.com/watch?v=j86pyBZe7t0)[[OpenCV Webinar]](https://www.youtube.com/live/MTMMoN6ogcY?si=22DAdrzM3p9kDQK4)[[BibTex]](#bibtex)
@@ -107,10 +108,7 @@ The larger the radius of the circle, the more accurate the observations become. 
 	```
 - Revise the config file
 
-	You should change calibration options using yaml files in the config folder
-	(mono.yaml is an example for intrinsic calibration and stereo.yaml is for extrinsic calibration)
-
-	If you have a trouble regarding to the visualization, turn off the visualization option in the config file.
+	You should change calibration options using yaml files in the config folder. If you have a trouble regarding to the visualization, turn off the visualization option in the config file.
 
 - Run
 
