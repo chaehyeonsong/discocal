@@ -22,7 +22,7 @@ For decades, the checkerboard pattern has been the go-to method for camera calib
 - 24.04.17. :round_pushpin:We update circular pattern detector! Now, you don't need to tune hyperparameters for detections
 - 24.04.05. :tada: Discocal is selected for highlight poster. (11.9% of accepted papers, 2.8% of total submissions.)
 
-## Why discocal? :The previous limitation in camera calibration
+## Why discocal? :The previous limitation of the circular pattern
 
 Sub-pixel accuracy and detection robustness are virtues of the conic features. But why do we use a checkerboard, not a circular pattern?
 
@@ -105,12 +105,12 @@ The larger the radius of the circle, the more accurate the observations become. 
 ### 1-2) Run
 ```bash
 sudo chmod +x run_mono
-.run_mono [config_path]
+./run_mono [config_path]
 ```
 or
 ```bash
 sudo chmod +x run_stereo
-.run_stereo [config_path]
+./run_stereo [config_path]
 ```
 
 ## Option 2) Build with docker (Supports all cases)
