@@ -23,7 +23,7 @@ Paper title: Unbiased Estimator for Distorted Conics in Camera Calibration
 - 24.04.05. :tada: Discocal is selected for highlight poster. (11.9% of accepted papers, 2.8% of total submissions.)
 
 --------------------
-# Before using
+# How to use
 ## 1. Check the camera model
 
 We assume **pinhole camera model** with **radial distortion**.
@@ -79,8 +79,8 @@ You can easily design these patterns in this [site](https://calib.io/pages/camer
 > **Q. How to decide the number of cicles and the radius size?** 
 The larger the radius of the circle, the more accurate the observations become. The greater the number of circles, the more observations you have, leading to increased robustness. Since these two values are in a trade-off relationship within a limited area, adjust them appropriately. It is recommended that every circle contains more than 400 pixels in images and not to exceed 7x5 circles.
 
-# How to use
-## Option 1) Use runfile (Easy but only works on Ubuntu PC)
+## 3. Run! (Choose one of them)
+**Option 1) Use runfile (Easy but only works on Ubuntu PC)**
 - Download runfiles and configs
 	* Ubuntu + x86_64 (amd64): 
 		[[Download_link]](https://drive.google.com/drive/folders/1vixewjLga-ijLR1AWvRLhydzaLZzNaQc?usp=sharing)
@@ -100,7 +100,7 @@ The larger the radius of the circle, the more accurate the observations become. 
 	./run_stereo [config_path]
 	```
 
-## Option 2) Build with docker (Supports all architectures)
+**Option 2) Build with docker (Supports all architectures)**
 - clone the repository
 	```bash
 	git clone https://github.com/chaehyeonsong/discocal.git
