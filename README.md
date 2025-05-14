@@ -144,7 +144,7 @@ Without considering geometery of the distorted ellipse, existing circular patter
 
 ## Application: Thermal Camera calibration (Extreme case)
 
-We can leverage the detection robustness of the circular patterns, particularly for unconventional cameras, such as thermal cameras. What the demo video!
+We can leverage the detection robustness of the circular patterns, particularly for unconventional cameras, such as thermal cameras. Watch the demo video!
 
 [![Video Label](http://img.youtube.com/vi/j86pyBZe7t0/0.jpg)](https://youtu.be/j86pyBZe7t0)
 
