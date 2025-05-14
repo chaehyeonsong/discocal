@@ -89,8 +89,6 @@ void MonoCalibration::mono_calibration(YAML::Node node){
 
 
     YAML::Node option_node =node["options"];
-    int max_scene = 0;
-    if(option_node["max_scene"]) max_scene= option_node["max_scene"].as<int>();
     bool visualize = true;
     if(option_node["visualize"]) visualize= option_node["visualize"].as<bool>();
     bool save_pose = false;
@@ -115,7 +113,11 @@ void MonoCalibration::mono_calibration(YAML::Node node){
         }
     }
     sort(imgs.begin(),imgs.end());
-    if(max_scene==0) max_scene=imgs.size();
+    int max_scene=imgs.size();
+    if(max_scene<4+n_d){
+        std::cout<<LackOfImageError().what()<<std::endl;
+        throw LackOfImageError();
+    }
 
     TargetDetector detector(n_x, n_y,visualize);
     pair<bool,vector<Shape>> result;

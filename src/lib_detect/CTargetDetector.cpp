@@ -478,7 +478,7 @@ bool TargetDetector::detect_circles(cv::Mat& img, cv::Mat& img_output,vector<Sha
             cv::morphologyEx(img_thresh, img_morph, cv::MORPH_CLOSE, kernel);    
             std::vector<std::vector<cv::Point>> all_contours;
             cv::findContours(img_morph, all_contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
-
+            int count=0;
             
             for(std::vector<cv::Point> contour : all_contours)
             {
@@ -490,8 +490,26 @@ bool TargetDetector::detect_circles(cv::Mat& img, cv::Mat& img_output,vector<Sha
                         shape.ks=s;
                         shape.bs=bs;    
                         circle_candidates.push_back(circle_info(shape, contour));
+                        count++;
                     }
                     
+                }
+            }
+            if(count==0){
+                cv::findContours(img_morph, all_contours, cv::RETR_LIST, cv::CHAIN_APPROX_NONE);
+                for(std::vector<cv::Point> contour : all_contours)
+                {
+                    if(contour.size()<contour_min_length) continue;
+                    Shape shape= contour2shape(contour);
+                    
+                    if(ellipse_test(shape)){      
+                        if(cal_shape_cov(contour, &shape, img_origin, grad_x3, grad_y3)){
+                            shape.ks=s;
+                            shape.bs=bs;    
+                            circle_candidates.push_back(circle_info(shape, contour));
+                        }
+                        
+                    }
                 }
             }
         }

@@ -43,95 +43,93 @@ public:
 
 vector<pair<se3,bool>> StereoCalibration::calExtrinsic(YAML::Node args, int camera_index){    
 
-    try{
-        YAML::Node camera_node = args["cameras"][camera_index];
-        string img_dir = camera_node["img_dir"].as<string>();
-        int n_d = camera_node["n_d"].as<int>();
-        bool cal_intrinsic = false;
-        if(camera_node["cal_intrinsic"]) cal_intrinsic= camera_node["cal_intrinsic"].as<bool>();
 
-        string detection_mode="";
-        if(camera_node["detection_mode"]){
-            detection_mode = camera_node["detection_mode"].as<string>();
-        }
-        string type = camera_node["type"].as<string>();
-        int n_x = camera_node["n_x"].as<int>();
-        int n_y = camera_node["n_y"].as<int>();
-        double r = camera_node["radius"].as<double>();
-        double distance = camera_node["distance"].as<double>();
+    YAML::Node camera_node = args["cameras"][camera_index];
+    string img_dir = camera_node["img_dir"].as<string>();
+    int n_d = camera_node["n_d"].as<int>();
+    bool cal_intrinsic = false;
+    if(camera_node["cal_intrinsic"]) cal_intrinsic= camera_node["cal_intrinsic"].as<bool>();
 
-        
-        YAML::Node option_node = args["options"];
-        int max_scene = 0;
-        if(option_node["max_scene"]) max_scene= option_node["max_scene"].as<int>();
-        bool visualize = true;
-        if(option_node["visualize"]) visualize= option_node["visualize"].as<bool>();
-        bool save_pose = false;
-        if( option_node["save_pose"]) save_pose = option_node["save_pose"].as<bool>();
-        bool save_rpe= false;
-        if(option_node["save_rpe"]) save_rpe= option_node["save_rpe"].as<bool>();
-        bool save_jacob= false;
-        if(option_node["save_jacob"]) save_jacob= option_node["save_jacob"].as<bool>();
-
-
-        vector<string> imgs;
-
-        for (const auto & file : std::filesystem::directory_iterator(img_dir)){
-            string s = file.path();
-            string path = split<string>(s,'/').back();
-            if(check_img_path(path)){
-                imgs.push_back(s);
-            }
-        }
-        sort(imgs.begin(),imgs.end());
-        if(max_scene==0) max_scene = imgs.size();
-
-        TargetDetector detector(n_x, n_y,visualize);
-        Calibrator calibrator = Calibrator(n_x,n_y,n_d,r,distance,max_scene,img_dir);
-        vector<bool> valid_scene; 
-
-        for(int i=0; i<imgs.size();i++){
-            if(i==max_scene) break;
-            string path = imgs[i];
-            cv::Mat bgr_img, gray_img;
-            bgr_img = cv::imread(path, cv::IMREAD_COLOR);
-            gray_img = TargetDetector::preprocessing(bgr_img,detection_mode);
-            if(gray_img.rows == 0) throw exception();
-            cout<<"start detect: "<<path<<endl;
-            pair<bool,vector<Shape>> result = detector.detect(gray_img, type);
-            valid_scene.push_back(result.first);
-            if(result.first){
-                calibrator.inputTarget(result.second);
-            }
-            else {
-                cout<<path<<": detection failed"<<endl;
-            }
-
-        }
-
-        // 0: moment, 1: conic, 2: point, 4: numerical, 5: iterative
-        int mode = 0;
-        if(type != "circle") mode=2;
-        if(cal_intrinsic) calibrator.calibrate(mode,save_jacob);
-        else calibrator.update_Es(Params(camera_node),mode);
-
-        if(save_pose) calibrator.save_extrinsic();
-
-        vector<se3> target_poses = calibrator.get_extrinsic();
-        vector<ext> final_results;
-        int count=0;
-        for(int i=0; i<valid_scene.size();i++){
-            final_results.push_back(ext(target_poses[count],valid_scene[i]));
-            if(valid_scene[i]) count++;
-        }
-
-        return final_results;
+    string detection_mode="";
+    if(camera_node["detection_mode"]){
+        detection_mode = camera_node["detection_mode"].as<string>();
     }
-    catch (const std::exception &e){
-        std::cout<<e.what()<<std::endl;
-        // throw YamlfileError();
+    string type = camera_node["type"].as<string>();
+    int n_x = camera_node["n_x"].as<int>();
+    int n_y = camera_node["n_y"].as<int>();
+    double r = camera_node["radius"].as<double>();
+    double distance = camera_node["distance"].as<double>();
+
+    
+    YAML::Node option_node = args["options"];
+    bool visualize = true;
+    if(option_node["visualize"]) visualize= option_node["visualize"].as<bool>();
+    bool save_pose = false;
+    if( option_node["save_pose"]) save_pose = option_node["save_pose"].as<bool>();
+    bool save_rpe= false;
+    if(option_node["save_rpe"]) save_rpe= option_node["save_rpe"].as<bool>();
+    bool save_jacob= false;
+    if(option_node["save_jacob"]) save_jacob= option_node["save_jacob"].as<bool>();
+
+
+    vector<string> imgs;
+
+    for (const auto & file : std::filesystem::directory_iterator(img_dir)){
+        string s = file.path();
+        string path = split<string>(s,'/').back();
+        if(check_img_path(path)){
+            imgs.push_back(s);
+        }
     }
+    sort(imgs.begin(),imgs.end());
+    int max_scene=imgs.size();
+    if( cal_intrinsic && max_scene<4+n_d){
+        std::cout<<LackOfImageError().what()<<std::endl;
+        throw LackOfImageError();
+    }
+
+    TargetDetector detector(n_x, n_y,visualize);
+    Calibrator calibrator = Calibrator(n_x,n_y,n_d,r,distance,max_scene,img_dir);
+    vector<bool> valid_scene; 
+
+    for(int i=0; i<imgs.size();i++){
+        if(i==max_scene) break;
+        string path = imgs[i];
+        cv::Mat bgr_img, gray_img;
+        bgr_img = cv::imread(path, cv::IMREAD_COLOR);
+        gray_img = TargetDetector::preprocessing(bgr_img,detection_mode);
+        if(gray_img.rows == 0) throw exception();
+        cout<<"start detect: "<<path<<endl;
+        pair<bool,vector<Shape>> result = detector.detect(gray_img, type);
+        valid_scene.push_back(result.first);
+        if(result.first){
+            calibrator.inputTarget(result.second);
+        }
+        else {
+            cout<<path<<": detection failed"<<endl;
+        }
+
+    }
+
+    // 0: moment, 1: conic, 2: point, 4: numerical, 5: iterative
+    int mode = 0;
+    if(type != "circle") mode=2;
+    if(cal_intrinsic) calibrator.calibrate(mode,save_jacob);
+    else calibrator.update_Es(Params(camera_node),mode);
+
+    if(save_pose) calibrator.save_extrinsic();
+
+    vector<se3> target_poses = calibrator.get_extrinsic();
     vector<ext> final_results;
+    int count=0;
+    for(int i=0; i<valid_scene.size();i++){
+        final_results.push_back(ext(target_poses[count],valid_scene[i]));
+        if(valid_scene[i]) count++;
+    }
+
+    return final_results;
+
+
     return final_results;
 }
 

@@ -17,7 +17,12 @@ class YamlfileError: public std::exception{
             return "Wrong yaml field";
         }
 };
-
+class LackOfImageError: public std::exception{
+    public:
+        const char* what(){
+            return "Total number of images is too small. Correct more images";
+        }
+};
 template <typename T>
 static std::vector<T> split(std::string str, char Delimiter) {
     std::istringstream iss(str);

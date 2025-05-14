@@ -8,3 +8,4 @@ imgs/*
 results/*
 outputs/*
 pybind11/*
+sample_imgs/test/*
