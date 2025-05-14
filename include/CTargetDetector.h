@@ -34,10 +34,12 @@ class TargetDetector{
         static cv::Mat preprocessing(cv::Mat img, string detection_mode);
         static cv::Mat translation_blur(const cv::Mat &img, double trans);
         static cv::Mat rotation_blur(const cv::Mat &img, double dtheta);
+        void save_result(string path);
 
     private:
         double numerical_stable;
         bool draw;
+        cv::Mat detection_result;
         int n_x, n_y;
         int size_threshold;
         float drawing_scale;

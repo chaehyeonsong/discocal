@@ -12,7 +12,7 @@ TargetDetector::TargetDetector(int n_x, int n_y, bool draw){
     this->distance_threshold = 10; // minimum pixels between two circles
 
     this->draw=draw; 
-    this->drawing_scale= -1;
+    this->drawing_scale= 1;
 
     for(int i=0; i<(n_y+4)/5;i++){
         // text_colors.push_back(cv::Scalar(255,0,0));
@@ -88,7 +88,7 @@ void TargetDetector::update_autocorrelation(cv::Mat &src, vector<Shape>& control
 }
 
 pair<bool,vector<Shape>> TargetDetector::detect(cv::Mat& img, string type){
-    if(this->drawing_scale<0){
+    if(this->draw){
         this->drawing_scale = 1000.0/max(img.rows, img.cols);
     }
     bool ret;
@@ -121,10 +121,13 @@ pair<bool,vector<Shape>> TargetDetector::detect(cv::Mat& img, string type){
     final_result.first = ret;
     final_result.second = control_shapes;
 
-    if(this->draw) visualize_result(output_img, final_result);
+    visualize_result(output_img, final_result);
     return final_result;
 }
 
+void TargetDetector::save_result(string path){
+    cv::imwrite(path, this->detection_result);
+}
 
 void TargetDetector::visualize_result(cv::Mat& img_output, pair<bool,vector<Shape>> &result){
     // visualize
@@ -161,19 +164,26 @@ void TargetDetector::visualize_result(cv::Mat& img_output, pair<bool,vector<Shap
     float left = img_output.cols*0.05;
     double fontscale = 1.2;
     int thickness = 3;
-    if(result.first) cv::putText(img_output,"save: 1, ignore: 0",cv::Point2f(left,bottom),0,fontscale,cv::Scalar(0,0,255),thickness);
-    else cv::putText(img_output,"detection fail, press any key",cv::Point2f(left,bottom),0,fontscale,cv::Scalar(0,0,255),thickness);
-    
-    cv::imshow("input_image",img_output);
-    printf("save: 1, ignore: 0\n");
-    char key = cv::waitKey(0);
-    while(key != '0' && key!='1'){
-        printf("wrong commend is detected\n");
-        key = cv::waitKey(0);
+    if(this->draw){
+        if(result.first) cv::putText(img_output,"save: 1, ignore: 0",cv::Point2f(left,bottom),0,fontscale,cv::Scalar(0,0,255),thickness);
+        else cv::putText(img_output,"detection fail, press any key",cv::Point2f(left,bottom),0,fontscale,cv::Scalar(0,0,255),thickness);
+        this->detection_result = img_output;
+
+        cv::imshow("input_image",img_output);
+        printf("save: 1, ignore: 0\n");
+        char key = cv::waitKey(0);
+        while(key != '0' && key!='1'){
+            printf("wrong commend is detected\n");
+            key = cv::waitKey(0);
+        }
+        cv::destroyAllWindows();
+        if(key == '0'){
+            result.first = false;
+        }
     }
-    cv::destroyAllWindows();
-    if(key == '0'){
-        result.first = false;
+    else{
+        if(!result.first) cv::putText(img_output,"detection fail",cv::Point2f(left,bottom),0,fontscale,cv::Scalar(0,0,255),thickness);
+        this->detection_result = img_output;
     }
 
 }

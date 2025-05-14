@@ -1,11 +1,10 @@
-upload.sh
-backup/
-backup*/
 .vscode/
 build/
-imgs/*
-.Ds_Store
 results/*
-outputs/*
-pybind11/*
 sample_imgs/test/*
+runfiles/run_mono
+runfiles/run_stereo
+sample_imgs/rgb12/left/*.yaml
+sample_imgs/rgb12/left/detection_results/
+sample_imgs/rgb12/right/*.yaml
+sample_imgs/rgb12/right/detection_results/

@@ -10,7 +10,3 @@ if(OpenMP_CXX_FOUND)
     target_link_libraries(targetDetector PUBLIC OpenMP::OpenMP_CXX)
 endif()
 target_include_directories(targetDetector PUBLIC ${CMAKE_SOURCE_DIR}/include ${OpenCV_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
-# target_link_libraries(calibrator
-#     ${OpenCV_LIBRARIES}
-#     ${CERES_LIBRARIES}
-# )

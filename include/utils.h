@@ -3,7 +3,40 @@
 
 #include <yaml-cpp/yaml.h>
 #include <tabulate/table.hpp>
+#include <filesystem>
+#include <iostream>
 
+
+static void print_process(int count, int MAX, std::string prefix = ""){
+    const char bar = '='; // 프로그레스바 문자  
+	const char blank = ' '; // 비어있는 프로그레스바 문자  
+	// const int MAX = 20; // 프로그레스바 길이  
+	int i; // 반복문 전용 변수  
+	int bar_count; // 프로그레스바 갯수 저장 변수  
+	float percent; // 퍼센트 저장 변수  
+    printf("\r%s%d/%d [", prefix.c_str(),count, MAX); // 진행 상태 출력  
+    percent = (float)count/MAX*100; // 퍼센트 계산  
+    bar_count = count; // 프로그레스바 갯수 계산  
+    for(i=0; i<MAX; i++) { // LEN길이의 프로그레스바 출력  
+        if(bar_count > i) { // 프로그레스바 길이보다 i가 작으면 
+            printf("%c", bar);
+        } else { // i가 더 커지면  
+            printf("%c", blank);
+        }
+    }
+    printf("] %0.2f%%", percent); // 퍼센트 출력  
+    // std::cout<<std::flush;
+    std::cout<<std::endl;
+}
+
+static void mkdir( const std::string &path ) {
+    std::filesystem::path p( path );
+
+    if ( std::filesystem::is_directory( p ) )
+        return;
+
+    std::filesystem::create_directories( p );
+}
 
 class OutofRangeError: public std::exception{
     public:

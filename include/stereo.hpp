@@ -46,6 +46,7 @@ vector<pair<se3,bool>> StereoCalibration::calExtrinsic(YAML::Node args, int came
 
     YAML::Node camera_node = args["cameras"][camera_index];
     string img_dir = camera_node["img_dir"].as<string>();
+    if(img_dir.back()!='/') img_dir = img_dir+"/";
     int n_d = camera_node["n_d"].as<int>();
     bool cal_intrinsic = false;
     if(camera_node["cal_intrinsic"]) cal_intrinsic= camera_node["cal_intrinsic"].as<bool>();
@@ -62,7 +63,7 @@ vector<pair<se3,bool>> StereoCalibration::calExtrinsic(YAML::Node args, int came
 
     
     YAML::Node option_node = args["options"];
-    bool visualize = true;
+    bool visualize = false;
     if(option_node["visualize"]) visualize= option_node["visualize"].as<bool>();
     bool save_pose = false;
     if( option_node["save_pose"]) save_pose = option_node["save_pose"].as<bool>();
@@ -87,11 +88,22 @@ vector<pair<se3,bool>> StereoCalibration::calExtrinsic(YAML::Node args, int came
         std::cout<<LackOfImageError().what()<<std::endl;
         throw LackOfImageError();
     }
+    string results_path = img_dir+"detection_results/";
+    mkdir(results_path);
 
     TargetDetector detector(n_x, n_y,visualize);
     Calibrator calibrator = Calibrator(n_x,n_y,n_d,r,distance,max_scene,img_dir);
     vector<bool> valid_scene; 
 
+    struct timeval  tv;
+    double begin, end;
+    gettimeofday(&tv, NULL);
+    begin = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000 ;
+    const int LEN = 20;
+    const char bar = '=';
+    const char blank = ' ';
+
+    vector<int> fail_img_list;
     for(int i=0; i<imgs.size();i++){
         if(i==max_scene) break;
         string path = imgs[i];
@@ -99,17 +111,30 @@ vector<pair<se3,bool>> StereoCalibration::calExtrinsic(YAML::Node args, int came
         bgr_img = cv::imread(path, cv::IMREAD_COLOR);
         gray_img = TargetDetector::preprocessing(bgr_img,detection_mode);
         if(gray_img.rows == 0) throw exception();
-        cout<<"start detect: "<<path<<endl;
+        if(visualize) cout<<"start detect: "<<path<<endl;
         pair<bool,vector<Shape>> result = detector.detect(gray_img, type);
+        detector.save_result(results_path+std::to_string(i)+".png");
         valid_scene.push_back(result.first);
         if(result.first){
             calibrator.inputTarget(result.second);
+            print_process(i+1,max_scene,"Detecting image: ");
         }
         else {
-            cout<<path<<": detection failed"<<endl;
+            if(visualize) cout<<path<<": detection failed"<<endl;
+            fail_img_list.push_back(i);
         }
 
     }
+    cout << "\nDetection fail img list: [";
+    for(int i: fail_img_list){
+        cout  << i<<" ";
+    }
+
+    gettimeofday(&tv, NULL);
+    end = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000 ;
+    double duration =(end - begin) / 1000;
+    printf("], Runtime: %.2fs\n", duration);
+    cout << "Detection results are saved at: "+results_path<<endl;
 
     // 0: moment, 1: conic, 2: point, 4: numerical, 5: iterative
     int mode = 0;
@@ -128,16 +153,13 @@ vector<pair<se3,bool>> StereoCalibration::calExtrinsic(YAML::Node args, int came
     }
 
     return final_results;
-
-
-    return final_results;
 }
 
-
 void StereoCalibration::stereo_calibration(YAML::Node node){
+    bool details=false;
     string path="../";
     if(node["options"]["save_results_path"]) path=node["options"]["save_results_path"].as<string>();
-    cout<< "results path: "<< path << endl;
+    path = path +"extrinsic_result.txt";
     std::ofstream writeFile(path.data());
     bool save_results = writeFile.is_open();
 
@@ -157,7 +179,7 @@ void StereoCalibration::stereo_calibration(YAML::Node node){
     int n_scene = dest.size();
     
     for(int i=1; i<n_camera;i++){
-        if(save_results){
+        if(details && save_results){
             writeFile<<"camera0to"+to_string(i)+"\n";
         }
         vector<ext> origin = all_ext[i];
@@ -171,13 +193,13 @@ void StereoCalibration::stereo_calibration(YAML::Node node){
                 Eigen::Matrix4d T_o2d = LieAlgebra::to_SE3(dest[j].first)*LieAlgebra::to_SE3(origin[j].first).inverse();
                 s_o2d = LieAlgebra::to_se3(T_o2d);
 
-                if(save_results)writeFile<< to_string(j)+"scene:\t"+s_o2d.to_string()+"\n"; 
+                if(details && save_results)writeFile<< to_string(j)+"scene:\t"+s_o2d.to_string()+"\n"; 
 
                 mean_rel.rot += s_o2d.rot;
                 mean_rel.trans += s_o2d.trans;
                 count++;
             }
-            else if(save_results) writeFile<< to_string(j)+"scene:\tfail\n"; 
+            else if(details && save_results) writeFile<< to_string(j)+"scene:\tfail\n"; 
             rels.push_back(ext(s_o2d, both_valid));
         }
         all_rel.push_back(rels);
@@ -202,8 +224,8 @@ void StereoCalibration::stereo_calibration(YAML::Node node){
                 writeFile<<message; 
             }
         }
-     
     }
+    cout<< "Extrinsic calibration result is saved at :"<< path << endl;
     writeFile.close();
 
 }

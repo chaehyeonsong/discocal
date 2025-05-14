@@ -92,13 +92,11 @@ The larger the radius of the circle, the more accurate the observations become. 
 
 - Run
 	```bash
-	sudo chmod +x run_mono
-	./run_mono [config_path]
+	chmod +x run_mono && ./run_mono [config_path]
 	```
 	or
 	```bash
-	sudo chmod +x run_stereo
-	./run_stereo [config_path]
+	chmod +x run_stereo && ./run_stereo [config_path]
 	```
 
 **Option 2) Build with docker (Supports all architectures)**
