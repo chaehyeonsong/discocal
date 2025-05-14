@@ -4,15 +4,11 @@
 #include <math.h>
 #include <fstream>
 #include <iostream>
-#include <opencv2/opencv.hpp>
-#include <opencv2/core.hpp>
-#include <opencv2/calib3d.hpp>
 
 #include "ceres/ceres.h"
 #include "glog/logging.h"
 #include "CMomentsTracker.h"
 #include "CLieAlgebra.h"
-#include "CTargetDetector.h"
 #include "utils.h"
 
 #include <time.h>
@@ -42,7 +38,6 @@ class Calibrator{
         ~Calibrator() = default;
 
         void init();
-        void inputImage(cv::Mat img);
         void inputTarget(vector<Shape> target);
         
         bool cal_initial_params(Params* inital_params);
@@ -81,8 +76,6 @@ class Calibrator{
 
         vector<se3> Es; // [R1, R2, t] se3: rot , trans
         vector<pair<Eigen::Matrix3d,double>> Hs;
-
-        vector<cv::Mat> images;
 
         vector<vector<Shape>> targets;
         vector<vector<Shape>> ud_targets;

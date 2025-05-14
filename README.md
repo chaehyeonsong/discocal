@@ -1,44 +1,29 @@
-# Welcome to Discocal! (CVPR24, ***highlight***)
-Paper title: Unbiased Estimator for Distorted Conics in Camera Calibration 
+# Welcome to Discocal! (CVPR24, ***highlight***) </br> Super Accurate, Fast, and Robust Calibration tool.
+
 
 For decades, the checkerboard pattern has been the go-to method for camera calibration, providing only pixel-level precision. But what if we could improve accuracy even further? This paper reveals the power of the circular pattern: a game-changer offering subpixel precision to meet challenges even from unconventional visual sensors.
-
+Paper title: Unbiased Estimator for Distorted Conics in Camera Calibration 
 
 [[Paper]](https://arxiv.org/abs/2403.04583)[[Video]](http://www.youtube.com/watch?v=87_R7Qkpczo)[[Demo]](http://www.youtube.com/watch?v=j86pyBZe7t0)[[OpenCV Webinar]](https://www.youtube.com/live/MTMMoN6ogcY?si=22DAdrzM3p9kDQK4)[[BibTex]](#bibtex)
 
 <img src="./docs/figs/shorts1.gif">
 
-## Discocal is actively maintained!
+## A new version has been released! (May, 2025)
 
-- **A new version has been released (more accuarte and robust).**
+- **It is more accuarte and robust!!**
 - If you encounter any bugs or problem, feel free to open an issue!
-- For the previous stable version, please refer to the v1 branch.
+- For the previous version, please refer to the v1 branch.
 
 ## News
 <!-- :round_pushpin: :Patch notes,    :tada:: awards -->
-- 25.04.10. :round_pushpin: (Early access) The uncertainty-aware version is released. It is more accurate and robost.
+- 25.04.10. :round_pushpin: The uncertainty-aware version is released. It is more accurate and robost.
 - 24.07.19. :tada: This work is invited to [OpenCV Webinar](https://www.youtube.com/live/MTMMoN6ogcY?si=22DAdrzM3p9kDQK4)
 - 24.06.17. :round_pushpin:Add a description of how to undisort images using our method.
 - 24.04.17. :round_pushpin:We update circular pattern detector! Now, you don't need to tune hyperparameters for detections
 - 24.04.05. :tada: Discocal is selected for highlight poster. (11.9% of accepted papers, 2.8% of total submissions.)
 
-## Why discocal? :The previous limitation of the circular pattern
-
-Sub-pixel accuracy and detection robustness are virtues of the conic features. But why do we use a checkerboard, not a circular pattern?
-
-> :cry: Conic is ***not*** conic anymore under distortion!!
-
-As shown below, the circle center is not projected to the centroid of the distorted ellipse under perspective transformation and distortion.
-
-<img src="./docs/figs/overview.png" width="600" height="300">
-
-Without considering geometery of the distorted ellipse, existing circular pattern-based calibration methods are biased, which leads low calibration accuracy than a checkerboard pattern.
-
-> :pushpin: **Our unbiased estimator completes the missing piece in the conic-based calibration pipeline**
-
-
-------------------
-# Before use
+--------------------
+# Before using
 ## 1. Check the camera model
 
 We assume **pinhole camera model** with **radial distortion**.
@@ -87,72 +72,76 @@ cv::Mat undist_image = imagehandler.undist(image);
 <img src="./docs/figs/board2.png" width="40%">
 
 Our method needs a planer white board on which black circle grid patterns are printed. 
-You can easily design these patterns in this [site](https://calib.io/pages/camera-calibration-pattern-generator).
+You can easily design these patterns in this [site](https://calib.io/pages/camera-calibration-pattern-generator). Just print the pattern , and attach it on a planar board.
 
-**Previous methods prefer to reduce the size of the circles to minimize bias, but our method is not limited to this. In fact, the larger the circles, the more accurate the measurements.**
+**Previous methods prefer to reduce the size of the circles to minimize bias, but our method is not limited to this. In fact, large circles induce more accurate measurements.**
 
 > **Q. How to decide the number of cicles and the radius size?** 
 The larger the radius of the circle, the more accurate the observations become. The greater the number of circles, the more observations you have, leading to increased robustness. Since these two values are in a trade-off relationship within a limited area, adjust them appropriately. It is recommended that every circle contains more than 400 pixels in images and not to exceed 7x5 circles.
 
 # How to use
 ## Option 1) Use runfile (Easy but only works on Ubuntu PC)
-### 1-1) Download runfiles
-* Ubuntu + x86_64 (amd64): 
-[[Download_link]](https://drive.google.com/drive/folders/1vixewjLga-ijLR1AWvRLhydzaLZzNaQc?usp=sharing)
+- Download runfiles and configs
+	* Ubuntu + x86_64 (amd64): 
+		[[Download_link]](https://drive.google.com/drive/folders/1vixewjLga-ijLR1AWvRLhydzaLZzNaQc?usp=sharing)
 
-* Ubuntu + Arm64: 
-[[To be uploaded]]()
-### 1-2) Run
-```bash
-sudo chmod +x run_mono
-./run_mono [config_path]
-```
-or
-```bash
-sudo chmod +x run_stereo
-./run_stereo [config_path]
-```
+	* Ubuntu + Arm64: 
+		[[To be uploaded]]()
+- Revise the config file: img_dir, n_d, radius, distance ...
 
-## Option 2) Build with docker (Supports all cases)
+- Run
+	```bash
+	sudo chmod +x run_mono
+	./run_mono [config_path]
+	```
+	or
+	```bash
+	sudo chmod +x run_stereo
+	./run_stereo [config_path]
+	```
+
+## Option 2) Build with docker (Supports all architectures)
 - clone the repository
 	```bash
 	git clone https://github.com/chaehyeonsong/discocal.git
 	```
-- build the docker images
-	```bash
-	docker build -t chaehyeonsong/discocal .  -f dockerfile
-	```
-- For visualization
-	```bash
-	xhost +local:docker
-	```
-- Run container (mount your discoal path to /mnt in docker container)
-	```bash
-	docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -v [your repository path]:/mnt chaehyeonsong/discocal
-	[In docker container]$ cd /mnt
-	```
-
 - Revise the config file
 
-	You should change calibration options using yaml files in the config folder.
-	
-	Refer to the config_example folder (mono.yaml is an example for intrinsic calibration and stereo.yaml is for extrinsic calibration)
+	You should change calibration options using yaml files in the config folder
+	(mono.yaml is an example for intrinsic calibration and stereo.yaml is for extrinsic calibration)
 
 	If you have a trouble regarding to the visualization, turn off the visualization option in the config file.
 
-- Bulid and Run (In the docker container)
-	```bash
-	## Build
-	cd [discocal folder]
-	mkdir build
-	cd build
-	cmake ..
-	make
+- Run
 
-	## Run (chose one of out files)
-	./mono.out [config path]
-	./stereo.out [config path]
+	For visualizing the detection results in docker, this command is needed
+	```bash
+	 xhost +local:docker
 	```
+
+	Chose one of them
+	```bash
+	docker compose up --build mono
+	```
+	or
+	```bash
+	docker-compose up --build stereo
+	```
+--------------------
+
+# Why discocal? 
+
+Sub-pixel accuracy and detection robustness are virtues of the conic features. But why do we use a checkerboard, not a circular pattern?
+
+> :cry: Conic is ***not*** conic anymore under distortion!!
+
+As shown below, the circle center is not projected to the centroid of the distorted ellipse under perspective transformation and distortion.
+
+<img src="./docs/figs/overview.png" width="600" height="300">
+
+Without considering geometery of the distorted ellipse, existing circular pattern-based calibration methods are biased, which leads low calibration accuracy than a checkerboard pattern.
+
+> :pushpin: **Our unbiased estimator completes the missing piece in the conic-based calibration pipeline**
 
 
 ## Application: Thermal Camera calibration (Extreme case)

@@ -2,7 +2,7 @@
 #include "mono.hpp"
 
 int main(int argc, char** argv){
-    string yaml_path="../config_example/mono.yaml";
+    string yaml_path="../config/mono.yaml";
     if(argc ==2){
         yaml_path = string(argv[1]);
     }

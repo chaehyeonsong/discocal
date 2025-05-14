@@ -1,0 +1,24 @@
+camera:
+  img_dir : "../sample_imgs/rgb12/right"
+  n_d: 2
+  type: "circle"
+  n_x: 4 
+  n_y: 3
+  detection_mode: ""
+  #rgb
+  radius: 0.035
+  distance: 0.09
+  
+  #tir
+  # radius: 0.03
+  # distance: 0.09
+
+options:
+  visualize : true
+  # save_pose : false 
+  # save_rpe : false
+  # fix_intrinsic : false
+  # save_jacob: false
+  
+
+

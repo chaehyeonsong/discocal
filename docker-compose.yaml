@@ -1,0 +1,36 @@
+version: '3.8'
+
+x-common: &default
+  build:
+    context: .
+    dockerfile: dockerfile
+  image: chaehyeonsong/discocal
+  volumes:
+    - ./:/mnt:cached
+    - /tmp/.X11-unix:/tmp/.X11-unix
+  environment:
+    - DISPLAY=${DISPLAY}
+  working_dir: /mnt
+
+services:
+  mono:
+    <<: *default
+    command: >
+      bash -lc "
+        mkdir -p build &&
+        cd build &&
+        cmake .. &&
+        make &&
+        ./mono.out ../config/mono.yaml
+      "
+
+  stereo:
+    <<: *default
+    command: >
+      bash -lc "
+        mkdir -p build &&
+        cd build &&
+        cmake .. &&
+        make &&
+        ./stereo.out ../config/stereo.yaml
+      "

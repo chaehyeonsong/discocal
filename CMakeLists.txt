@@ -7,6 +7,7 @@ project(discocal)
 
 find_package(OpenCV REQUIRED)
 find_package(Eigen3)
+find_package(Ceres REQUIRED)
 find_package(yaml-cpp REQUIRED)
 add_subdirectory(src/lib_calib)
 add_subdirectory(src/lib_detect)

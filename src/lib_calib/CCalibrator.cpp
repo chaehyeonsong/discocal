@@ -20,7 +20,6 @@ Calibrator::Calibrator(int n_x, int n_y,int n_d, double r,double distance, int m
     ud_targets.reserve(max_scene);
     Hs.reserve(max_scene);
     Es.reserve(max_scene);
-    images.reserve(max_scene);
 
     set_origin_target();
 }
@@ -55,9 +54,6 @@ void Calibrator::set_origin_target(){
     ori_ms = get_mean_sigma(origin_target);
 }
 
-void Calibrator::inputImage(cv::Mat img){
-    images.push_back(img);
-}
 
 void Calibrator::inputTarget(vector<Shape> target){
     // vector<Point> target2;
@@ -273,8 +269,6 @@ void Calibrator::visualize_rep(string path,Params params, int mode){
     for(int i=0;i<num_scene;i++){
         sample.push_back(i);
     }
-    // cv::Mat img = cv::Mat(930,1200,CV_8UC1,cv::Scalar(255));
-    // int scale = 20;
 
     double fx{params.fx}, fy{params.fy}, cx{params.cx}, cy{params.cy}, skew{params.skew};
     vector<double> ds = {1, params.d[0], params.d[1],params.d[2],params.d[3]};
@@ -295,9 +289,6 @@ void Calibrator::visualize_rep(string path,Params params, int mode){
             double u_o = targets[index][j].x;
             double v_o = targets[index][j].y;
             buffer.push_back(array<double,4>{u_o,v_o,p_i.x,p_i.y});
-            // double u_diff= (u_e-u_o);
-            // double v_diff = (v_e-v_o);
-            // cv::arrowedLine(img,cv::Point2d(u_o, v_o),cv::Point2d(u_o+u_diff,v_o+v_diff),cv::Scalar(0),1,8,0,0.2);
         }
     }
     delete tracker;
