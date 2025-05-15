@@ -1,5 +1,3 @@
-version: '3.8'
-
 x-common: &default
   build:
     context: .
@@ -20,7 +18,7 @@ services:
         mkdir -p build &&
         cd build &&
         cmake .. &&
-        make &&
+        make -j$(nproc) &&
         ./mono.out ../config/mono.yaml
       "
 
@@ -31,6 +29,6 @@ services:
         mkdir -p build &&
         cd build &&
         cmake .. &&
-        make &&
+        make -j$(nproc) &&
         ./stereo.out ../config/stereo.yaml
       "

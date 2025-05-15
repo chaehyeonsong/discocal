@@ -1,38 +1,49 @@
 FROM ubuntu:20.04
 
-LABEL name="chaehyeon.song"
-LABEL email="chaehyeon@snu.ac.kr"
-LABEL version="2.0"
+LABEL name="chaehyeon.song" \
+		email="chaehyeon@snu.ac.kr" \
+		version="2.0"
 
 ARG DEBIAN_FRONTEND=noninteractive
+WORKDIR /tmp
 
-RUN apt-get -y update \
-&& apt-get -y install \
-	build-essential\ 
-	cmake\ 
-	git\
-	wget\
-	python3\
-	python3-pip \
-	gdb\
-	libgoogle-glog-dev\
-	libgflags-dev\
-	libatlas-base-dev\
-	libeigen3-dev\
-	libsuitesparse-dev\
-	libopencv-dev\
-	python3-opencv\
-	locales\
-&& apt-get autoclean
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends \
+		build-essential \
+		cmake \
+		git \
+		wget \
+		libgoogle-glog-dev\
+		libgflags-dev\
+		libatlas-base-dev\
+		libeigen3-dev\
+		libsuitesparse-dev\
+		libopencv-dev\
+		python3.8-dev\
+		python3-pip \
+		# python3-opencv\
+	&& rm -rf /var/lib/apt/lists/*
 
-RUN locale-gen en_US.UTF-8
+# Install Ceres Solver
+RUN wget http://ceres-solver.org/ceres-solver-2.2.0.tar.gz \
+	&& tar xf ceres-solver-2.2.0.tar.gz \
+	&& mkdir ceres-build && cd ceres-build \
+	&& cmake ../ceres-solver-2.2.0 -DCMAKE_BUILD_TYPE=Release \
+	&& make -j$(nproc) \
+	&& make install
 
-##install Ceres
-RUN mkdir /temp && cd /temp && wget http://ceres-solver.org/ceres-solver-2.2.0.tar.gz && tar zxf ceres-solver-2.2.0.tar.gz
-RUN mkdir /temp/ceres-bin && cd /temp/ceres-bin && cmake ../ceres-solver-2.2.0 && make -j4 && make test && make install
+# Install yaml-cpp
+RUN git clone https://github.com/jbeder/yaml-cpp.git \
+	&& cd yaml-cpp \
+	&& mkdir build && cd build \
+	&& cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local .. \
+	&& make -j$(nproc) \
+	&& make install
 
-##install yaml-cpp
-RUN cd /temp && git clone https://github.com/jbeder/yaml-cpp.git && cd yaml-cpp/ && mkdir build && cd build && cmake -DCMAKE_INSTALL_PREFIX=/usr/local ../ && make && make install
+# Clean up build artifacts
+RUN rm -rf /tmp/*
+
+#-----------------------------------------------------------
 
 RUN pip3 install pyinstaller
 
@@ -44,13 +55,13 @@ RUN mkdir build && cd build \
   && cmake .. \
   && make -j$(nproc)
 
-# 6) PyInstaller로 run_calib 번들링
+# PyInstaller로 run_calib 번들링
 RUN pyinstaller \
     --onefile \
     --add-binary "build/pydiscocal.cpython-38-x86_64-linux-gnu.so:." \
     runfiles/run_mono.py
 
-	RUN pyinstaller \
+RUN pyinstaller \
     --onefile \
     --add-binary "build/pydiscocal.cpython-38-x86_64-linux-gnu.so:." \
     runfiles/run_stereo.py
