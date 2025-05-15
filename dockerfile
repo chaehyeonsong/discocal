@@ -19,7 +19,7 @@ RUN apt-get update \
 		libeigen3-dev\
 		libsuitesparse-dev\
 		libopencv-dev\
-		python3.8-dev\
+		python3-dev\
 		python3-pip \
 		# python3-opencv\
 	&& rm -rf /var/lib/apt/lists/*
