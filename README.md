@@ -148,7 +148,7 @@ We can leverage the detection robustness of the circular patterns, particularly 
 
 [![Video Label](http://img.youtube.com/vi/j86pyBZe7t0/0.jpg)](https://youtu.be/j86pyBZe7t0)
 
-# Read More and Cite
+# Read More from Our Papers and Cite them
 
 If you want to read the details, please find the following paper.
 
