@@ -140,7 +140,7 @@ The larger the radius of the circle, the more accurate the observations become. 
 
 
 
-## Applications
+# Applications
 
 ### Thermal Infrared Camera calibration
 
@@ -148,7 +148,7 @@ We can leverage the detection robustness of the circular patterns, particularly 
 
 [![Video Label](http://img.youtube.com/vi/j86pyBZe7t0/0.jpg)](https://youtu.be/j86pyBZe7t0)
 
-## BibTex
+# Read More and Cite
 
 If you want to read the details, please find the following paper.
 
@@ -164,7 +164,7 @@ Unbiased Estimator for Distorted Conics in Camera Calibration  (CVPR 2024, highl
     pages     = {373-381}
 }
 ```
-## License
+# License
  <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
 
 - This work is protected by a patent.
