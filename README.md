@@ -1,4 +1,4 @@
-# Welcome to Discocal! (CVPR24, ***highlight***) </br> Super Accurate, Fast, and Robust Calibration tool.
+# Welcome to DiscoCal! (CVPR24, ***highlight***) </br> Super Accurate, Fast, and Robust Calibration tool.
 
 
 For decades, the checkerboard pattern has been the go-to method for camera calibration, providing only pixel-level precision. But what if we could improve accuracy even further? This paper reveals the power of the circular pattern: a game-changer offering subpixel precision to meet challenges even from unconventional visual sensors.
@@ -7,7 +7,7 @@ For decades, the checkerboard pattern has been the go-to method for camera calib
 
 <img src="./docs/figs/shorts1.gif">
 
-# Why discocal? 
+# Why DiscoCal? 
 
 Sub-pixel accuracy and detection robustness are virtues of the conic features. But why do we use a checkerboard, not a circular pattern?
 
