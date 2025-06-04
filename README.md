@@ -1,13 +1,33 @@
 # Welcome to DiscoCal! (CVPR24, ***highlight***) </br> Super Accurate, Fast, and Robust Calibration tool.
 
 
-For decades, the checkerboard pattern has been the go-to method for camera calibration, providing only pixel-level precision. But what if we could improve accuracy even further? This paper reveals the power of the circular pattern: a game-changer offering subpixel precision to meet challenges even from unconventional visual sensors.
+For decades, the checkerboard pattern has been the go-to method for camera calibration, providing only pixel-level precision. But what if we could improve accuracy even further? Discocal reveals the power of the circular pattern: a game-changer offering subpixel precision to meet challenges even from unconventional visual sensors.
 
-[[Paper]](https://arxiv.org/abs/2403.04583)[[Video]](http://www.youtube.com/watch?v=87_R7Qkpczo)[[Demo]](http://www.youtube.com/watch?v=j86pyBZe7t0)[[OpenCV Webinar]](https://www.youtube.com/live/MTMMoN6ogcY?si=22DAdrzM3p9kDQK4)[[BibTex]](#bibtex)
+**Visit the official [Document](chaehyeonsong.github.io/discocal) for details!**
 
-<img src="./docs/figs/shorts1.gif">
 
-# Why DiscoCal? 
+[[Paper]](https://arxiv.org/abs/2403.04583)[[Video]](http://www.youtube.com/watch?v=87_R7Qkpczo)[[OpenCV Webinar]](https://www.youtube.com/live/MTMMoN6ogcY?si=22DAdrzM3p9kDQK4)[[BibTex]](#Citation)
+
+<img src="./figs/shorts1.gif">
+
+
+Discocal supports:
+- RGB camera calibration
+- Thermal infrared camera calibration
+- Extrinsic calibration of N cameras
+- RGB-TIR extrinsic calibartion
+- (Comming soon) LiDAR-Camera extrinsic calibration
+
+## News
+<!-- :round_pushpin: :Patch notes,    :tada:: awards -->
+- 25.05.30. :round_pushpin: **The uncertainty-aware version is released.** It is more accurate and robost.
+- 24.07.19. :tada: This work is invited to [OpenCV Webinar](https://www.youtube.com/live/MTMMoN6ogcY?si=22DAdrzM3p9kDQK4)
+- 24.06.17. :round_pushpin:Add a description of how to undisort images using our method.
+- 24.04.17. :round_pushpin:We update circular pattern detector! Now, you don't need to tune hyperparameters for detections
+- 24.04.05. :tada: Discocal is selected for highlight poster. (11.9% of accepted papers, 2.8% of total submissions.)
+
+<!-- --------------------
+## Why DiscoCal? 
 
 Sub-pixel accuracy and detection robustness are virtues of the conic features. But why do we use a checkerboard, not a circular pattern?
 
@@ -21,22 +41,14 @@ Without considering geometery of the distorted ellipse, existing circular patter
 
 > :pushpin: **Our unbiased estimator completes the missing piece in the conic-based calibration pipeline**
 
+Supports:
+* RGB camera calibration
+* Thermal infrared camera calibration
+* Extrinsic calibration of N cameras
+* RGB-TIR extrinsic calibartion
+* (Comming soon) LiDAR-Camera extrinsic calibration -->
 
-## A new version has been released! (May, 2025)
-
-- **It is more accuarte and robust!!**
-- If you encounter any bugs or problem, feel free to open an issue!
-- For the previous version, please refer to the v1 branch.
-
-## News
-<!-- :round_pushpin: :Patch notes,    :tada:: awards -->
-- 25.04.10. :round_pushpin: The uncertainty-aware version is released. It is more accurate and robost.
-- 24.07.19. :tada: This work is invited to [OpenCV Webinar](https://www.youtube.com/live/MTMMoN6ogcY?si=22DAdrzM3p9kDQK4)
-- 24.06.17. :round_pushpin:Add a description of how to undisort images using our method.
-- 24.04.17. :round_pushpin:We update circular pattern detector! Now, you don't need to tune hyperparameters for detections
-- 24.04.05. :tada: Discocal is selected for highlight poster. (11.9% of accepted papers, 2.8% of total submissions.)
-
---------------------
+----------------------
 # How to use
 ## 1. Prepare runfile
 **Option 1) Download runfile (Easy but only works on Ubuntu PC)**
@@ -54,7 +66,8 @@ docker compose up --build
 ```
 After build, runfiles will be created in discocal folder 
 
-## 2. Run (revise config files before run)
+## 2. Run 
+Note: Revise the config file before run
 * Intrinsic calibration
 	```bash
 	chmod +x run_mono && ./run_mono [config_path]
@@ -63,23 +76,18 @@ After build, runfiles will be created in discocal folder
 	```bash
 	chmod +x run_stereo && ./run_stereo [config_path]
 	```
---------------------
 
+You can download sample images in [here](https://www.dropbox.com/scl/fo/mdy8xivja5wfwrjpculb3/ALXiShefmtTgfacgkOm7Zcw?rlkey=0ndgwesufd22f7i0mcfrtl8uo&st=s99ke8pt&dl=0)
 
-
-# Applications
+<!-- # Applications
 
 ### Thermal Infrared Camera calibration
 
 We can leverage the detection robustness of the circular patterns, particularly for unconventional cameras, such as thermal cameras. Watch the demo video!
 
-[![Video Label](http://img.youtube.com/vi/j86pyBZe7t0/0.jpg)](https://youtu.be/j86pyBZe7t0)
+[![Video Label](http://img.youtube.com/vi/j86pyBZe7t0/0.jpg)](https://youtu.be/j86pyBZe7t0) -->
 
-# Read More from Our Papers and Cite them
-
-If you want to read the details, please find the following paper.
-
-Unbiased Estimator for Distorted Conics in Camera Calibration  (CVPR 2024, highlight)
+# Citation
 
 ```
 @INPROCEEDINGS{chsong-2024-cvpr,  
