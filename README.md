@@ -1,13 +1,26 @@
-# Welcome to Discocal! (CVPR24, ***highlight***) </br> Super Accurate, Fast, and Robust Calibration tool.
+# Welcome to DiscoCal! (CVPR24, ***highlight***) </br> Super Accurate, Fast, and Robust Calibration tool.
 
 
 For decades, the checkerboard pattern has been the go-to method for camera calibration, providing only pixel-level precision. But what if we could improve accuracy even further? This paper reveals the power of the circular pattern: a game-changer offering subpixel precision to meet challenges even from unconventional visual sensors.
 
-Paper title: Unbiased Estimator for Distorted Conics in Camera Calibration 
-
 [[Paper]](https://arxiv.org/abs/2403.04583)[[Video]](http://www.youtube.com/watch?v=87_R7Qkpczo)[[Demo]](http://www.youtube.com/watch?v=j86pyBZe7t0)[[OpenCV Webinar]](https://www.youtube.com/live/MTMMoN6ogcY?si=22DAdrzM3p9kDQK4)[[BibTex]](#bibtex)
 
 <img src="./docs/figs/shorts1.gif">
+
+# Why DiscoCal? 
+
+Sub-pixel accuracy and detection robustness are virtues of the conic features. But why do we use a checkerboard, not a circular pattern?
+
+> :cry: Conic is ***not*** conic anymore under distortion!!
+
+As shown below, the circle center is not projected to the centroid of the distorted ellipse under perspective transformation and distortion.
+
+<img src="./docs/figs/overview.png" width="600" height="300">
+
+Without considering geometery of the distorted ellipse, existing circular pattern-based calibration methods are biased, which leads low calibration accuracy than a checkerboard pattern.
+
+> :pushpin: **Our unbiased estimator completes the missing piece in the conic-based calibration pipeline**
+
 
 ## A new version has been released! (May, 2025)
 
@@ -52,28 +65,22 @@ After build, runfiles will be created in discocal folder
 	```
 --------------------
 
-# Why discocal? 
-
-Sub-pixel accuracy and detection robustness are virtues of the conic features. But why do we use a checkerboard, not a circular pattern?
-
-> :cry: Conic is ***not*** conic anymore under distortion!!
-
-As shown below, the circle center is not projected to the centroid of the distorted ellipse under perspective transformation and distortion.
-
-<img src="./docs/figs/overview.png" width="600" height="300">
-
-Without considering geometery of the distorted ellipse, existing circular pattern-based calibration methods are biased, which leads low calibration accuracy than a checkerboard pattern.
-
-> :pushpin: **Our unbiased estimator completes the missing piece in the conic-based calibration pipeline**
 
 
-## Application: Thermal Camera calibration (Extreme case)
+# Applications
+
+### Thermal Infrared Camera calibration
 
 We can leverage the detection robustness of the circular patterns, particularly for unconventional cameras, such as thermal cameras. Watch the demo video!
 
 [![Video Label](http://img.youtube.com/vi/j86pyBZe7t0/0.jpg)](https://youtu.be/j86pyBZe7t0)
 
-## BibTex
+# Read More from Our Papers and Cite them
+
+If you want to read the details, please find the following paper.
+
+Unbiased Estimator for Distorted Conics in Camera Calibration  (CVPR 2024, highlight)
+
 ```
 @INPROCEEDINGS{chsong-2024-cvpr,  
     author    = {Song, Chaehyeon and Shin, Jaeho and Jeon, Myung-Hwan and Lim, Jongwoo and Kim, Ayoung},
@@ -84,7 +91,7 @@ We can leverage the detection robustness of the circular patterns, particularly 
     pages     = {373-381}
 }
 ```
-## License
+# License
  <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
 
 - This work is protected by a patent.
