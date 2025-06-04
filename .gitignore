@@ -1,10 +1,7 @@
 .vscode/
 build/
-results/*
 sample_imgs/test/*
-runfiles/run_mono
-runfiles/run_stereo
-sample_imgs/rgb12/left/*.yaml
-sample_imgs/rgb12/left/detection_results/
-sample_imgs/rgb12/right/*.yaml
-sample_imgs/rgb12/right/detection_results/
+sample_imgs/rgb12/left/calibration_results/
+sample_imgs/rgb12/right/calibration_results/
+run_mono
+run_stereo

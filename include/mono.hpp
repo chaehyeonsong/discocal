@@ -56,8 +56,8 @@ void MonoCalibration::mono_calibration(YAML::Node node){
     if( option_node["save_pose"]) save_pose = option_node["save_pose"].as<bool>();
     bool save_rpe= false;
     if(option_node["save_rpe"]) save_rpe= option_node["save_rpe"].as<bool>();
-    bool save_jacob= false;
-    if(option_node["save_jacob"]) save_jacob= option_node["save_jacob"].as<bool>();
+    bool evaluation= false;
+    if(option_node["evaluation"]) evaluation= option_node["evaluation"].as<bool>();
     bool fix_intrinsic= false;
     if(option_node["fix_intrinsic"])fix_intrinsic= option_node["fix_intrinsic"].as<bool>();
 
@@ -70,7 +70,7 @@ void MonoCalibration::mono_calibration(YAML::Node node){
         string path = split<string>(s,'/').back();
         // if (path.find(type) == string::npos) continue;
         if(check_img_path(path)){
-                imgs.push_back(s);
+            imgs.push_back(s);
         }
     }
     sort(imgs.begin(),imgs.end());
@@ -80,13 +80,13 @@ void MonoCalibration::mono_calibration(YAML::Node node){
         throw LackOfImageError();
     }
 
-    string results_path = img_dir+"detection_results/";
+    string results_path = img_dir+"calibration_results/";
     mkdir(results_path);
 
     TargetDetector detector(n_x, n_y,visualize);
     pair<bool,vector<Shape>> result;
     int count=0;
-    Calibrator calibrator = Calibrator(n_x,n_y,n_d,r,distance,max_scene,img_dir);
+    Calibrator calibrator = Calibrator(n_x,n_y,n_d,r,distance,max_scene,results_path);
 
     // vector<int> success_img_list;
     vector<int> fail_img_list;
@@ -97,6 +97,7 @@ void MonoCalibration::mono_calibration(YAML::Node node){
     const int LEN = 20;
     const char bar = '=';
     const char blank = ' ';
+    bool need_init = true;
     for(int i=0; i<imgs.size();i++){
         if(calibrator.get_num_scene()==max_scene) break;
         print_process(i+1,max_scene,"Detecting image: ");
@@ -105,11 +106,13 @@ void MonoCalibration::mono_calibration(YAML::Node node){
         cv::Mat bgr_img, gray_img,hsv_img;
         bgr_img = cv::imread(path, cv::IMREAD_COLOR);
         gray_img = TargetDetector::preprocessing(bgr_img,detection_mode);
-                
         if(gray_img.rows == 0){
             throw exception();
         }
-
+        if(need_init) {
+            calibrator.set_image_size(gray_img.cols, gray_img.rows);
+            need_init=false;
+        }
         if(visualize) cout<<"start detect: "<<path<<endl;
         result = detector.detect(gray_img, type);
         detector.save_result(results_path+std::to_string(i)+".png");
@@ -145,12 +148,12 @@ void MonoCalibration::mono_calibration(YAML::Node node){
             cout<<table <<endl;
             calibrator.update_Es(final_params,0);
         }
-        else final_params=calibrator.calibrate(0,save_jacob);
+        else final_params=calibrator.calibrate(0,evaluation);
         if(save_pose) calibrator.save_extrinsic(img_dir+"est_pose_c0.txt");
         if(save_rpe) calibrator.visualize_rep(img_dir+"rpe_c0.txt",final_params,0);
     }
     else{
-        final_params=calibrator.calibrate(2,save_jacob);
+        final_params=calibrator.calibrate(2,evaluation);
         if(save_pose) calibrator.save_extrinsic(img_dir+"est_pose_s.txt");
         if(save_rpe) calibrator.visualize_rep(img_dir+"rpe_s.txt",final_params,2);
     }

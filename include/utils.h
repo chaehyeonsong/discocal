@@ -210,7 +210,7 @@ struct Params{
     }
     tabulate::Table to_table(bool only_intrinsic = false,  bool details = false){
         tabulate::Table table;
-        int toralance = 3;
+        int toralance = 2;
         if(only_intrinsic){
             table.add_row({"Parameter","fx", "fy", "cx","cy","skew"});
             table.add_row({"mean", to_stringf(fx, 2), to_stringf(fy, 2), to_stringf(cx, 2),to_stringf(cy, 2),to_stringf(skew, 2)

@@ -54,7 +54,7 @@ class Calibrator{
         
 
         
-
+        void set_image_size(int _width, int _height);
         // for exp
         void visualize_rep(string path, Params params, int mode);
         // Params calibrate();

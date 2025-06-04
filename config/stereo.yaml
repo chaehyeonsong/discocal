@@ -1,5 +1,5 @@
 cameras:
-  - img_dir: "../sample_imgs/rgb12/left/"
+  - img_dir: "./sample_imgs/rgb12/left/"
     cal_intrinsic: false
     type: "circle"
     n_x: 4 
@@ -18,7 +18,7 @@ cameras:
     d3: 0
     d4: 0
 
-  - img_dir: "../sample_imgs/rgb12/right/"
+  - img_dir: "./sample_imgs/rgb12/right/"
     cal_intrinsic: false
     type: "circle"
     n_x: 4 
@@ -38,5 +38,5 @@ cameras:
     d4: 0
 
 options:
-  save_results_path : "../"
+  save_results_path : "./"
   visualize : true

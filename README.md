@@ -25,103 +25,30 @@ Paper title: Unbiased Estimator for Distorted Conics in Camera Calibration
 
 --------------------
 # How to use
-## 1. Check the camera model
+## 1. Prepare runfile
+**Option 1) Download runfile (Easy but only works on Ubuntu PC)**
+* Ubuntu + x86_64 (amd64): 
+	[[Download_link]](https://www.dropbox.com/scl/fo/m7ugu49aboonfk1o55spk/ADgaLJ8n3V_oks52XEz2Sts?rlkey=noidt7em84dtzfbbxl0j28wxk&st=nzrwslgt&dl=0)
 
-We assume **pinhole camera model** with **radial distortion**.
-<p align="center">
-  <img src="./docs/figs/camera_model.png" width="40%">
-</p>
-<!-- ```math
-\begin{aligned}
-s\begin{bmatrix}
-x_n\\ y_n \\ 1
-\end{bmatrix} &= \begin{bmatrix} \boldsymbol{r}_1 & \boldsymbol{r}_2 & \boldsymbol{r}_3 & \boldsymbol{t} 
-\end{bmatrix}\begin{bmatrix}
-x_w\\ y_w \\ z_w \\ 1
-\end{bmatrix} \\
-k &= 1+ \sum_{i=1}^{n_d}d_i(x_n^2+y_n^2)^i\\
-\begin{bmatrix}
-u\\ v
-\end{bmatrix} &= \begin{bmatrix}
-f_x & \eta & c_x \\
-0 & f_y & c_y
-\end{bmatrix} \begin{bmatrix}
-kx_n \\ ky_n \\ 1
-\end{bmatrix}
-\end{aligned} 
-``` -->
+* Ubuntu + Arm64: 
+	[[Download_link]](https://www.dropbox.com/scl/fo/j0s4rr1bkzul7r8bptks6/ADmWkbheq0jjjIbGLno8gw4?rlkey=xaflec5h9591i0dct8akb3p9z&st=qnqwcoul&dl=0)
 
-Calibration results: $f_x, f_y, c_x, c_y, \eta, d_1, d_2, ... d_n$
-
-### Q. How do you undisort images using this model?
-#### Option 1) Use cv::undistort function(Only n_d <=3)
-Our model is compatible to OpenCV pin-hole camera model. **Set p1 and p2 as zero**.
-
+**Option 2) Build with docker (Supports all architectures)**
+```bash
+git clone https://github.com/chaehyeonsong/discocal.git
+cd discocal
+docker compose up --build
 ```
-distcoeff=(cv::Mat1d(1, 5) << d_1, d_2, 0., 0., d_3);
-cv::initUndistortRectifyMap(camera_matrix, distcoeff, cv::Mat(), camera_matrix, imageSize, CV_32FC1, mapx, mapy);
-cv::remap(image,undist_image, mapx, mapy, cv::INTER_LINEAR);
-```
-#### Option 2) Use Imagehandler class (General case)
-We provide a class that has an "undistort" function. This class can deal with n_d>3 cases. Please refer to the “CImagehander.cpp” files for details.
-```
-Imagehandler imagehandler(width, height, total_params, n_d);
-cv::Mat undist_image = imagehandler.undist(image);
-```
+After build, runfiles will be created in discocal folder 
 
-## 2. Prepare a calibration target
-<img src="./docs/figs/board2.png" width="40%">
-
-Our method needs a planer white board on which black circle grid patterns are printed. 
-You can easily design these patterns in this [site](https://calib.io/pages/camera-calibration-pattern-generator). Just print the pattern , and attach it on a planar board.
-
-**Previous methods prefer to reduce the size of the circles to minimize bias, but our method is not limited to this. In fact, large circles induce more accurate measurements.**
-
-> **Q. How to decide the number of cicles and the radius size?** 
-The larger the radius of the circle, the more accurate the observations become. The greater the number of circles, the more observations you have, leading to increased robustness. Since these two values are in a trade-off relationship within a limited area, adjust them appropriately. It is recommended that every circle contains more than 400 pixels in images and not to exceed 7x5 circles.
-
-## 3. Run! (Choose one of them)
-**Option 1) Use runfile (Easy but only works on Ubuntu PC)**
-- Download runfiles and configs
-	* Ubuntu + x86_64 (amd64): 
-		[[Download_link]](https://drive.google.com/drive/folders/1vixewjLga-ijLR1AWvRLhydzaLZzNaQc?usp=sharing)
-
-	* Ubuntu + Arm64: 
-		[[To be uploaded]]()
-- Revise the config file: img_dir, n_d, radius, distance ...
-
-- Run
+## 2. Run (revise config files before run)
+* Intrinsic calibration
 	```bash
 	chmod +x run_mono && ./run_mono [config_path]
 	```
-	or
+* Extrinsic calibration
 	```bash
 	chmod +x run_stereo && ./run_stereo [config_path]
-	```
-
-**Option 2) Build with docker (Supports all architectures)**
-- clone the repository
-	```bash
-	git clone https://github.com/chaehyeonsong/discocal.git
-	```
-- Revise the config file
-
-	You should change calibration options using yaml files in the config folder. If you have a trouble regarding to the visualization, turn off the visualization option in the config file.
-
-- Run
-
-	For visualizing the detection results in docker, this command is needed
-	```bash
-	 xhost +local:docker
-	```
-
-	Chose one of them
-	```bash
-	docker compose up --build mono
-	```
-	or
-	```bash
-	docker-compose up --build stereo
 	```
 --------------------
 

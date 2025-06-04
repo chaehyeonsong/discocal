@@ -69,8 +69,8 @@ vector<pair<se3,bool>> StereoCalibration::calExtrinsic(YAML::Node args, int came
     if( option_node["save_pose"]) save_pose = option_node["save_pose"].as<bool>();
     bool save_rpe= false;
     if(option_node["save_rpe"]) save_rpe= option_node["save_rpe"].as<bool>();
-    bool save_jacob= false;
-    if(option_node["save_jacob"]) save_jacob= option_node["save_jacob"].as<bool>();
+    bool evaluation= false;
+    if(option_node["evaluation"]) evaluation= option_node["evaluation"].as<bool>();
 
 
     vector<string> imgs;
@@ -88,11 +88,11 @@ vector<pair<se3,bool>> StereoCalibration::calExtrinsic(YAML::Node args, int came
         std::cout<<LackOfImageError().what()<<std::endl;
         throw LackOfImageError();
     }
-    string results_path = img_dir+"detection_results/";
+    string results_path = img_dir+"calibration_results/";
     mkdir(results_path);
 
     TargetDetector detector(n_x, n_y,visualize);
-    Calibrator calibrator = Calibrator(n_x,n_y,n_d,r,distance,max_scene,img_dir);
+    Calibrator calibrator = Calibrator(n_x,n_y,n_d,r,distance,max_scene,results_path);
     vector<bool> valid_scene; 
 
     struct timeval  tv;
@@ -102,7 +102,7 @@ vector<pair<se3,bool>> StereoCalibration::calExtrinsic(YAML::Node args, int came
     const int LEN = 20;
     const char bar = '=';
     const char blank = ' ';
-
+    bool need_init = true;
     vector<int> fail_img_list;
     for(int i=0; i<imgs.size();i++){
         if(i==max_scene) break;
@@ -111,6 +111,10 @@ vector<pair<se3,bool>> StereoCalibration::calExtrinsic(YAML::Node args, int came
         bgr_img = cv::imread(path, cv::IMREAD_COLOR);
         gray_img = TargetDetector::preprocessing(bgr_img,detection_mode);
         if(gray_img.rows == 0) throw exception();
+        if(need_init) {
+            calibrator.set_image_size(gray_img.rows, gray_img.cols);
+            need_init=false;
+        }
         if(visualize) cout<<"start detect: "<<path<<endl;
         pair<bool,vector<Shape>> result = detector.detect(gray_img, type);
         detector.save_result(results_path+std::to_string(i)+".png");
@@ -139,7 +143,7 @@ vector<pair<se3,bool>> StereoCalibration::calExtrinsic(YAML::Node args, int came
     // 0: moment, 1: conic, 2: point, 4: numerical, 5: iterative
     int mode = 0;
     if(type != "circle") mode=2;
-    if(cal_intrinsic) calibrator.calibrate(mode,save_jacob);
+    if(cal_intrinsic) calibrator.calibrate(mode,evaluation);
     else calibrator.update_Es(Params(camera_node),mode);
 
     if(save_pose) calibrator.save_extrinsic();

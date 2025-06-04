@@ -21,7 +21,7 @@ RUN apt-get update \
 		libopencv-dev\
 		python3-dev\
 		python3-pip \
-		# python3-opencv\
+		python3-opencv\
 	&& rm -rf /var/lib/apt/lists/*
 
 # Install Ceres Solver
@@ -42,3 +42,29 @@ RUN git clone https://github.com/jbeder/yaml-cpp.git \
 
 # Clean up build artifacts
 RUN rm -rf /tmp/*
+
+#-----------------------------------------------------------
+
+RUN pip3 install pyinstaller scipy matplotlib pyyaml
+# 5) 프로젝트 복사 및 빌드
+WORKDIR /app
+COPY . .
+
+RUN rm -rf build && mkdir build && cd build \
+  && cmake .. \
+  && make -j$(nproc)
+
+# Run PyInstaller with static .so detection
+RUN pyinstaller \
+    --onefile \
+    --add-binary "build/pydiscocal.cpython-38-x86_64-linux-gnu.so:." \
+    src/python/run_mono.py
+
+RUN pyinstaller \
+    --onefile \
+    --add-binary "build/pydiscocal.cpython-38-x86_64-linux-gnu.so:." \
+    src/python//run_stereo.py
+
+# Run PyInstaller with dynamic .so detection
+# RUN chmod +x pyinstaller_build.sh
+# RUN pyinstaller_build.sh

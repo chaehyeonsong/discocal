@@ -13,6 +13,8 @@ Calibrator::Calibrator(int n_x, int n_y,int n_d, double r,double distance, int m
 
     this->original_r = r;
     this->distance = distance;
+    this->width = 0;
+    this->height = 0;
 
     // origin_conics.reserve(n_x*n_y);
     origin_target.reserve(n_x*n_y);
@@ -36,6 +38,11 @@ void Calibrator::init(){
     //     rs[i]=original_r;
     // }
     // Hs.clear();
+}
+
+void Calibrator::set_image_size(int _width, int _height){
+    this->width = _width;
+    this->height = _height;
 }
 
 void Calibrator::set_origin_target(){
@@ -518,10 +525,14 @@ Params Calibrator::calibrate(int mode, bool save_jacob){
     std::cout.precision(12);
     Params initial_params;
     Params final_params;
-    string path = root_dir + "calibration_result.yaml";
+    string path = root_dir + "intrinsic_parameters.yaml";
     std::ofstream writeFile(path.data());
    
     bool result= cal_initial_params(&initial_params);
+    if(!result){
+        initial_params.fx = initial_params.cx = this->width/2;
+        initial_params.fy = initial_params.cy = this->height/2;
+    }
     //  if(debug) cout<< initial_params.to_table(true)<<endl;
     // if(debug) printParams(initial_params,true);
     
@@ -557,7 +568,9 @@ Params Calibrator::calibrate(int mode, bool save_jacob){
 
     
     if(writeFile.is_open()){
-        writeFile<<"img_dir: \""<<root_dir <<"\"\n";  
+        writeFile<<"results_dir: \""<<root_dir <<"\"\n";  
+        writeFile<<"width: "<<width <<"\n";  
+        writeFile<<"height: "<<height <<"\n";  
         writeFile<<"n_d: "<<n_d <<"\n";  
         writeFile<<"mode: "<<mode <<"\n";
         writeFile<<"radius: " << original_r << "\n";
@@ -755,15 +768,20 @@ bool Calibrator::cal_initial_params(Params* inital_params){
             skew = -b(1)*fx*fx*fy/lamda;
             cx = skew*cy/fx - b(3)*fx*fx/lamda;
 
-            inital_params->fx= fx;
-            inital_params->fy= fy;
-            inital_params->cx = cx;
-            inital_params->cy= cy;
-            inital_params->skew = skew;
-            return true;
+            if(fx <0 || fy <0 || cx <0 || cy < 0){
+                return false;
+            }
+            else{
+                inital_params->fx= fx;
+                inital_params->fy= fy;
+                inital_params->cx = cx;
+                inital_params->cy= cy;
+                inital_params->skew = skew;
+                return true;
+            }
         }
         else{
-            printf("Not enough images collected");
+            // printf("Not enough images collected");
             return false;
         }
 
