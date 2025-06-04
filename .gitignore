@@ -4,3 +4,7 @@ sample_imgs/rgb
 sample_imgs/tir
 run_mono
 run_stereo
+
+#pages
+Gemfile.lock
+_site
