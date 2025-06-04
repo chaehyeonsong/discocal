@@ -1,0 +1,48 @@
+title: jekyll-theme-read-the-docs
+description: Read the Docs like Jekyll Theme for GitHub Pages
+
+theme: null
+
+google:
+  site_verification: ChPjQbKFflPAwOF9uuYRLEodZBgPjW5CISg0gSsViN0
+
+mouseflow:
+  project_api_key: 11a6acbb-5bc8-41ac-b415-731ab78f77e0
+
+posthog:
+  project_api_key: phc_f6FrCZbt951cotQoYFi5VAS7KYpyCnpgRcbknlMwBDs
+
+telemetry:
+  app_id: CB7D497B-DC8A-4C75-B5FD-00AAA1F60E41
+
+umami:
+  website_id: 7670b311-8c77-45fb-a36d-6fecf59bbdac
+
+readme_index:
+  with_frontmatter: true
+
+plugins:
+  - jemoji
+  - jekyll-avatar
+  - jekyll-mentions
+  - jekyll-github-metadata
+
+exclude:
+  - .bash
+  - .github
+  - .vscode
+  - .yarn
+  - CNAME
+  - Gemfile
+  - Gemfile.lock
+  - jekyll-theme-read-the-docs.gemspec
+  - LICENSE
+  - Makefile
+  - node_modules
+  - package-lock.json
+  - package.json
+  - Pipfile
+  - Pipfile.lock
+  - requirements.txt
+  - webpack.config.js
+  - yarn.lock

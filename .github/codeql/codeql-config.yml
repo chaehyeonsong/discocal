@@ -1,0 +1,19 @@
+# Copyright (c) 2019-2024 JV-conseil, All rights reserved
+#
+# Specifying directories to scan
+# See <https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/customizing-code-scanning#specifying-directories-to-scan>
+
+name: "CodeQL config"
+
+# paths:
+#   - _includes/js
+#   - _includes/scripts
+#   - _js
+#   - .scripts
+paths-ignore:
+  # - "assets/*"
+  # - 'assets/js/bower_components/*'
+  # - 'assets/js/legacy/*'
+  # - 'assets/js/service-worker.js'
+  # - 'assets/js/sw.js'
+  - "_site/*"

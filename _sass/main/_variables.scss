@@ -1,0 +1,52 @@
+// fonts
+$body-font: "Lato", BlinkMacSystemFont, "Segoe UI", Helvetica, sans-serif;
+$head-font: "Roboto-Slab", sans-serif;
+$mono-font: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+
+// hack primer/css v15 --> v20
+// - <https://primer.style/css/support/v16-migration>
+// - <https://primer.style/primitives/colors>
+// - <https://github.com/primer/css/releases/tag/v15.2.0>
+$black: #1b1f23 !default;
+// -------- Blue --------
+$blue-500: #0366d6 !default; // Default: Passes AA with #fff
+$blue: $blue-500 !default;
+// -------- Green --------
+$green-500: #28a745 !default; // Default. passes AA Large
+$green: $green-500 !default;
+// -------- Grays --------
+$gray-100: #f6f8fa !default;
+$gray-300: #d1d5da !default;
+$gray-500: #6a737d !default;
+$bg-gray: $gray-100 !default;
+$text-gray-light: $gray-500 !default;
+
+// theme color
+$theme-blue: #2980b9;
+$theme-red: #e74c3c;
+$theme-green: #1abc9c;
+$theme-orange: #e67e22;
+
+$theme-white: lighten($black, 99%);
+$theme-black: lighten($black, 15%);
+
+// theme link
+$theme-link: $blue;
+$theme-link-hover: lighten($blue, 10%);
+// $theme-link-visited: lighten($purple, 10%);
+
+// theme code
+$theme-code: $theme-black;
+$theme-code-background: $bg-gray;
+$theme-code-inline: $theme-red;
+$theme-code-inline-background: darken($theme-white, 2%);
+
+// theme mask
+$theme-mask-white: transparentize($theme-white, 0.9);
+$theme-mask-black: transparentize($theme-black, 0.9);
+
+// theme menu
+$theme-menu-width-sm: 85%;
+$theme-menu-width: 300px;
+$theme-menu-background: darken($theme-black, 10%);
+$theme-menu-active-background: darken($theme-blue, 15%);
