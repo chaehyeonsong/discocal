@@ -5,14 +5,14 @@ sort: 2
 # How To Run
 
 ## 1. Prepare runfiles
-**Option 1) Download runfile (Easy but only works on Ubuntu PC)**
+### Option 1) Download runfile (Easy but only works on Ubuntu PC)
 * Ubuntu + x86_64 (amd64): 
 	[[Download_link]](https://www.dropbox.com/scl/fo/m7ugu49aboonfk1o55spk/ADgaLJ8n3V_oks52XEz2Sts?rlkey=noidt7em84dtzfbbxl0j28wxk&st=nzrwslgt&dl=0)
 
 * Ubuntu + Arm64: 
 	[[Download_link]](https://www.dropbox.com/scl/fo/j0s4rr1bkzul7r8bptks6/ADmWkbheq0jjjIbGLno8gw4?rlkey=xaflec5h9591i0dct8akb3p9z&st=qnqwcoul&dl=0)
 
-**Option 2) Build with docker (Supports all architectures)**
+### Option 2) Build with docker (Supports all architectures)
 ```bash
 $ git clone https://github.com/chaehyeonsong/discocal.git
 $ cd discocal
@@ -23,13 +23,14 @@ After build, runfiles will be created in discocal folder
 ```tip
 If docker compose command is not installed or doesn't work, try this
 
+`$ docker build -t chaehyeonsong/discocal . -f dockerfile`  
 `$ docker run --rm --entrypoint sh chaehyeonsong/discocal -c "tar -C /app/dist -cf - ." | tar -xf -`
 ```
 
 
 
 ## 2. Revise the config files
-This is template of config files
+This is template of config files of **instrinsic calibration**
 
 ```
 camera:
@@ -47,6 +48,57 @@ options:
   evaluation: true # If true, you can check the uncertainty map indicating calibration accuracy
   save_pose : false # If true, estimated target poses are saved
   save_rpe : false # If true, reprojection error of each measurement is saved
+```
+
+This is template of config files of **extrinsic calibration**.  
+With DiscoCal, extrinsic calibration for **n** cameras can be performed simultaneously.  
+The relative poses of all cameras are estimated with respect to the first camera.
+```
+cameras:
+  - img_dir: "image dir path for camera 1"
+    cal_intrinsic: false # If true, camera instrinsic parameter is recalurated using images in "img_dir"
+    type: "circle"
+    n_x: 4 
+    n_y: 3
+    radius: 0.03
+    distance: 0.09
+    detection_mode: ""
+    n_d: 2
+    fx: 496.293 # Please adjust the parameters according to your camera.
+    fy: 496.357
+    cx: 717.485
+    cy: 572.079
+    skew: 0.41766
+    d1: -0.00921607
+    d2: 0.00222301
+    d3: 0
+    d4: 0
+
+  - img_dir: "image dir path for camera 2"
+    cal_intrinsic: false
+    type: "circle"
+    n_x: 4 
+    n_y: 3
+    radius: 0.03
+    distance: 0.09
+    detection_mode: ""
+    n_d: 2
+    fx: 491.095 # Please adjust the parameters according to your camera.
+    fy: 491.347
+    cx: 725.878
+    cy: 569.479
+    skew: 0.593612
+    d1: -0.00876289
+    d2: 0.00243215
+    d3: 0
+    d4: 0
+    
+  - img_dir: "image dir path for camera 3"
+    ... # others are same as above
+
+options:
+  save_results_path : "./"
+  visualize : true
 ```
 
 
