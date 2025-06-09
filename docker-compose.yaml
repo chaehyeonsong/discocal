@@ -8,4 +8,4 @@ services:
       - "4000:4000" # 호스트와 컨테이너의 4000 포트를 연결
     environment:
       - JEKYLL_ENV=development
-      - PAGES_REPO_NWO=discocal/my-jekyll-docs
+      - PAGES_REPO_NWO=chaehyeonsong/discocal
