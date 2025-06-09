@@ -50,7 +50,7 @@ Supports:
 
 ----------------------
 # How to use
-## 1. Prepare runfile
+## 1. Prepare runfiles
 **Option 1) Download runfile (Easy but only works on Ubuntu PC)**
 * Ubuntu + x86_64 (amd64): 
 	[[Download_link]](https://www.dropbox.com/scl/fo/m7ugu49aboonfk1o55spk/ADgaLJ8n3V_oks52XEz2Sts?rlkey=noidt7em84dtzfbbxl0j28wxk&st=nzrwslgt&dl=0)
@@ -70,11 +70,11 @@ After build, runfiles will be created in discocal folder
 Note: Revise the config file before run
 * Intrinsic calibration
 	```bash
-	chmod +x run_mono && ./run_mono [config_path]
+	sudo chmod +x run_mono && ./run_mono [config_path]
 	```
 * Extrinsic calibration
 	```bash
-	chmod +x run_stereo && ./run_stereo [config_path]
+	sudo chmod +x run_stereo && ./run_stereo [config_path]
 	```
 
 You can download sample images in [here](https://www.dropbox.com/scl/fo/mdy8xivja5wfwrjpculb3/ALXiShefmtTgfacgkOm7Zcw?rlkey=0ndgwesufd22f7i0mcfrtl8uo&st=s99ke8pt&dl=0)

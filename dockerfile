@@ -1,27 +1,27 @@
 FROM ubuntu:20.04
 
 LABEL name="chaehyeon.song" \
-		email="chaehyeon@snu.ac.kr" \
-		version="2.0"
+	email="chaehyeon@snu.ac.kr" \
+	version="2.0"
 
 ARG DEBIAN_FRONTEND=noninteractive
 WORKDIR /tmp
 
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends \
-		build-essential \
-		cmake \
-		git \
-		wget \
-		libgoogle-glog-dev\
-		libgflags-dev\
-		libatlas-base-dev\
-		libeigen3-dev\
-		libsuitesparse-dev\
-		libopencv-dev\
-		python3-dev\
-		python3-pip \
-		python3-opencv\
+	build-essential \
+	cmake \
+	git \
+	wget \
+	libgoogle-glog-dev\
+	libgflags-dev\
+	libatlas-base-dev\
+	libeigen3-dev\
+	libsuitesparse-dev\
+	libopencv-dev\
+	python3-dev\
+	python3-pip \
+	python3-opencv\
 	&& rm -rf /var/lib/apt/lists/*
 
 # Install Ceres Solver
@@ -51,20 +51,12 @@ WORKDIR /app
 COPY . .
 
 RUN rm -rf build && mkdir build && cd build \
-  && cmake .. \
-  && make -j$(nproc)
+	&& cmake .. \
+	&& make -j$(nproc)
 
-# Run PyInstaller with static .so detection
-RUN pyinstaller \
-    --onefile \
-    --add-binary "build/pydiscocal.cpython-38-x86_64-linux-gnu.so:." \
-    src/python/run_mono.py
-
-RUN pyinstaller \
-    --onefile \
-    --add-binary "build/pydiscocal.cpython-38-x86_64-linux-gnu.so:." \
-    src/python//run_stereo.py
+# Copy build script
+COPY pyinstaller_build.sh /app/
+RUN chmod +x /app/pyinstaller_build.sh
 
 # Run PyInstaller with dynamic .so detection
-# RUN chmod +x pyinstaller_build.sh
-# RUN pyinstaller_build.sh
+RUN /app/pyinstaller_build.sh
