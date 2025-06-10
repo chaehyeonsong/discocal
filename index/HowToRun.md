@@ -1,8 +1,11 @@
 ---
-sort: 2
+sort: 3
 ---
 
 # How To Run
+
+## 0. Preprocess
+Before start, take images for calbibration using a planar target with the circular pattern. See the [Guidance](./Guidance.md) section.
 
 ## 1. Prepare runfiles
 ### Option 1) Download runfile (Easy but only works on Ubuntu PC)
@@ -29,78 +32,13 @@ If docker compose command is not installed or doesn't work, try this
 
 
 
-## 2. Revise the config files
-This is template of config files of **instrinsic calibration**
+## 2. Modify the config file
+- [`intrinsic.yaml`](../codes/intrinsic.yaml): This is a config template of **instrinsic calibration**
 
-```
-camera:
-  img_dir : "write your image path" 
-  n_d: 2 # number of distortion coefficients
-  type: "circle"
-  n_x: 4 # Number of circles in a row
-  n_y: 3 # Number of circles in a column
-  detection_mode: ""
-  radius: 0.03 # circle radius
-  distance: 0.09 # distance between circle centers
 
-options:
-  visualize : true # If true, you can check the detection results in real-time
-  evaluation: true # If true, you can check the uncertainty map indicating calibration accuracy
-  save_pose : false # If true, estimated target poses are saved
-  save_rpe : false # If true, reprojection error of each measurement is saved
-```
-
-This is template of config files of **extrinsic calibration**.  
+- [`extrinsic.yaml`](../codes/intrinsic.yaml): This is a config template of **extrinsic calibration**.  
 With DiscoCal, extrinsic calibration for **n** cameras can be performed simultaneously.  
 The relative poses of all cameras are estimated with respect to the first camera.
-```
-cameras:
-  - img_dir: "image dir path for camera 1"
-    cal_intrinsic: false # If true, camera instrinsic parameter is recalurated using images in "img_dir"
-    type: "circle"
-    n_x: 4 
-    n_y: 3
-    radius: 0.03
-    distance: 0.09
-    detection_mode: ""
-    n_d: 2
-    fx: 496.293 # Please adjust the parameters according to your camera.
-    fy: 496.357
-    cx: 717.485
-    cy: 572.079
-    skew: 0.41766
-    d1: -0.00921607
-    d2: 0.00222301
-    d3: 0
-    d4: 0
-
-  - img_dir: "image dir path for camera 2"
-    cal_intrinsic: false
-    type: "circle"
-    n_x: 4 
-    n_y: 3
-    radius: 0.03
-    distance: 0.09
-    detection_mode: ""
-    n_d: 2
-    fx: 491.095 # Please adjust the parameters according to your camera.
-    fy: 491.347
-    cx: 725.878
-    cy: 569.479
-    skew: 0.593612
-    d1: -0.00876289
-    d2: 0.00243215
-    d3: 0
-    d4: 0
-    
-  - img_dir: "image dir path for camera 3"
-    ... # others are same as above
-
-options:
-  save_results_path : "./"
-  visualize : true
-```
-
 
 ## 3. Run 
 * Intrinsic calibration
@@ -113,3 +51,5 @@ $ sudo chmod +x run_stereo && ./run_stereo [config_path]
 ```
 
 You can download sample images in [here](https://www.dropbox.com/scl/fo/mdy8xivja5wfwrjpculb3/ALXiShefmtTgfacgkOm7Zcw?rlkey=0ndgwesufd22f7i0mcfrtl8uo&st=s99ke8pt&dl=0)
+
+<!-- ## 4. Results -->

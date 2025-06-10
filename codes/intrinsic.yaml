@@ -1,0 +1,15 @@
+camera:
+  img_dir : "write your image path" 
+  n_d: 2 # number of distortion coefficients
+  type: "circle"
+  n_x: 4 # Number of circles in a row
+  n_y: 3 # Number of circles in a column
+  detection_mode: ""
+  radius: 0.03 # circle radius
+  distance: 0.09 # distance between circle centers
+
+options:
+  visualize : true # If true, you can check the detection results in real-time
+  evaluation: true # If true, you can check the uncertainty map indicating calibration accuracy
+  save_pose : false # If true, estimated target poses are saved
+  save_rpe : false # If true, reprojection error of each measurement is saved
