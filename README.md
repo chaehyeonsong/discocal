@@ -1,6 +1,6 @@
 # DiscoCal
 
-**DiscoCal** is a highly accurate, robust, and fast camera calibration tool. It utilizes a **circular pattern**, which offers more precise measurements compared to a checkerboard. For more details, see [Why DiscoCal?](/index/Why.md)
+**DiscoCal** is a highly accurate, robust, and fast camera calibration tool. It utilizes a **circular pattern**, which offers more precise measurements compared to a checkerboard. For more details, see [Why DiscoCal?](/index/Why_discocal.md)
 
 ## Supported Tasks
 
@@ -12,7 +12,7 @@ DiscoCal supports the following tasks *(the list will be continuously updated)*:
 - Camera–LiDAR extrinsic calibration *(coming soon)*
 
 ## Project Information
-
+gi
 This project began in **April 2024** and is actively maintained by the [RPM Robotics Lab](https://rpm.snu.ac.kr/index.php/Main/About) at **Seoul National University**, South Korea.
 
 - 📁 GitHub Repository: [https://github.com/chaehyeonsong/discocal](https://github.com/chaehyeonsong/discocal)  
