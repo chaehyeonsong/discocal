@@ -9,3 +9,4 @@ run_stereo
 Gemfile.lock
 _site
 sample_imgs/
+config/*

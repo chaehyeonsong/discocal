@@ -630,45 +630,81 @@ array<double, 4> Calibrator::get_mean_sigma(const vector<Shape> &target){
 pair<Eigen::Matrix3d,double> Calibrator::get_H(const vector<Shape> &target){
     
     int n_points = target.size();
-
-    Eigen::MatrixXd X(2*n_points,9);
-    X.setZero();
-
     array<double,4> ms = get_mean_sigma(target);
     double m_u{ms[0]}, m_v{ms[1]}, s_u{ms[2]}, s_v{ms[3]};
 
     double m_x{ori_ms[0]}, m_y{ori_ms[1]}, s_x{ori_ms[2]}, s_y{ori_ms[3]};
 
-    for (int i=0;i<n_points;i++){
-        double x,y,u,v;
-
-        u = (target[i].x-m_u)/s_u;
-        v = (target[i].y-m_v)/s_v;
-        x = (origin_target[i].x-m_x)/s_x;
-        y = (origin_target[i].y-m_y)/s_y;
-
-        X(2*i, 0)=x;
-        X(2*i,1) = y;
-        X(2*i,2) = 1;
-        X(2*i,6) = -u*x;
-        X(2*i,7) = -u*y;
-        X(2*i,8) = -u;
-
-        X(2*i+1,3)=x;
-        X(2*i+1,4) = y;
-        X(2*i+1,5) = 1;
-        X(2*i+1,6) = -v*x;
-        X(2*i+1,7) = -v*y;
-        X(2*i+1,8) = -v;
-
-    }
-    Eigen::BDCSVD<Eigen::MatrixXd> svd(X,Eigen::ComputeThinU | Eigen::ComputeThinV);
-    Eigen::MatrixXd V = svd.matrixV();
-
     Eigen::Matrix3d H, Kt, Ko;
-    H << V(0,8),V(1,8),V(2,8),
-         V(3,8),V(4,8),V(5,8),
-         V(6,8),V(7,8),V(8,8);
+    double singular_value_ratio =1;
+
+    // (n>4) -> DLT, n==4 -> exact solution
+    if(n_points>4){
+        Eigen::MatrixXd X(2*n_points,9);
+        X.setZero();
+        for (int i=0;i<n_points;i++){
+            double x,y,u,v;
+
+            u = (target[i].x-m_u)/s_u;
+            v = (target[i].y-m_v)/s_v;
+            x = (origin_target[i].x-m_x)/s_x;
+            y = (origin_target[i].y-m_y)/s_y;
+
+            X(2*i, 0)=x;
+            X(2*i,1) = y;
+            X(2*i,2) = 1;
+            X(2*i,6) = -u*x;
+            X(2*i,7) = -u*y;
+            X(2*i,8) = -u;
+
+            X(2*i+1,3)=x;
+            X(2*i+1,4) = y;
+            X(2*i+1,5) = 1;
+            X(2*i+1,6) = -v*x;
+            X(2*i+1,7) = -v*y;
+            X(2*i+1,8) = -v;
+
+        }
+        Eigen::BDCSVD<Eigen::MatrixXd> svd(X,Eigen::ComputeThinU | Eigen::ComputeThinV);
+        Eigen::MatrixXd V = svd.matrixV();
+        H << V(0,8),V(1,8),V(2,8),
+            V(3,8),V(4,8),V(5,8),
+            V(6,8),V(7,8),V(8,8);
+        Eigen::VectorXd singular_values=svd.singularValues();
+        double singular_value_ratio = singular_values(7)/singular_values(8);
+    }
+    else if(n_points==4){
+        Eigen::MatrixXd X(2*n_points,8);
+        Eigen::VectorXd b(2*n_points);
+        X.setZero();
+        for (int i=0;i<n_points;i++){
+            double x,y,u,v;
+
+            u = (target[i].x-m_u)/s_u;
+            v = (target[i].y-m_v)/s_v;
+            x = (origin_target[i].x-m_x)/s_x;
+            y = (origin_target[i].y-m_y)/s_y;
+
+            X(2*i, 0)=x;
+            X(2*i,1) = y;
+            X(2*i,2) = 1;
+            X(2*i,6) = -u*x;
+            X(2*i,7) = -u*y;
+            X(2*i+1,3)=x;
+            X(2*i+1,4) = y;
+            X(2*i+1,5) = 1;
+            X(2*i+1,6) = -v*x;
+            X(2*i+1,7) = -v*y;
+
+            b(2*i) = u;
+            b(2*i+1) = v;
+        }
+        Eigen::VectorXd V = X.fullPivLu().solve(b);
+        H << V(0),V(1),V(2),
+            V(3),V(4),V(5),
+            V(6),V(7),1;
+    }
+    else throw exception();    
 
     Ko << 1/s_x, 0, -m_x/s_x,
             0,  1/s_y, -m_y/s_y,
@@ -678,8 +714,6 @@ pair<Eigen::Matrix3d,double> Calibrator::get_H(const vector<Shape> &target){
             0,  1/s_v, -m_v/s_v,
             0,  0,  1;
 
-    Eigen::VectorXd singular_values=svd.singularValues();
-    double singular_value_ratio = singular_values(7)/singular_values(8);
     // std::cout<<"singular value ratio: "<<singular_value_ratio<<std::endl;
 
     H = Kt.inverse() * H * Ko;
