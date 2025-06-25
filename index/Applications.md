@@ -28,7 +28,7 @@ As shown, the **epipolar lines** are perfectly aligned — despite the differenc
 DiscoCal also works in challenging environments such as **underwater settings**.  
 Check out the video demonstration:
 
-[![Video Label](http://img.youtube.com/vi/1OsWIEwnsb4/0.jpg)](https://youtu.be/1OsWIEwnsb4)
+[![Video Label](http://img.youtube.com/vi/S62zH_EzlU8/0.jpg)](https://youtu.be/S62zH_EzlU8)
 
 
 ---

@@ -53,3 +53,7 @@ $ sudo chmod +x run_stereo && ./run_stereo [config_path]
 You can download sample images in [here](https://www.dropbox.com/scl/fo/mdy8xivja5wfwrjpculb3/ALXiShefmtTgfacgkOm7Zcw?rlkey=0ndgwesufd22f7i0mcfrtl8uo&st=s99ke8pt&dl=0)
 
 <!-- ## 4. Results -->
+
+## Demo video
+
+[![Video Label](http://img.youtube.com/vi/75tsl_WARz4/0.jpg)](https://youtu.be/75tsl_WARz4)

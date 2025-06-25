@@ -12,11 +12,13 @@ DiscoCal supports the following tasks *(the list will be continuously updated)*:
 - Camera–LiDAR extrinsic calibration *(coming soon)*
 
 ## Project Information
-gi
 This project began in **April 2024** and is actively maintained by the [RPM Robotics Lab](https://rpm.snu.ac.kr/index.php/Main/About) at **Seoul National University**, South Korea.
 
 - 📁 GitHub Repository: [https://github.com/chaehyeonsong/discocal](https://github.com/chaehyeonsong/discocal)  
 - ❓ If you have any questions or encounter issues, please use the **Issues** tab on GitHub.
+- Papers:
+    - CVPR24: [Unbiased Estimator for Distorted Conics in Camera Calibration](https://arxiv.org/abs/2403.04583)
+    - TPAMI (under reivew): [Camera Calibration via Circular Patterns: A Comprehensive Framework with Measurement Uncertainty and Unbiased Projection Model](https://arxiv.org/abs/2506.16842)
 
 ## Cite Us
 

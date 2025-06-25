@@ -3,6 +3,8 @@ sort: 2
 ---
 
 # Guidance
+This section is the summerized version of our paper. For more details, please refer to our [journal](https://arxiv.org/abs/2506.16842)
+
 ## Pinhole camera model
 DiscoCal assumes **Pinhole Camera Model** with **Radial Distortion**.  
 A 3D point $$(x_w, y_w, z_w)$$ is projected to the image pixel $$(u,v)$$ as
@@ -59,3 +61,4 @@ In this case, place the camera such that its optical center faces the target dir
 <img src="../figs/optimal_configuration.png" height="300">
 
 Those two methods completely identical from the perspective of the relative configuration between the camera and the target.
+

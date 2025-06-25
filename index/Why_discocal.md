@@ -38,6 +38,7 @@ Although there is no simple analytic form for distorted ellipses, **moment repre
 
 <img src="../figs/moments_transformation.png" height="300">
 
+If you are interested in the unbiased projection of conic, please visit our [paper](https://arxiv.org/abs/2403.04583)
 
 ## Uncertainty-aware Framework
 
@@ -56,3 +57,5 @@ You can also check the calibration uncertainty in image space.
 After calibration, DiscoCal generates an **uncertainty map**, which indicates the pixel-wise accuracy of the calibration.
 
 <img src="../figs/calibration_uncertainty.png" height="300">
+
+If you are interested in the uncertainty in calibration, please visit our [paper](https://arxiv.org/abs/2506.16842)
