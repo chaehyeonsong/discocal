@@ -96,7 +96,7 @@ pair<bool,vector<Shape>> TargetDetector::detect(cv::Mat& img, string type){
     cv::Mat bgr_img, output_img;
     cv::cvtColor(img,bgr_img, cv::COLOR_GRAY2BGR);
     if (type == "square"){
-        // ìˆœì„œ : y ë†’ì€ìˆœ ->  x ë†’ì€ìˆœ
+        // ?ˆœ?„œ : y ?†’????ˆœ ->  x ?†’????ˆœ
         vector<cv::Point2f> corners;
         ret = cv::findChessboardCorners(img,cv::Size(n_x,n_y), corners); //flag????
         if(draw&&ret){
@@ -231,6 +231,16 @@ void TargetDetector::sortTarget(vector<cv::Point2f>&source, vector<cv::Point2f>&
     bool isAsymmetricGrid=false;
     CircleGridFinder gridfinder(isAsymmetricGrid);
     gridfinder.findGrid(source, cv::Size(n_x,n_y),dist);
+    if (n_x == n_y && dist.front().y < dist.back().y) {
+        std::vector<cv::Point2f> new_dist(n_x * n_y);
+        for (int i = 0; i < n_x * n_y; ++i) {
+            int row = n_y - 1 - (i % n_y);  // ¾Æ·¡ ¡æ À§
+            int col = i / n_y;              // ¿Þ ¡æ ¿À
+            int new_idx = row * n_x + col;
+            new_dist[new_idx] = dist[i];
+        }
+        dist = new_dist;
+    }
     reverse(dist.begin(), dist.end());
     return;
 }
@@ -541,7 +551,7 @@ bool TargetDetector::detect_circles(cv::Mat& img, cv::Mat& img_output,vector<Sha
     // printf("finishied. Runtime: %.2f\n", duration);
     // finish = clock();
     // double duration = (double)(finish - start) / CLOCKS_PER_SEC;
-    // printf("%fì´ˆ\n", duration);
+    // printf("%fì´?\n", duration);
 
 
     // merge same blobs and select largest n_x * n_y blobs//

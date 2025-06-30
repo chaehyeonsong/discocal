@@ -1,11 +1,7 @@
 services:
   builder:
+    image: discocal-builder:latest
     build:
       context: .
       dockerfile: dockerfile
-    volumes:
-      - ./:/output
-    command:  >
-      sh -c "
-        cp -r /app/dist/. /output
-      "
+    

@@ -1,0 +1,43 @@
+cameras:
+  - img_dir: "../sample_data/imgs/"
+    cal_intrinsic: false
+    type: "circle"
+    n_x: 2 
+    n_y: 2
+    radius: 0.075
+    distance: 0.24
+    detection_mode: ""
+    n_d: 2
+    fx: 1171.47
+    fy: 1167.51
+    cx: 1054.59
+    cy: 769.52
+    skew: -1.39
+    d1: -0.292
+    d2: 0.057
+    d3: 0
+    d4: 0
+
+lidar:
+  - point_cloud_dir: "../sample_data/lidars/"
+    type: "circle"
+    n_x: 2 
+    n_y: 2
+    radius: 0.075
+    distance: 0.24
+    detection_mode: ""
+    coarse_bd_x1: 0.0 #for coarse boundary detection
+    coarse_bd_x2: 5.0
+    coarse_bd_y1: -2.0
+    coarse_bd_y2: 2.0
+    coarse_bd_z1: -0.5
+    coarse_bd_z2: 3.0
+    eps : 0.05  # for clustering
+    distance_threshold: 0.02 #for plane fitting , plane width/2
+    max_iterations: 10000 # for plane fitting
+    cdr : 0.4 #for boundary detection  줄이면 boundary 수 증가
+    direction_var : 1.0 # for boundary detection 늘리면 boundary 수 증가
+
+options:
+  save_results_path : "./"
+  visualize : false
