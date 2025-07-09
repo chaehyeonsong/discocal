@@ -4,6 +4,8 @@ sample_imgs/rgb
 sample_imgs/tir
 run_mono
 run_stereo
+sample_data/viz_chech
+sample_data/raw_ply
 
 #pages
 Gemfile.lock

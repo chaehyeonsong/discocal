@@ -35,9 +35,10 @@ lidar:
     eps : 0.05  # for clustering
     distance_threshold: 0.02 #for plane fitting , plane width/2
     max_iterations: 10000 # for plane fitting
-    cdr : 0.4 #for boundary detection  줄이면 boundary 수 증가
-    direction_var : 1.0 # for boundary detection 늘리면 boundary 수 증가
+    cdr: 0.4  # For boundary detection ??? decreasing this value increases the number of boundaries detected
+    direction_var: 1.0  # For boundary detection ??? increasing this value increases the number of boundaries detected
+
 
 options:
   save_results_path : "./"
-  visualize : false
+  visualize : true

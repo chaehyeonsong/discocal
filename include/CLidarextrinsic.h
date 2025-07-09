@@ -4,7 +4,7 @@
 #include <string>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include "utils.h"  // se3 Á¤ÀÇ Æ÷ÇÔ
+#include "utils.h"  // se3 ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 #include "CLieAlgebra.h"
 #include "Lidarparam.h"
 #include <iostream>
@@ -25,12 +25,23 @@
 #include <random> 
 #include "CCircleGridFinder.hpp"
 #include <ceres/ceres.h>
+#include <pcl/visualization/pcl_visualizer.h> 
+
+#include <thread>
+#include <chrono>
+#include <future>
+#include <sys/wait.h> 
+#include <unistd.h>   
 struct LidarCalibrationParams;
+
+
 
 bool estimate_lidar_extrinsic(const std::string& pcd_path,
                                const LidarCalibrationParams& params,
-                               se3& out_pose);
-
+                               se3& out_pose, int cnt);
+void keyboardCallback(const pcl::visualization::KeyboardEvent &event, void *);
+bool visualizeCloudInteractive(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, const std::string& title);
+bool visualizeClustersInteractive(const std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr>& clusters, const std::string& title) ;
 void applyBoundaryFilter(pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud,
                          const LidarCalibrationParams& params,
                          pcl::PointCloud<pcl::PointXYZ>::Ptr& filtered_cloud);

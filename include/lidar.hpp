@@ -59,11 +59,12 @@ vector<ext> LidarCalibration::calExtrinsic_lidar(YAML::Node args) {
         }
     }
     sort(cloud_files.begin(), cloud_files.end());
-
+    int cnt = 0;
     for (const auto& pcd_path : cloud_files) {
         se3 pose;
-        bool success = estimate_lidar_extrinsic(pcd_path, params, pose);
+        bool success = estimate_lidar_extrinsic(pcd_path, params, pose,cnt);
         results.push_back({pose, success});
+        cnt++;
     }
     cout<< "Lidar extrinsic calibration completed. Number of scenes: " << results.size() << endl;
     for (const auto& result : results) {

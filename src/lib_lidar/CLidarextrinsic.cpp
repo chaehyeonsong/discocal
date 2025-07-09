@@ -1,22 +1,18 @@
 #include "CLidarextrinsic.h"
 
-
+std::atomic<bool> continue_flag(false);
+//main function -> estimate_lidar_extrinsic() : all other functions are called inside this function
 bool estimate_lidar_extrinsic(const std::string& pcd_path,
                                const LidarCalibrationParams& params,
-                               se3& out_pose) {
+                               se3& out_pose, int cnt) {
     std::cout << "[INFO] Loading point cloud from: " << pcd_path << std::endl;
 
-    // 1. 포인트 클라우드 로드
+    // 1. ????? ????? ?占쏙옙?
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>());
 
     if (pcd_path.ends_with(".pcd")) {
         if (pcl::io::loadPCDFile<pcl::PointXYZ>(pcd_path, *cloud) == -1) {
             std::cerr << "[ERROR] Couldn't read PCD file: " << pcd_path << std::endl;
-            return false;
-        }
-    } else if (pcd_path.ends_with(".ply")) {
-        if (pcl::io::loadPLYFile<pcl::PointXYZ>(pcd_path, *cloud) == -1) {
-            std::cerr << "[ERROR] Couldn't read PLY file: " << pcd_path << std::endl;
             return false;
         }
     } else {
@@ -29,15 +25,20 @@ bool estimate_lidar_extrinsic(const std::string& pcd_path,
     applyBoundaryFilter(cloud, params, cloud);
 
     if (params.visualize) {
-        std::string save_dir = "../sample_data/viz_check/";
+        std::string save_dir = "../sample_data/viz_check/cloud_" + std::to_string(cnt) + "/";
         std::filesystem::create_directories(save_dir);  
 
         std::string ply_path = save_dir + "filtered_cloud.ply";
         pcl::io::savePLYFileBinary(ply_path, *cloud);
         std::cout << "[INFO] Point cloud saved to: " << ply_path << std::endl;
-        std::cout << "[INFO] Please open the file externally to view. Press [Enter] to continue..." << std::endl;
 
-        std::cin.get();  
+        if (fork() == 0){
+            if (!visualizeCloudInteractive(cloud, "Filtered Cloud")) std::exit(1);
+            std::exit(0);
+        } else{
+            int status;
+            wait(&status);
+        }
     }
     auto cluster_indices = clusterPoints(cloud, params.eps, 10);
     if (cluster_indices.empty()) {
@@ -46,15 +47,19 @@ bool estimate_lidar_extrinsic(const std::string& pcd_path,
     }
     auto most_planar_cluster = findMostPlanarCluster(cloud, cluster_indices);
     if (params.visualize) {
-        std::string save_dir = "../sample_data/viz_check/";
+        std::string save_dir = "../sample_data/viz_check/cloud_" + std::to_string(cnt) + "/";     
         std::filesystem::create_directories(save_dir);  
 
         std::string ply_path = save_dir + "most_planar_cluster.ply";
         pcl::io::savePLYFileBinary(ply_path, *most_planar_cluster);
         std::cout << "[INFO] Most planar cluster saved to: " << ply_path << std::endl;
-        std::cout << "[INFO] Please open the file externally to view. Press [Enter] to continue..." << std::endl;
-
-        std::cin.get();  
+        if (fork() == 0){
+            if (!visualizeCloudInteractive(most_planar_cluster, "Most planar cluster")) std::exit(1);
+            std::exit(0);
+        } else{
+            int status;
+            wait(&status);
+        }
     }
     //projection
     auto [ransac_plane_model, inliers] = detectPlanes(most_planar_cluster, params.distance_threshold, 3, params.max_iterations);
@@ -68,27 +73,35 @@ bool estimate_lidar_extrinsic(const std::string& pcd_path,
     Eigen::Vector4f plane_model = pcaPlaneFitting(inlier_cloud); 
     auto projected_cloud = projectPointsToPlane(inlier_cloud, plane_model);
     if(params.visualize) {
-        std::string save_dir = "../sample_data/viz_check/";
+        std::string save_dir = "../sample_data/viz_check/cloud_" + std::to_string(cnt) + "/";  
         std::filesystem::create_directories(save_dir);  
 
         std::string ply_path = save_dir + "projected_cloud.ply";
         pcl::io::savePLYFileBinary(ply_path, *projected_cloud);
         std::cout << "[INFO] Projected cloud saved to: " << ply_path << std::endl;
-        std::cout << "[INFO] Please open the file externally to view. Press [Enter] to continue..." << std::endl;
-
-        std::cin.get();  
+        if (fork() == 0){
+            if (!visualizeCloudInteractive(projected_cloud, "projected cloud"))  std::exit(1);
+            std::exit(0);
+        } else{
+            int status;
+            wait(&status);
+        } 
     }
     pcl::PointCloud<pcl::PointXYZ>::Ptr boundary_pcd = findBoundaryPointsImproved(projected_cloud, 0.3*params.radius, 0.0, params.cdr, params.direction_var);
     if(params.visualize){
-        std::string save_dir = "../sample_data/viz_check/";
+        std::string save_dir = "../sample_data/viz_check/cloud_" + std::to_string(cnt) + "/";  
         std::filesystem::create_directories(save_dir);  
 
         std::string ply_path = save_dir + "boundary_pcd.ply";
         pcl::io::savePLYFileBinary(ply_path, *boundary_pcd);
         std::cout << "[INFO] Boundary point cloud saved to: " << ply_path << std::endl;
-        std::cout << "[INFO] Please open the file externally to view. Press [Enter] to continue..." << std::endl;
-
-        std::cin.get();  
+        if (fork() == 0){
+            if (!visualizeCloudInteractive(boundary_pcd, "boundary point clouds"))  std::exit(1);
+            std::exit(0);
+        } else{
+            int status;
+            wait(&status);
+        } 
     }
     auto best_clusters = selectNCircleClusters(boundary_pcd, params.distance, params.radius, params.n_x * params.n_y);
     if (best_clusters.empty()) {
@@ -96,17 +109,23 @@ bool estimate_lidar_extrinsic(const std::string& pcd_path,
         return false;
     }
     if(params.visualize) {
-        std::string save_dir = "../sample_data/viz_check/";
+        std::string save_dir = "../sample_data/viz_check/cloud_" + std::to_string(cnt) + "/";  
         std::filesystem::create_directories(save_dir);  
 
         for (size_t i = 0; i < best_clusters.size(); ++i) {
             std::string ply_path = save_dir + "best_cluster_" + std::to_string(i) + ".ply";
             pcl::io::savePLYFileBinary(ply_path, *best_clusters[i]);
             std::cout << "[INFO] Best cluster " << i << " saved to: " << ply_path << std::endl;
+            
         }
-        std::cout << "[INFO] Please open the files externally to view. Press [Enter] to continue..." << std::endl;
-
-        std::cin.get();  
+        if (fork() == 0){
+            if (!visualizeClustersInteractive(best_clusters, "best_clusters"))  std::exit(1);
+            std::exit(0);
+        } else{
+            int status;
+            wait(&status);
+        } 
+        
     }
     std::vector<Eigen::Vector3f> circle_centers;
     for (const auto& cluster : best_clusters) {
@@ -131,6 +150,92 @@ bool estimate_lidar_extrinsic(const std::string& pcd_path,
     return true;  
 }
 
+
+// Keyboard callback function
+void keyboardCallback(const pcl::visualization::KeyboardEvent &event, void *) {
+    if (event.keyDown()) {
+        std::string key = event.getKeySym();
+        if (key == "c" || key == "C" ) {
+            continue_flag = true;
+        }
+    }
+}
+//functions to visualize pcd
+bool visualizeCloudInteractive(const pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud, const std::string &title) {
+    continue_flag = false;
+    pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer(title));
+
+    viewer->setBackgroundColor(0, 0, 0);
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> color_handler(cloud, 255, 255, 255);
+    viewer->addPointCloud(cloud, color_handler, "cloud");
+    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "cloud");
+    viewer->addCoordinateSystem(0.1);
+    viewer->initCameraParameters();
+    viewer->resetCamera();
+
+    viewer->registerKeyboardCallback(keyboardCallback);
+
+    std::cout << "[INFO] Press 'c' to continue" << std::endl;
+
+    while (!viewer->wasStopped()) {
+        viewer->spinOnce(100);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+        if (continue_flag ) {
+            viewer->close();  // Close the window programmatically
+            
+            break;
+        }
+    }
+    viewer.reset();  // Cleanup
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Optional small delay
+    return true;
+}
+
+
+bool visualizeClustersInteractive(const std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr>& clusters, const std::string& title) {
+    continue_flag = false;
+
+    pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer(title));
+
+    viewer->setBackgroundColor(0, 0, 0);
+    for (size_t i = 0; i < clusters.size(); ++i) {
+        std::string cloud_name = "cluster_" + std::to_string(i);
+
+        // Generate unique color per cluster
+        int r = (37 * (i+1)) % 255;
+        int g = (67 * (i+1)) % 255;
+        int b = (97 * (i+1)) % 255;
+
+        pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> color_handler(clusters[i], r, g, b);
+        viewer->addPointCloud<pcl::PointXYZ>(clusters[i], color_handler, cloud_name);
+        viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, cloud_name);
+    }
+    viewer->addCoordinateSystem(0.1);
+    viewer->initCameraParameters();
+    viewer->resetCamera();
+
+    viewer->registerKeyboardCallback(keyboardCallback);
+
+    std::cout << "[INFO] Press 'c' to continue" << std::endl;
+
+    while (!viewer->wasStopped()) {
+        viewer->spinOnce(100);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+        if (continue_flag ) {
+            viewer->close();  // Close the window programmatically
+            break;
+        }
+    }
+    viewer.reset();  // Cleanup
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Optional small delay
+    return true;
+    
+    
+}
+
+//coarse boundary filter func
 void applyBoundaryFilter(pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud,
                              const LidarCalibrationParams& params,
                              pcl::PointCloud<pcl::PointXYZ>::Ptr& filtered_cloud) {
@@ -151,7 +256,7 @@ void applyBoundaryFilter(pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud,
     pass.setFilterLimits(params.coarse_bd_z.first, params.coarse_bd_z.second);
     pass.filter(*filtered_cloud);
 }
-
+//first cluster the points and..
 std::vector<pcl::PointIndices> clusterPoints(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud,
                                              float eps , int min_samples) {
     std::vector<pcl::PointIndices> cluster_indices;
@@ -168,7 +273,7 @@ std::vector<pcl::PointIndices> clusterPoints(const pcl::PointCloud<pcl::PointXYZ
 
     return cluster_indices;
 }
-
+//find the most planar cluster -> board detect
 pcl::PointCloud<pcl::PointXYZ>::Ptr findMostPlanarCluster(
     const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud,
     const std::vector<pcl::PointIndices>& cluster_indices) {
@@ -205,7 +310,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr findMostPlanarCluster(
 
     return most_planar_cluster;
 }
-
+//detect most reliable plane inside the board cluster 
 std::pair<Eigen::Vector4f, pcl::PointIndices::Ptr> detectPlanes(const pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,
                                                                 double distance_threshold ,
                                                                 int ransac_n , int num_iterations) {
@@ -256,6 +361,8 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr projectPointsToPlane(const pcl::PointCloud<p
     }
     return projected_cloud;
 }
+
+//found boundary points inside the projected pointcloud 
 pcl::PointCloud<pcl::PointXYZ>::Ptr findBoundaryPointsImproved(const pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,
                                                                double radius, double min_distance, double cdr_threshold, double direction_var_threshold) {
     pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
@@ -330,25 +437,23 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr findBoundaryPointsImproved(const pcl::PointC
 
     return boundary_cloud;
 }
-
+//select N circle clusters inside the boundarypoints
 std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr>
 selectNCircleClusters(const pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,
                       double distance, double radius,
                       int n) 
     {
-    // 1. 클러스터링
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
     tree->setInputCloud(cloud);
     std::vector<pcl::PointIndices> cluster_indices;
     pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-    ec.setClusterTolerance(distance-radius*2-0.025); // 거리 기준
-    ec.setMinClusterSize(3); // 필요 시 조절
+    ec.setClusterTolerance(distance-radius*2-0.025); 
+    ec.setMinClusterSize(3); 
     ec.setMaxClusterSize(100);
     ec.setSearchMethod(tree);
     ec.setInputCloud(cloud);
     ec.extract(cluster_indices);
 
-    // 2. 클러스터 중심 & 반지름 오차 계산
     using ScoredCluster = std::pair<float, pcl::PointCloud<pcl::PointXYZ>::Ptr>;
     std::vector<ScoredCluster> scored_clusters;
 
@@ -372,7 +477,6 @@ selectNCircleClusters(const pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,
         scored_clusters.emplace_back(score, cluster);
     }
 
-    // 3. 오차 기준 상위 n개 선택
     std::sort(scored_clusters.begin(), scored_clusters.end(),
               [](const ScoredCluster& a, const ScoredCluster& b) {
                   return a.first < b.first;
@@ -385,7 +489,7 @@ selectNCircleClusters(const pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,
 
     return best_clusters;
 }
-
+//utilize ransac to remove noise points
 std::tuple<Eigen::Vector3f, float, pcl::PointCloud<pcl::PointXYZ>::Ptr> ransacCircleFit(const pcl::PointCloud<pcl::PointXYZ>::Ptr &cluster_points,
                                                                                         const Eigen::Vector4f &plane_coeffs,
                                                                                         int ransac_iterations ,
@@ -447,6 +551,7 @@ std::pair<Eigen::Vector3f, Eigen::Vector3f> findAxes(const Eigen::Vector4f &plan
 
     return {u1, u2};
 }
+//find circle center per one circle cluster
 std::pair<Eigen::Vector3f, float> circleFitConstrained2D(const pcl::PointCloud<pcl::PointXYZ>::Ptr &points, const Eigen::Vector4f &plane_coeffs) {
     auto [u1, u2] = findAxes(plane_coeffs);
     Eigen::Vector3f center_point(0, 0, 0);
@@ -491,24 +596,22 @@ std::pair<Eigen::Vector3f, float> circleFitConstrained2D(const pcl::PointCloud<p
 
     return {circle_center_3d, radius};
 }
+//sort centers -> 3d to 2d and apply camera version sorting 
 std::vector<Eigen::Vector3f> sortCentersByRotatedLidarFrame(const std::vector<Eigen::Vector3f>& circle_centers, int nx, int ny) {
-    // 1. 평균 위치 계산
+
     Eigen::Vector3f mean = Eigen::Vector3f::Zero();
     for (const auto& pt : circle_centers)
         mean += pt;
     mean /= circle_centers.size();
 
-    // 2. 라이다 원점 → 보드 중심 방향 (x, y) → 새로운 x축이 될 방향
-    Eigen::Vector2f direction_2d = mean.head<2>().normalized();  // (x, y) 성분만 추출
-    float theta = std::atan2(direction_2d.y(), direction_2d.x());  // z축 기준 회전각
+    Eigen::Vector2f direction_2d = mean.head<2>().normalized();  
+    float theta = std::atan2(direction_2d.y(), direction_2d.x());  // 
 
-    // 3. z축 기준 회전 행렬 (LiDAR 좌표계를 회전)
     Eigen::Matrix3f R;
     R << std::cos(-theta), -std::sin(-theta), 0,
          std::sin(-theta),  std::cos(-theta), 0,
          0,                 0,                1;
     
-    // 4. 점들을 회전된 좌표계로 변환
     std::vector<cv::Point2f> yz_coords;
     std::vector<std::pair<cv::Point2f, float>> yz_with_x;
     for (size_t i = 0; i < circle_centers.size(); ++i) {
@@ -519,7 +622,6 @@ std::vector<Eigen::Vector3f> sortCentersByRotatedLidarFrame(const std::vector<Ei
         yz_with_x.emplace_back(yz, pt_rot.x());
     }
 
-    // 5. findGrid 실행
     CircleGridFinder gridfinder(false);
     std::vector<cv::Point2f> dist(nx * ny);
     gridfinder.findGrid(yz_coords, cv::Size(nx, ny), dist);
@@ -533,7 +635,6 @@ std::vector<Eigen::Vector3f> sortCentersByRotatedLidarFrame(const std::vector<Ei
         }
         dist = new_dist;
     }
-    // 6. 정렬된 (y,z)에 대응하는 x값 찾고 원래 좌표계로 역회전
     Eigen::Matrix3f R_inv = R.transpose();
     std::vector<Eigen::Vector3f> sorted_centers;
     for (const auto& pt2d : dist) {
@@ -552,7 +653,7 @@ std::vector<Eigen::Vector3f> sortCentersByRotatedLidarFrame(const std::vector<Ei
 
     return sorted_centers;
 }
-
+//find se3 using ceres slover
 Eigen::MatrixXf board_points;
 Eigen::Matrix4f optimize_rotation_transform_general(
     const std::vector<Eigen::Vector3f> &cluster_centers,
@@ -560,30 +661,25 @@ Eigen::Matrix4f optimize_rotation_transform_general(
     int n_x, int n_y,
     float distance)
 {
-    // 기준축 계산을 위한 기준 점 두 개 선택
     int base_idx = (n_y - 1) * n_x;
     Eigen::Vector3f center_ref = cluster_centers[base_idx];
     Eigen::Vector3f center_next = cluster_centers[base_idx + 1];
 
-    // 평면 법선 계수 정리
     float a = plane_coeffs(0), b = plane_coeffs(1), c = plane_coeffs(2), d = plane_coeffs(3);
     if (d < 0) { a = -a; b = -b; c = -c; d = -d; }
 
-    // 보드 좌표계 기준 축 계산
     Eigen::Vector3f w = center_next - center_ref;
     w.normalize();
     Eigen::Vector3f v = Eigen::Vector3f(a, b, c).cross(w);
     Eigen::Matrix4f R = compute_R(w, v, a, b, c, center_ref);
     Eigen::Matrix4f R_inv = R.inverse();
 
-    // 보드 위 점들을 보드 기준 좌표계로 변환
     Eigen::MatrixXf world_points(4, cluster_centers.size());
     for (size_t i = 0; i < cluster_centers.size(); ++i)
         world_points.col(i) << cluster_centers[i], 1.0f;
 
     Eigen::MatrixXf transformed_world_points = (R_inv * world_points).topRows(3).eval();
 
-    // Ceres 최적화 파라미터 초기화
     double theta_init = 0.0;
     double x_offset_init = -distance;
     double y_offset_init = -distance;
@@ -591,7 +687,6 @@ Eigen::Matrix4f optimize_rotation_transform_general(
     int num_points = n_x * n_y;
     board_points.resize(3, num_points);
 
-    // 보드 모델 좌표계 점 생성
     for (int j = 0; j < n_y; ++j) {
         for (int i = 0; i < n_x; ++i) {
             int idx = j * n_x + i;
@@ -601,7 +696,6 @@ Eigen::Matrix4f optimize_rotation_transform_general(
         }
     }
 
-    // ceres 최적화
     Residuals* residuals = new Residuals(R_inv, transformed_world_points, num_points);
     ceres::Problem problem;
     problem.AddResidualBlock(
@@ -613,14 +707,12 @@ Eigen::Matrix4f optimize_rotation_transform_general(
         &y_offset_init
     );
 
-    // Solver 설정
     ceres::Solver::Options options;
     options.linear_solver_type = ceres::DENSE_QR;
     options.minimizer_progress_to_stdout = true;
     ceres::Solver::Summary summary;
     ceres::Solve(options, &problem, &summary);
 
-    // 최적화 결과 변환 행렬 계산
     Eigen::Matrix4f optimized_R_board;
     optimized_R_board << std::cos(theta_init), -std::sin(theta_init), 0.0f, x_offset_init,
                          std::sin(theta_init),  std::cos(theta_init), 0.0f, y_offset_init,
