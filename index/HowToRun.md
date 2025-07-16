@@ -36,7 +36,7 @@ If docker compose command is not installed or doesn't work, try this
 - [`intrinsic.yaml`](../codes/intrinsic.yaml): This is a config template of **instrinsic calibration**
 
 
-- [`extrinsic.yaml`](../codes/intrinsic.yaml): This is a config template of **extrinsic calibration**.  
+- [`extrinsic.yaml`](../codes/extrinsic.yaml): This is a config template of **extrinsic calibration**.  
 With DiscoCal, extrinsic calibration for **n** cameras can be performed simultaneously.  
 The relative poses of all cameras are estimated with respect to the first camera.
 
