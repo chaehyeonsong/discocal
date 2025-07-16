@@ -13,11 +13,11 @@ Watch the video to see it in action:
 
 ---
 
-<!-- ## TIR–RGB Extrinsic Calibration
+<!-- ## TIR��밨GB Extrinsic Calibration
 
 Below is the result of **stereo rectification** using RGB and TIR images.  
 Both intrinsic and extrinsic calibration were performed with **DiscoCal**.  
-As shown, the **epipolar lines** are perfectly aligned — despite the differences in sensor modalities.
+As shown, the **epipolar lines** are perfectly aligned ��� despite the differences in sensor modalities.
 
 <img src="../figs/epipolar_line.png" height="300"> -->
 
@@ -36,4 +36,6 @@ Check out the video demonstration:
 
 
 ## RGB-LiDAR Extrinsic Calibration
-Coming soon!
+
+DiscoCal is also compatible with LiDAR sensors. All you need is a planar calibration board with circular holes to get started. For detailed instructions and theoretical background, refer to the [LiDAR calibration](./LiDAR_cal.html) section.
+
