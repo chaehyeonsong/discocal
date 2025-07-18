@@ -13,8 +13,6 @@ Calibrator::Calibrator(int n_x, int n_y,int n_d, double r,double distance, int m
 
     this->original_r = r;
     this->distance = distance;
-    this->width = 0;
-    this->height = 0;
 
     // origin_conics.reserve(n_x*n_y);
     origin_target.reserve(n_x*n_y);
@@ -29,6 +27,14 @@ int Calibrator::get_num_scene(){
     return this->num_scene;
 }
 
+void Calibrator::set_max_scene(int max_scene) {
+    this->max_scene = max_scene;
+    targets.reserve(max_scene);
+    ud_targets.reserve(max_scene);
+    Hs.reserve(max_scene);
+    Es.reserve(max_scene);
+}
+
 void Calibrator::init(){
     //Todo: for continous calibration
     // targets.clear();
@@ -40,9 +46,16 @@ void Calibrator::init(){
     // Hs.clear();
 }
 
-void Calibrator::set_image_size(int _width, int _height){
-    this->width = _width;
-    this->height = _height;
+void Calibrator::clear() {
+    targets.clear();
+    Es.clear();
+    // curr_r= original_r;
+    // for(int i=0;i<num_scene;i++){
+    //     rs[i]=original_r;
+    // }
+    Hs.clear();
+    num_scene = 0;
+    thr_homography = 0;
 }
 
 void Calibrator::set_origin_target(){
@@ -121,9 +134,9 @@ Params Calibrator::batch_optimize(std::vector<int> sample, Params initial_params
     for(int i=0;i<sample.size();i++){
         int index =sample.at(i);
         int num_residual= targets.at(index).size()*2;
-
-        CostFunction* cost_function = new NumericDiffCostFunction<CalibrationFunctor,ceres::CENTRAL, ceres::DYNAMIC,5,4,3,3>(
-            new CalibrationFunctor(origin_target,targets[index],original_r,n_d,projection_mode,use_weight), ceres::TAKE_OWNERSHIP, num_residual
+        // Change to AutoDiffCostFunction
+        CostFunction* cost_function = new AutoDiffCostFunction<CalibrationFunctor, ceres::DYNAMIC, 5,4,3,3>(
+            new CalibrationFunctor(origin_target,targets[index],original_r,n_d,projection_mode,use_weight), num_residual
         );
 
         problem.AddResidualBlock(cost_function, loss_function, fcs, distorsion, Es.at(index).rot.data(),Es.at(index).trans.data() );
@@ -176,9 +189,9 @@ Params Calibrator::batch_optimize(std::vector<int> sample, Params initial_params
         int index =sample.at(i);
         int num_residual= targets.at(index).size()*2;
         use_weight =false;
-
-        CostFunction* cost_function = new NumericDiffCostFunction<CalibrationFunctor,ceres::CENTRAL, ceres::DYNAMIC, 5,4,3,3>(
-            new CalibrationFunctor(origin_target,targets[index],original_r,n_d,projection_mode,use_weight), ceres::TAKE_OWNERSHIP, num_residual
+        // Change to AutoDiffCostFunction
+        CostFunction* cost_function = new AutoDiffCostFunction<CalibrationFunctor,ceres::DYNAMIC, 5,4,3,3>(
+            new CalibrationFunctor(origin_target,targets[index],original_r,n_d,projection_mode,use_weight), num_residual
         );
         problem2.AddResidualBlock(cost_function, new ceres::TrivialLoss(),fcs, distorsion,Es.at(index).rot.data(),Es.at(index).trans.data() );
 
@@ -364,7 +377,7 @@ void Calibrator::save_data_for_gpr(std::vector<int> sample,Params params, int mo
                 dp = tracker->wc2dp_Numerical(Cw,E,ds);
             }
             else{
-                throw MomentsTrackerError();
+                throw MomentsTrackerError("Mode error!!");
             }
 
             if(writeFile.is_open()){
@@ -413,6 +426,38 @@ double Calibrator::cal_reprojection_error(std::vector<int> sample,Params params,
     return error_total/n;
 }
 
+vector<double> Calibrator::cal_reprojection_error_each_image(Params params, int mode){
+    double fx{params.fx}, fy{params.fy}, cx{params.cx}, cy{params.cy}, skew{params.skew};
+    vector<double> ds = {1, params.d[0], params.d[1],params.d[2],params.d[3]};
+    Eigen::Matrix3d E;
+    vector<double> error_each_image;
+
+    MomentsTracker* tracker = new MomentsTracker(n_d);
+
+    for(int i=0; i<max_scene;i++){
+        E= LieAlgebra::to_E(Es[i]);
+        double t_error=0;
+        for(int j=0;j<origin_target.size();j++){
+            double wx = origin_target[j].x;
+            double wy = origin_target[j].y;
+            Point p_i = tracker->project(wx,wy,original_r,params,E,mode);
+
+            double u_e = p_i.x; 
+            double v_e = p_i.y;
+
+            double u_o = targets[i][j].x;
+            double v_o = targets[i][j].y;
+
+            double tt_error= sqrt(pow(u_e-u_o,2)+pow(v_e-v_o,2));  
+            t_error += tt_error;
+        }
+        error_each_image.push_back(t_error/origin_target.size());
+    }
+
+    delete tracker;
+    return error_each_image;
+}
+
 double Calibrator::cal_calibration_quality(std::vector<int> sample,Params params, int mode){
     // To be developed
     double fx{params.fx}, fy{params.fy}, cx{params.cx}, cy{params.cy}, skew{params.skew};
@@ -456,6 +501,51 @@ double Calibrator::cal_calibration_quality(std::vector<int> sample,Params params
     delete tracker;
     return prob_total/n;
 }
+
+vector<double> Calibrator::cal_calibration_quality_each_image(Params params, int mode){
+    // To be developed
+    double fx{params.fx}, fy{params.fy}, cx{params.cx}, cy{params.cy}, skew{params.skew};
+    vector<double> ds = {1, params.d[0], params.d[1],params.d[2],params.d[3]};
+    Eigen::Matrix3d E;
+
+    vector<double> prob_each_image;
+
+    MomentsTracker* tracker = new MomentsTracker(n_d);
+
+    for(int i=0; i<max_scene;i++){
+        E= LieAlgebra::to_E(Es[i]);
+        double t_prop=0;
+        for(int j=0;j<origin_target.size();j++){
+            double wx = origin_target[j].x;
+            double wy = origin_target[j].y;
+            Point p_i = tracker->project(wx,wy,original_r,params,E,mode);
+
+            double u_e = p_i.x; 
+            double v_e = p_i.y;
+
+            Shape measurement = targets[i][j];
+            double u_o = measurement.x;
+            double v_o = measurement.y;
+
+            double e_x = u_o-u_e;
+            double e_y = v_o-v_e;
+            double det = measurement.Kxx*measurement.Kyy-pow(measurement.Kxy,2);
+            double scale_factor = measurement.n;
+            double info_xx = measurement.Kyy/det/scale_factor;
+            double info_xy = -measurement.Kxy/det/scale_factor;
+            double info_yy = measurement.Kxx/det/scale_factor;
+            double cdf_x = sqrt((info_xx*pow(e_x,2)+2*info_xy*e_x*e_y+info_yy*pow(e_y,2)));
+            double tt_prob = 1-cdf(cdf_x);
+            t_prop += tt_prob;           
+        }
+        prob_each_image.push_back(t_prop/origin_target.size());
+    }
+
+    delete tracker;
+    return prob_each_image;
+}
+
+
 void Calibrator::normalize_Es(){
     for(int i=0; i<Es.size();i++){
         Es[i].rot = LieAlgebra::normalize_so3(Es[i].rot);
@@ -487,10 +577,18 @@ vector<se3> Calibrator::get_extrinsic(){
     return Es;
 }
 
-void Calibrator::update_Es(Params intrinsic, int mode){
-    init();
+void Calibrator::update_Es(Params intrinsic, int mode, bool shuffle){
+    //init();
     set_inital_Es(intrinsic);
-    std::vector<int> sample = sorted_random_sampling(num_scene,num_scene);
+    std::vector<int> sample;
+    if(shuffle) {
+        sample = sorted_random_sampling(num_scene,num_scene);
+    }
+    else {
+        for(int i=0; i<num_scene; i++) {
+            sample.push_back(i);
+        }
+    }
     double fcs[5]={intrinsic.fx, intrinsic.fy, intrinsic.cx, intrinsic.cy, intrinsic.skew};
     double distorsion[4]={intrinsic.d[0],intrinsic.d[1],intrinsic.d[2],intrinsic.d[3]};
     bool use_weight= true;
@@ -498,10 +596,11 @@ void Calibrator::update_Es(Params intrinsic, int mode){
     ceres::LossFunction* loss_function;
     loss_function = new ceres::TrivialLoss();
     for(int i=0;i<sample.size();i++){
-        int index =sample.at(i);
+        int index = sample.at(i);
         int num_residual= targets.at(index).size()*2;
-        CostFunction* cost_function = new NumericDiffCostFunction<CalibrationFunctor,ceres::CENTRAL, ceres::DYNAMIC,5,4,3,3>(
-            new CalibrationFunctor(origin_target,targets[index],original_r,n_d,mode,use_weight), ceres::TAKE_OWNERSHIP, num_residual
+        // Change to AutoDiffCostFunction
+        CostFunction* cost_function = new AutoDiffCostFunction<CalibrationFunctor, ceres::DYNAMIC,5,4,3,3>(
+            new CalibrationFunctor(origin_target,targets[index],original_r,n_d,mode,use_weight), num_residual
         );
         problem.AddResidualBlock(cost_function, loss_function, fcs, distorsion, Es.at(index).rot.data(),Es.at(index).trans.data() );
 
@@ -525,14 +624,10 @@ Params Calibrator::calibrate(int mode, bool save_jacob){
     std::cout.precision(12);
     Params initial_params;
     Params final_params;
-    string path = root_dir + "intrinsic_parameters.yaml";
+    string path = root_dir + "calibration_result.yaml";
     std::ofstream writeFile(path.data());
    
     bool result= cal_initial_params(&initial_params);
-    if(!result){
-        initial_params.fx = initial_params.cx = this->width/2;
-        initial_params.fy = initial_params.cy = this->height/2;
-    }
     //  if(debug) cout<< initial_params.to_table(true)<<endl;
     // if(debug) printParams(initial_params,true);
     
@@ -566,33 +661,49 @@ Params Calibrator::calibrate(int mode, bool save_jacob){
     double rperror = cal_reprojection_error(sample,final_params,mode);
     printf("Reprojection error: %f\n",rperror);
 
-    
+    // modified
     if(writeFile.is_open()){
-        writeFile<<"results_dir: \""<<root_dir <<"\"\n";  
-        writeFile<<"width: "<<width <<"\n";  
-        writeFile<<"height: "<<height <<"\n";  
-        writeFile<<"n_d: "<<n_d <<"\n";  
-        writeFile<<"mode: "<<mode <<"\n";
-        writeFile<<"radius: " << original_r << "\n";
-        writeFile<<"distance: " << distance << "\n";
-        writeFile<<"fx: " << final_params.fx << "\n";
-        writeFile<<"fy: " << final_params.fy << "\n";
-        writeFile<<"cx: " << final_params.cx << "\n";
-        writeFile<<"cy: " << final_params.cy << "\n";
-        writeFile<<"skew: " << final_params.skew << "\n";
-        writeFile<<"d1: " << final_params.d[0] << "\n";
-        writeFile<<"d2: " << final_params.d[1] << "\n";
-        writeFile<<"d3: " << final_params.d[2] << "\n";
-        writeFile<<"d4: " << final_params.d[3] << "\n";
-        writeFile<<"sfx: " << final_params.s_fx << "\n";
-        writeFile<<"sfy: " << final_params.s_fy << "\n";
-        writeFile<<"scx: " << final_params.s_cx << "\n";
-        writeFile<<"scy: " << final_params.s_cy << "\n";
-        writeFile<<"sd1: " << final_params.s_d[0] << "\n";
-        writeFile<<"sd2: " << final_params.s_d[1] << "\n";
-        writeFile<<"sd3: " << final_params.s_d[2] << "\n";
-        writeFile<<"sd4: " << final_params.s_d[3] << "\n";
-        writeFile<<"reprojection_error: " << rperror;
+        writeFile << "camera:" << "\n";
+        writeFile<<"  img_dir: \""<<root_dir <<"\"\n";  
+        writeFile<<"  n_d: "<<n_d <<"\n";  
+        //writeFile<<"mode"<<mode<<"\n";
+        writeFile<<"  type: \""<< mode <<"\"\n";
+        writeFile << "  n_x: " << n_x << "\n";
+        writeFile << "  n_y: " << n_y << "\n";
+        writeFile << "  detection_mode: " << "\"\"" << "\n";
+        writeFile<<"  radius: " << original_r << "\n";
+        writeFile<<"  distance: " << distance << "\n";
+        
+        writeFile << "\n";
+
+        writeFile << "options:" << "\n";
+        writeFile << "  visualize: " << "true" << "\n";
+        writeFile << "  save_pose: " << "true" << "\n";
+        writeFile << "  save_rpe: " << "true" << "\n";
+        writeFile << "  fix_intrinsic: " << "true" << "\n";
+        writeFile << "  save_jacob: " << "true" << "\n";
+
+        writeFile << "\n";
+
+        writeFile << "intrinsic_calibration:" << "\n";
+        writeFile<<"  fx: " << final_params.fx << "\n";
+        writeFile<<"  fy: " << final_params.fy << "\n";
+        writeFile<<"  cx: " << final_params.cx << "\n";
+        writeFile<<"  cy: " << final_params.cy << "\n";
+        writeFile<<"  skew: " << final_params.skew << "\n";
+        writeFile<<"  d1: " << final_params.d[0] << "\n";
+        writeFile<<"  d2: " << final_params.d[1] << "\n";
+        writeFile<<"  d3: " << final_params.d[2] << "\n";
+        writeFile<<"  d4: " << final_params.d[3] << "\n";
+        writeFile<<"  sfx: " << final_params.s_fx << "\n";
+        writeFile<<"  sfy: " << final_params.s_fy << "\n";
+        writeFile<<"  scx: " << final_params.s_cx << "\n";
+        writeFile<<"  scy: " << final_params.s_cy << "\n";
+        writeFile<<"  sd1: " << final_params.s_d[0] << "\n";
+        writeFile<<"  sd2: " << final_params.s_d[1] << "\n";
+        writeFile<<"  sd3: " << final_params.s_d[2] << "\n";
+        writeFile<<"  sd4: " << final_params.s_d[3] << "\n";
+        writeFile<<"  reprojection_error: " << rperror<<"\n";
     } 
 
     writeFile.close();
@@ -630,81 +741,45 @@ array<double, 4> Calibrator::get_mean_sigma(const vector<Shape> &target){
 pair<Eigen::Matrix3d,double> Calibrator::get_H(const vector<Shape> &target){
     
     int n_points = target.size();
+
+    Eigen::MatrixXd X(2*n_points,9);
+    X.setZero();
+
     array<double,4> ms = get_mean_sigma(target);
     double m_u{ms[0]}, m_v{ms[1]}, s_u{ms[2]}, s_v{ms[3]};
 
     double m_x{ori_ms[0]}, m_y{ori_ms[1]}, s_x{ori_ms[2]}, s_y{ori_ms[3]};
 
+    for (int i=0;i<n_points;i++){
+        double x,y,u,v;
+
+        u = (target[i].x-m_u)/s_u;
+        v = (target[i].y-m_v)/s_v;
+        x = (origin_target[i].x-m_x)/s_x;
+        y = (origin_target[i].y-m_y)/s_y;
+
+        X(2*i, 0)=x;
+        X(2*i,1) = y;
+        X(2*i,2) = 1;
+        X(2*i,6) = -u*x;
+        X(2*i,7) = -u*y;
+        X(2*i,8) = -u;
+
+        X(2*i+1,3)=x;
+        X(2*i+1,4) = y;
+        X(2*i+1,5) = 1;
+        X(2*i+1,6) = -v*x;
+        X(2*i+1,7) = -v*y;
+        X(2*i+1,8) = -v;
+
+    }
+    Eigen::BDCSVD<Eigen::MatrixXd> svd(X,Eigen::ComputeThinU | Eigen::ComputeThinV);
+    Eigen::MatrixXd V = svd.matrixV();
+
     Eigen::Matrix3d H, Kt, Ko;
-    double singular_value_ratio =1;
-
-    // (n>4) -> DLT, n==4 -> exact solution
-    if(n_points>4){
-        Eigen::MatrixXd X(2*n_points,9);
-        X.setZero();
-        for (int i=0;i<n_points;i++){
-            double x,y,u,v;
-
-            u = (target[i].x-m_u)/s_u;
-            v = (target[i].y-m_v)/s_v;
-            x = (origin_target[i].x-m_x)/s_x;
-            y = (origin_target[i].y-m_y)/s_y;
-
-            X(2*i, 0)=x;
-            X(2*i,1) = y;
-            X(2*i,2) = 1;
-            X(2*i,6) = -u*x;
-            X(2*i,7) = -u*y;
-            X(2*i,8) = -u;
-
-            X(2*i+1,3)=x;
-            X(2*i+1,4) = y;
-            X(2*i+1,5) = 1;
-            X(2*i+1,6) = -v*x;
-            X(2*i+1,7) = -v*y;
-            X(2*i+1,8) = -v;
-
-        }
-        Eigen::BDCSVD<Eigen::MatrixXd> svd(X,Eigen::ComputeThinU | Eigen::ComputeThinV);
-        Eigen::MatrixXd V = svd.matrixV();
-        H << V(0,8),V(1,8),V(2,8),
-            V(3,8),V(4,8),V(5,8),
-            V(6,8),V(7,8),V(8,8);
-        Eigen::VectorXd singular_values=svd.singularValues();
-        double singular_value_ratio = singular_values(7)/singular_values(8);
-    }
-    else if(n_points==4){
-        Eigen::MatrixXd X(2*n_points,8);
-        Eigen::VectorXd b(2*n_points);
-        X.setZero();
-        for (int i=0;i<n_points;i++){
-            double x,y,u,v;
-
-            u = (target[i].x-m_u)/s_u;
-            v = (target[i].y-m_v)/s_v;
-            x = (origin_target[i].x-m_x)/s_x;
-            y = (origin_target[i].y-m_y)/s_y;
-
-            X(2*i, 0)=x;
-            X(2*i,1) = y;
-            X(2*i,2) = 1;
-            X(2*i,6) = -u*x;
-            X(2*i,7) = -u*y;
-            X(2*i+1,3)=x;
-            X(2*i+1,4) = y;
-            X(2*i+1,5) = 1;
-            X(2*i+1,6) = -v*x;
-            X(2*i+1,7) = -v*y;
-
-            b(2*i) = u;
-            b(2*i+1) = v;
-        }
-        Eigen::VectorXd V = X.fullPivLu().solve(b);
-        H << V(0),V(1),V(2),
-            V(3),V(4),V(5),
-            V(6),V(7),1;
-    }
-    else throw exception();    
+    H << V(0,8),V(1,8),V(2,8),
+         V(3,8),V(4,8),V(5,8),
+         V(6,8),V(7,8),V(8,8);
 
     Ko << 1/s_x, 0, -m_x/s_x,
             0,  1/s_y, -m_y/s_y,
@@ -714,6 +789,8 @@ pair<Eigen::Matrix3d,double> Calibrator::get_H(const vector<Shape> &target){
             0,  1/s_v, -m_v/s_v,
             0,  0,  1;
 
+    Eigen::VectorXd singular_values=svd.singularValues();
+    double singular_value_ratio = singular_values(7)/singular_values(8);
     // std::cout<<"singular value ratio: "<<singular_value_ratio<<std::endl;
 
     H = Kt.inverse() * H * Ko;
@@ -802,20 +879,15 @@ bool Calibrator::cal_initial_params(Params* inital_params){
             skew = -b(1)*fx*fx*fy/lamda;
             cx = skew*cy/fx - b(3)*fx*fx/lamda;
 
-            if(fx <0 || fy <0 || cx <0 || cy < 0){
-                return false;
-            }
-            else{
-                inital_params->fx= fx;
-                inital_params->fy= fy;
-                inital_params->cx = cx;
-                inital_params->cy= cy;
-                inital_params->skew = skew;
-                return true;
-            }
+            inital_params->fx= fx;
+            inital_params->fy= fy;
+            inital_params->cx = cx;
+            inital_params->cy= cy;
+            inital_params->skew = skew;
+            return true;
         }
         else{
-            // printf("Not enough images collected");
+            printf("Not enough images collected");
             return false;
         }
 

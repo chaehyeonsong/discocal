@@ -30,7 +30,7 @@ class WrongTypeException: public std::exception{
 class TargetDetector{
     public:
         TargetDetector(int n_x, int n_y, bool draw = true);
-        pair<bool,vector<Shape>>detect(cv::Mat& img, string type);
+        pair<bool,vector<Shape>>detect(cv::Mat& img, string type, bool key_input=true); //modified: key_input
         static cv::Mat preprocessing(cv::Mat img, string detection_mode);
         static cv::Mat translation_blur(const cv::Mat &img, double trans);
         static cv::Mat rotation_blur(const cv::Mat &img, double dtheta);
@@ -57,7 +57,7 @@ class TargetDetector{
 
         void update_autocorrelation(cv::Mat &src, vector<Shape>& control_shapes);
 
-        void visualize_result(cv::Mat& img_output, pair<bool,vector<Shape>> &result);
+        void visualize_result(cv::Mat& img_output, pair<bool,vector<Shape>> &result, bool key_input = true); //modified: key_input
 
         //for exp
         bool detect_circles_banilar(cv::Mat& img, cv::Mat& img_output,vector<Shape>&target, bool debug);
