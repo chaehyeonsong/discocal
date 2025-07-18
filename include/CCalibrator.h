@@ -38,6 +38,7 @@ class Calibrator{
         ~Calibrator() = default;
 
         void init();
+        void clear();
         void inputTarget(vector<Shape> target);
         
         bool cal_initial_params(Params* inital_params);
@@ -45,16 +46,20 @@ class Calibrator{
         
         void printParams(Params p);
         int get_num_scene();
+        void set_max_scene(int max_scene); //add
         void save_extrinsic(string root_dir);
         void save_extrinsic();
         vector<se3> get_extrinsic();
-        void update_Es(Params inital_params, int mode);
+        void update_Es(Params inital_params, int mode, bool shuffle=true);
 
+        //Additional
+        vector<double> cal_reprojection_error_each_image(Params params, int mode);
+        vector<double> cal_calibration_quality_each_image(Params params, int mode);
         Params calibrate_test(int mode,Params initial_params);
         
 
         
-        void set_image_size(int _width, int _height);
+
         // for exp
         void visualize_rep(string path, Params params, int mode);
         // Params calibrate();
@@ -112,46 +117,91 @@ struct CalibrationFunctor {
 
     template <typename T>
     bool operator()(const T* const fcs, const T* const distorsion, const T* const rot, const T* const trans,T* residual) const {
-        for(int i=0;i<origin_target.size();i++){
-            double wx = origin_target[i].x;
-            double wy = origin_target[i].y;
-            // double radius = 0.05;
-            Params params = {fcs[0],fcs[1],fcs[2],fcs[3], fcs[4], distorsion[0],distorsion[1],distorsion[2],distorsion[3]};
-            Eigen::Matrix3d E, E_inv, Qn;
-            Eigen::Vector3d rot_vector{rot[0],rot[1],rot[2]};  
+        // for(int i=0;i<origin_target.size();i++){
+        //     double wx = origin_target[i].x;
+        //     double wy = origin_target[i].y;
+        //     // double radius = 0.05;
+        //     Params params = {fcs[0],fcs[1],fcs[2],fcs[3], fcs[4], distorsion[0],distorsion[1],distorsion[2],distorsion[3]};
+        //     Eigen::Matrix3d E, E_inv, Qn;
+        //     Eigen::Vector3d rot_vector{rot[0],rot[1],rot[2]};  
+        //     rot_vector = LieAlgebra::normalize_so3(rot_vector);
+        //     E= LieAlgebra::to_E(se3(rot_vector,Eigen::Vector3d(trans[0],trans[1],trans[2])));
+
+        //     Point p_i = tracker->project(wx, wy, radius, params, E,mode);
+        //     double u_e = p_i.x;
+        //     double v_e = p_i.y;
+
+        //     double u_o = target[i].x;
+        //     double v_o = target[i].y;
+
+        //     double c1 = 1;
+        //     double c2 = 0;
+        //     double c3 = 1;
+
+        //     if(use_weight){
+        //         Eigen::Matrix2d cov;
+        //         cov<<target[i].Kxx , target[i].Kxy , target[i].Kxy , target[i].Kyy;
+        //         Eigen::LLT<Eigen::Matrix2d> lltOfA(cov.inverse()); // compute the Cholesky decomposition of A
+        //         Eigen::Matrix2d L = lltOfA.matrixL(); 
+        //         c1= L(0,0);
+        //         c2= L(1,0);
+        //         c3= L(1,1);
+        //     }
+
+        //     residual[2*i]= c1*(u_o-u_e)+c2*(v_o-v_e);
+        //     residual[2*i+1]= c3*(v_o-v_e);  
+
+        
+        for(size_t i=0; i<origin_target.size(); i++) {
+            T wx = static_cast<T>(origin_target[i].x);
+            T wy = static_cast<T>(origin_target[i].y);
+            
+            Params_T<T> params = {
+                fcs[0], fcs[1], fcs[2], fcs[3], fcs[4], 
+                distorsion[0], distorsion[1], distorsion[2], distorsion[3]
+            };
+
+            Eigen::Matrix<T, 3, 3> E;
+            Eigen::Matrix<T, 3, 1> rot_vector;
+            rot_vector << rot[0], rot[1], rot[2];
+            
             rot_vector = LieAlgebra::normalize_so3(rot_vector);
-            E= LieAlgebra::to_E(se3(rot_vector,Eigen::Vector3d(trans[0],trans[1],trans[2])));
 
-            Point p_i = tracker->project(wx, wy, radius, params, E,mode);
-            double u_e = p_i.x;
-            double v_e = p_i.y;
+            Eigen::Matrix<T, 3, 1> trans_vector;
+            trans_vector << trans[0], trans[1], trans[2];
+            
+            E = LieAlgebra::to_E(se3_T<T>(rot_vector, trans_vector));
 
-            double u_o = target[i].x;
-            double v_o = target[i].y;
+            Point_T<T> p_i = tracker->project<T>(wx, wy, static_cast<T>(radius), params, E, mode);
+            T u_e = p_i.x;
+            T v_e = p_i.y;
 
-            double c1 = 1;
-            double c2 = 0;
-            double c3 = 1;
+            T u_o = static_cast<T>(target[i].x);
+            T v_o = static_cast<T>(target[i].y);
+
+            T c1 = T(1.0);
+            T c2 = T(0.0);
+            T c3 = T(1.0);
 
             if(use_weight){
-                Eigen::Matrix2d cov;
-                cov<<target[i].Kxx , target[i].Kxy , target[i].Kxy , target[i].Kyy;
-                Eigen::LLT<Eigen::Matrix2d> lltOfA(cov.inverse()); // compute the Cholesky decomposition of A
-                Eigen::Matrix2d L = lltOfA.matrixL(); 
+                Eigen::Matrix<T, 2, 2> cov;
+                cov << static_cast<T>(target[i].Kxx), static_cast<T>(target[i].Kxy), 
+                    static_cast<T>(target[i].Kxy), static_cast<T>(target[i].Kyy);
+
+                Eigen::LLT<Eigen::Matrix<T, 2, 2>> lltOfA(cov.inverse());
+                Eigen::Matrix<T, 2, 2> L = lltOfA.matrixL(); 
                 c1= L(0,0);
                 c2= L(1,0);
                 c3= L(1,1);
             }
 
-            residual[2*i]= c1*(u_o-u_e)+c2*(v_o-v_e);
-            residual[2*i+1]= c3*(v_o-v_e);  
-
-
-
-              
+            residual[2*i] = c1*(u_o-u_e)+c2*(v_o-v_e);
+            residual[2*i+1] = c3*(v_o-v_e);
         }
         
         return true;
+
+              
     }
     private:
         int mode;

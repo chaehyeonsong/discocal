@@ -25,24 +25,28 @@ TargetDetector::TargetDetector(int n_x, int n_y, bool draw){
     }
 }
 
+//modified
 cv::Mat TargetDetector::preprocessing(const cv::Mat img, string detection_mode){
-    cv::Mat output_img;
+    // cv::Mat filltered_img, gray_img;
+    // cv::bilateralFilter(img,filltered_img,-1,10,10);
+    // filltered_img = img.clone();
+    
+    cv::Mat gray_img;
+
     if(img.channels()==3){
-        
         if(detection_mode == "saturation"){
             cv::Mat hsv_img;
             cv::cvtColor(img, hsv_img, cv::COLOR_BGR2HSV);
-            cv::extractChannel(hsv_img, output_img, 1);
+            cv::extractChannel(hsv_img, gray_img, 1);
         }
         else{
-            cv::cvtColor(img, output_img, cv::COLOR_BGR2GRAY);
+            cv::cvtColor(img, gray_img, cv::COLOR_BGR2GRAY);
         }
         
-        return output_img;
+        return gray_img;
     }
     else if(img.channels()==1){
-        cv::bilateralFilter(img,output_img,-1,10,10);
-        return output_img;
+        return img;
     }
     else{
         throw WrongTypeException();
@@ -86,7 +90,8 @@ void TargetDetector::update_autocorrelation(cv::Mat &src, vector<Shape>& control
     }
 }
 
-pair<bool,vector<Shape>> TargetDetector::detect(cv::Mat& img, string type){
+//modified: key_input
+pair<bool,vector<Shape>> TargetDetector::detect(cv::Mat& img, string type, bool key_input){
     if(this->draw){
         this->drawing_scale = 1000.0/max(img.rows, img.cols);
     }
@@ -120,7 +125,7 @@ pair<bool,vector<Shape>> TargetDetector::detect(cv::Mat& img, string type){
     final_result.first = ret;
     final_result.second = control_shapes;
 
-    visualize_result(output_img, final_result);
+    visualize_result(output_img, final_result, key_input);
     return final_result;
 }
 
@@ -128,7 +133,8 @@ void TargetDetector::save_result(string path){
     cv::imwrite(path, this->detection_result);
 }
 
-void TargetDetector::visualize_result(cv::Mat& img_output, pair<bool,vector<Shape>> &result){
+//modified: key_input
+void TargetDetector::visualize_result(cv::Mat& img_output, pair<bool,vector<Shape>> &result, bool key_input){
     // visualize
     int scale= 100/this->drawing_scale;
     if(result.first){
@@ -163,25 +169,32 @@ void TargetDetector::visualize_result(cv::Mat& img_output, pair<bool,vector<Shap
     float left = img_output.cols*0.05;
     double fontscale = 1.2;
     int thickness = 3;
-    if(this->draw){
-        if(result.first) cv::putText(img_output,"save: 1, ignore: 0, quit_visualize: q",cv::Point2f(left,bottom),0,fontscale,cv::Scalar(0,0,255),thickness);
-        else cv::putText(img_output,"detection fail, press any key",cv::Point2f(left,bottom),0,fontscale,cv::Scalar(0,0,255),thickness);
-        this->detection_result = img_output;
 
-        cv::imshow("input_image",img_output);
-        printf("Interact with the visualization window\n");
-        char key = cv::waitKey(0);
-        
-        if(key != '0' && key!='1' && key!='q'){
-            printf("wrong commend is detected\n");
-            key = cv::waitKey(0);
+
+    if(this->draw){
+        if(key_input) {
+            if(result.first) cv::putText(img_output,"save: 1, ignore: 0",cv::Point2f(left,bottom),0,fontscale,cv::Scalar(0,0,255),thickness);
+            else cv::putText(img_output,"detection fail, press any key",cv::Point2f(left,bottom),0,fontscale,cv::Scalar(0,0,255),thickness);
+            this->detection_result = img_output;
+
+            cv::imshow("input_image",img_output);
+            printf("save: 1, ignore: 0\n");
+            char key = cv::waitKey(0);
+            while(key != '0' && key!='1'){
+                printf("wrong commend is detected\n");
+                key = cv::waitKey(0);
+            }
+            cv::destroyAllWindows();
+            if(key == '0'){
+                result.first = false;
+            }
         }
-        cv::destroyAllWindows();
-        if(key == '0'){
-            result.first = false;
-        }
-        if(key == 'q'){
-            this->draw = false;
+        else {
+            if(result.first) cv::putText(img_output,"detection success",cv::Point2f(left,bottom),0,fontscale,cv::Scalar(0,0,255),thickness);
+            else cv::putText(img_output,"detection fail",cv::Point2f(left,bottom),0,fontscale,cv::Scalar(0,0,255),thickness);
+            this->detection_result = img_output;
+
+            cv::imshow("input_image",img_output);
         }
     }
     else{
@@ -293,6 +306,8 @@ Shape TargetDetector::contour2shape(const vector<cv::Point2i> &contour){
     double m00{0}, m10{0}, m01{0}, m20{0},m11{0},m02{0};
     double M00{0}, M10{0}, M01{0}, M20{0},M11{0},M02{0};
 
+    #pragma omp prallel for \
+    reduction(+: M00) reduction(+: M10) reduction(+: M01) reduction(+: M20) reduction(+: M11) reduction(+: M02)
     for(int i=0; i<n;i++){
         cv::Point2i pt = contour[i];
         int x_f = pt.x;
@@ -346,79 +361,76 @@ bool TargetDetector::cal_shape_cov(const vector<cv::Point2i> &contour, Shape* sh
     J10.setZero();
     J01.setZero();
     Jc.setZero();
-    
+    // Eigen::MatrixXd p_info(2*n, 2*n);
+    // p_info.setZero();
+
+    Eigen::SparseMatrix<double> sparse_p_info(2*n, 2*n);
+
     double s = pow(1,2);
     double z=1/s*2/3;
+    #pragma omp prallel for
+    for(int i=0;i<n;i++){
+        int curr_x_index = 2*i;
+        int curr_y_index = (curr_x_index+1)%(2*n);
+        int next_x_index = (curr_x_index+2)%(2*n);
+        int next_y_index = (curr_x_index+3)%(2*n);
+
+        sparse_p_info.insert(curr_x_index,next_x_index)=-z;
+        sparse_p_info.insert(next_x_index,curr_x_index)=-z;
+
+        sparse_p_info.insert(curr_y_index,next_y_index)=-z;
+        sparse_p_info.insert(next_y_index,curr_y_index)=-z;
+    }
+
     float * grad_x3_ptr = (float*) grad_x3.data;
     float * grad_y3_ptr = (float*) grad_y3.data;
 
-    std::vector<Eigen::Triplet<double>> triplets;
-    triplets.reserve(10 * n);
-    #pragma omp parallel
-    {
-        std::vector<Eigen::Triplet<double>> local_triplets;
 
-        #pragma omp for nowait
-        for (int i = 0; i < n; i++) {
-            int curr_x_index = 2 * i;
-            int curr_y_index = (curr_x_index + 1) % (2 * n);
-            int next_x_index = (curr_x_index + 2) % (2 * n);
-            int next_y_index = (curr_x_index + 3) % (2 * n);
+    #pragma omp prallel for
+    for(int i=0; i<n;i++){
+        int i_p = (i-1+n)%n;
+        cv::Point2i pt_p = contour[i_p];
+        int x_p = pt_p.x;
+        int y_p = pt_p.y;
 
-            local_triplets.emplace_back(curr_x_index, next_x_index, -z);
-            local_triplets.emplace_back(next_x_index, curr_x_index, -z);
-            local_triplets.emplace_back(curr_y_index, next_y_index, -z);
-            local_triplets.emplace_back(next_y_index, curr_y_index, -z);
-        }
+        int i_c= i;
+        cv::Point2i pt_c = contour[i_c];
+        int x_c = pt_c.x;
+        int y_c = pt_c.y;
 
-        #pragma omp for nowait
-        for (int i = 0; i < n; i++) {
-            int i_p = (i - 1 + n) % n;
-            int i_c = i;
-            int i_f = (i + 1) % n;
+        int i_f= (i+1)%n;
+        cv::Point2i pt_f = contour[i_f];
+        int x_f = pt_f.x;
+        int y_f = pt_f.y;
 
-            cv::Point2i pt_p = contour[i_p];
-            cv::Point2i pt_c = contour[i_c];
-            cv::Point2i pt_f = contour[i_f];
+        J00(2*i_c) = y_p - y_f;
+        J00(2*i_c+1) = x_f - x_p;
+        J10(2*i_c) = x_f*(y_c-y_f) + 2*x_c*(y_p-y_f)+x_p*(y_p-y_c);
+        J10(2*i_c+1) = (x_f-x_p)*(x_f+x_c+x_p);
+        J01(2*i_c) = (y_p-y_f)*(y_f+y_c+y_p);
+        J01(2*i_c+1) = y_f*(x_f-x_c) + 2*y_c*(x_f-x_p)+y_p*(x_c-x_p);
 
-            int x_p = pt_p.x, y_p = pt_p.y;
-            int x_c = pt_c.x, y_c = pt_c.y;
-            int x_f = pt_f.x, y_f = pt_f.y;
+        int pos = y_c*width +x_c;
+        float gx_i = grad_x3_ptr[pos];
+        float gy_i = grad_y3_ptr[pos];
+        float gn_i = sqrt(gx_i*gx_i+gy_i*gy_i) + numerical_stable;
+        float step_x = gx_i/gn_i;
+        float step_y = gy_i/gn_i;
+        double delta = intensity_range(gray_img, x_c,y_c,step_x, step_y, step_length)+0.0;
+        Eigen::Matrix2d V,W, likelihood_i;
+        V << step_x , -step_y,
+             step_y , step_x;
+        W << pow(gn_i*4/delta,2) , 0,0,0;
+        likelihood_i = V*W*V.transpose();
+        
+        // cout<<likelihood_i<<endl;
 
-            J00(2 * i_c) = y_p - y_f;
-            J00(2 * i_c + 1) = x_f - x_p;
-            J10(2 * i_c) = x_f * (y_c - y_f) + 2 * x_c * (y_p - y_f) + x_p * (y_p - y_c);
-            J10(2 * i_c + 1) = (x_f - x_p) * (x_f + x_c + x_p);
-            J01(2 * i_c) = (y_p - y_f) * (y_f + y_c + y_p);
-            J01(2 * i_c + 1) = y_f * (x_f - x_c) + 2 * y_c * (x_f - x_p) + y_p * (x_c - x_p);
+        sparse_p_info.insert(2*i_c,2*i_c) = likelihood_i(0,0)+2*z+numerical_stable;;
+        sparse_p_info.insert(2*i_c+1,2*i_c) = likelihood_i(1,0);
+        sparse_p_info.insert(2*i_c,2*i_c+1) = likelihood_i(0,1);
+        sparse_p_info.insert(2*i_c+1,2*i_c+1) = likelihood_i(1,1)+2*z+numerical_stable;;
 
-            int pos = y_c * width + x_c;
-            float gx_i = grad_x3_ptr[pos];
-            float gy_i = grad_y3_ptr[pos];
-            float gn_i = sqrt(gx_i * gx_i + gy_i * gy_i) + numerical_stable;
-            float step_x = gx_i / gn_i;
-            float step_y = gy_i / gn_i;
-            double delta = intensity_range(gray_img, x_c, y_c, step_x, step_y, step_length) + 0.0;
-
-            Eigen::Matrix2d V, W, likelihood_i;
-            V << step_x, -step_y,
-                step_y,  step_x;
-            W << pow(gn_i * 4 / delta, 2), 0,
-                0, 0;
-            likelihood_i = V * W * V.transpose();
-
-            int idx = 2 * i_c;
-            local_triplets.emplace_back(idx,     idx,     likelihood_i(0,0) + 2 * z + numerical_stable);
-            local_triplets.emplace_back(idx + 1, idx,     likelihood_i(1,0));
-            local_triplets.emplace_back(idx,     idx + 1, likelihood_i(0,1));
-            local_triplets.emplace_back(idx + 1, idx + 1, likelihood_i(1,1) + 2 * z + numerical_stable);
-        }
-
-        #pragma omp critical
-        triplets.insert(triplets.end(), local_triplets.begin(), local_triplets.end());
     }
-    Eigen::SparseMatrix<double> sparse_p_info(2 * n, 2 * n);
-    sparse_p_info.setFromTriplets(triplets.begin(), triplets.end());
 
 
     double M00 = shape->m00*2;
@@ -477,8 +489,7 @@ bool TargetDetector::detect_circles(cv::Mat& img, cv::Mat& img_output,vector<Sha
     cv::Mat img_thresh, img_morph;
     int scale_factor = max(img_origin.rows, img_origin.cols)/1000+1;
     int blur_size = scale_factor*2+3; //should be odd
-    // cv::GaussianBlur(img_origin, img_blur, cv::Size(blur_size, blur_size), -1);
-    img_blur = img_origin;
+    cv::GaussianBlur(img_origin, img_blur, cv::Size(blur_size, blur_size), -1);
 
     // threshold based
     vector<int> block_sizes = {6*scale_factor+1,12*scale_factor+1,18*scale_factor+1};

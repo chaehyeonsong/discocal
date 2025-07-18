@@ -3,6 +3,7 @@
 
 #include <yaml-cpp/yaml.h>
 #include <tabulate/table.hpp>
+#include "ceres/ceres.h"
 #include <filesystem>
 #include <iostream>
 
@@ -129,117 +130,246 @@ struct Shape{
 };
 
 
-struct Params{
-    double fx;
-    double fy;
-    double cx;
-    double cy;
-    double skew;
-    double d[4];
-    // double radius;
-    double s_fx;
-    double s_fy;
-    double s_cx;
-    double s_cy;
-    double s_skew;
-    double s_d[4];
-    // double s_radius;
+// struct Params{
+//     double fx;
+//     double fy;
+//     double cx;
+//     double cy;
+//     double skew;
+//     double d[4];
+//     // double radius;
+//     double s_fx;
+//     double s_fy;
+//     double s_cx;
+//     double s_cy;
+//     double s_skew;
+//     double s_d[4];
+//     // double s_radius;
 
-    Params(double _fx=0, double _fy=0, double _cx=0, double _cy=0, double _skew=0, double _d1=0, double _d2=0, double _d3=0, double _d4=0){
-        fx = _fx;
-        fy = _fy;
-        cx = _cx;
-        cy = _cy;
-        skew = _skew;
+//     Params(double _fx=0, double _fy=0, double _cx=0, double _cy=0, double _skew=0, double _d1=0, double _d2=0, double _d3=0, double _d4=0){
+//         fx = _fx;
+//         fy = _fy;
+//         cx = _cx;
+//         cy = _cy;
+//         skew = _skew;
+//         d[0] = _d1;
+//         d[1] = _d2;
+//         d[2] = _d3;
+//         d[3] = _d4;
+//         // radius = _radius;
+//         initialize_unc();
+//     }
+//     Params(YAML::Node camera_node){
+//         fx = camera_node["fx"].as<double>();
+//         fy = camera_node["fy"].as<double>();
+//         cx = camera_node["cx"].as<double>();
+//         cy = camera_node["cy"].as<double>();
+//         skew = camera_node["skew"].as<double>();
+//         d[0] = camera_node["d1"].as<double>();
+//         d[1] = camera_node["d2"].as<double>();
+//         d[2] = camera_node["d3"].as<double>();
+//         d[3] = camera_node["d4"].as<double>();
+//         initialize_unc();
+//     }
+//     void update_unc(std::array<double,9> params_cov){
+//         s_fx = params_cov[0];
+//         s_fy = params_cov[1];
+//         s_cx = params_cov[2];
+//         s_cy = params_cov[3];
+//         s_skew = params_cov[4];
+//         s_d[0] = params_cov[5];
+//         s_d[1] = params_cov[6];
+//         s_d[2] = params_cov[7];
+//         s_d[3] = params_cov[8];
+//     }
+//     void initialize_unc(){
+//         std::array<double,9> params_cov{0,};
+//         update_unc(params_cov);
+//     }
+//     int get_precision(double s){
+//         int max_precision =0;
+//         int min_precision = -4;
+//         for(int i =max_precision; i>=min_precision;i--){
+//             double mod= pow(10, i);
+//             int v = floor(s/mod);
+//             if(v!=0){
+//                 return -i;
+//             }
+//         }
+//         return 4;
+//     }
+//     std::string sigma3(double x, double s_x){
+//         int n = get_precision(s_x);
+//         int toralance = 3;
+//         return to_stringf(x,n)+"\u00B1"+to_stringf(toralance*s_x,n+1);
+//     }
+//     std::string to_string(){
+//         std::string str = "fx\tfy\tcx\tcy\tskew\td1\td2\td3\td4\n"
+//         +std::to_string(fx) + "\t"+std::to_string(fy) + "\t"+std::to_string(cx) + "\t"+std::to_string(cy) + "\t"+std::to_string(skew) 
+//         + "\t"+std::to_string(d[0]) + "\t"+std::to_string(d[1]) + "\t"+std::to_string(d[2]) + "\t"+std::to_string(d[3]);
+//         return str;
+//     }
+//     tabulate::Table to_table(bool only_intrinsic = false,  bool details = false){
+//         tabulate::Table table;
+//         int toralance = 3;
+//         if(only_intrinsic){
+//             table.add_row({"Parameter","fx", "fy", "cx","cy","skew"});
+//             table.add_row({"mean", to_stringf(fx, 2), to_stringf(fy, 2), to_stringf(cx, 2),to_stringf(cy, 2),to_stringf(skew, 2)
+//             });
+//         }
+//         else{
+//             table.add_row({"Parameter","fx", "fy", "cx","cy","skew","d1","d2","d3","d4"});
+//             table.add_row({ "mean",to_stringf(fx, 2), to_stringf(fy, 2), to_stringf(cx, 2), to_stringf(cy, 2),to_stringf(skew, 2),
+//             to_stringf(d[0], 3), to_stringf(d[1], 3),to_stringf(d[2], 3),to_stringf(d[3], 4)
+//             });
+//             if(details){
+//                 table.add_row({ "2sigma",to_stringf(toralance*s_fx, 3), to_stringf(toralance*s_fy, 3),to_stringf(toralance*s_cx, 3), to_stringf(toralance*s_cy, 3),to_stringf(toralance*s_skew, 3),
+//                    to_stringf(toralance*s_d[0], 4), to_stringf(toralance*s_d[1], 4),to_stringf(toralance*s_d[2], 4),to_stringf(toralance*s_d[3], 5)
+//                 });
+//                 // table.add_row({ sigma3(fx, s_fx), sigma3(fy, s_fy), sigma3(cx, s_cx),sigma3(cy, s_cy),sigma3(skew, s_skew),
+//                 // sigma3(d[0],s_d[0]), sigma3(d[1],s_d[1]), sigma3(d[2],s_d[2]), sigma3(d[3],s_d[3]), sigma3(radius,s_radius)});
+//             }
+//         }
+        
+        
+//         return table;
+//     }
+// };
+
+template<typename T>
+struct Params_T {
+    T fx;
+    T fy;
+    T cx;
+    T cy;
+    T skew;
+    std::array<T, 4> d;
+    
+    T s_fx;
+    T s_fy;
+    T s_cx;
+    T s_cy;
+    T s_skew;
+    std::array<T, 4> s_d;
+
+    // Default constructor
+    Params_T(T _fx = T(0), T _fy = T(0), T _cx = T(0), T _cy = T(0), T _skew = T(0),
+           T _d1 = T(0), T _d2 = T(0), T _d3 = T(0), T _d4 = T(0))
+    : fx(_fx), fy(_fy), cx(_cx), cy(_cy), skew(_skew) {
         d[0] = _d1;
         d[1] = _d2;
         d[2] = _d3;
         d[3] = _d4;
-        // radius = _radius;
-        initialize_unc();
+        // initialize_unc();
     }
-    Params(YAML::Node camera_node){
-        fx = camera_node["fx"].as<double>();
-        fy = camera_node["fy"].as<double>();
-        cx = camera_node["cx"].as<double>();
-        cy = camera_node["cy"].as<double>();
-        skew = camera_node["skew"].as<double>();
-        d[0] = camera_node["d1"].as<double>();
-        d[1] = camera_node["d2"].as<double>();
-        d[2] = camera_node["d3"].as<double>();
-        d[3] = camera_node["d4"].as<double>();
-        initialize_unc();
+    
+    // YAML constructor (double에 고정)
+    // 템플릿 내부에 템플릿이 아닌 생성자를 두는 것도 가능
+    Params_T(YAML::Node camera_node) {
+        fx = static_cast<T>(camera_node["fx"].as<double>());
+        fy = static_cast<T>(camera_node["fy"].as<double>());
+        cx = static_cast<T>(camera_node["cx"].as<double>());
+        cy = static_cast<T>(camera_node["cy"].as<double>());
+        skew = static_cast<T>(camera_node["skew"].as<double>());
+        d[0] = static_cast<T>(camera_node["d1"].as<double>());
+        d[1] = static_cast<T>(camera_node["d2"].as<double>());
+        d[2] = static_cast<T>(camera_node["d3"].as<double>());
+        d[3] = static_cast<T>(camera_node["d4"].as<double>());
+        // initialize_unc();
     }
-    void update_unc(std::array<double,9> params_cov){
-        s_fx = params_cov[0];
-        s_fy = params_cov[1];
-        s_cx = params_cov[2];
-        s_cy = params_cov[3];
-        s_skew = params_cov[4];
-        s_d[0] = params_cov[5];
-        s_d[1] = params_cov[6];
-        s_d[2] = params_cov[7];
-        s_d[3] = params_cov[8];
+
+    void update_unc(const std::array<double, 9>& params_cov) {
+        s_fx = static_cast<T>(params_cov[0]);
+        s_fy = static_cast<T>(params_cov[1]);
+        s_cx = static_cast<T>(params_cov[2]);
+        s_cy = static_cast<T>(params_cov[3]);
+        s_skew = static_cast<T>(params_cov[4]);
+        s_d[0] = static_cast<T>(params_cov[5]);
+        s_d[1] = static_cast<T>(params_cov[6]);
+        s_d[2] = static_cast<T>(params_cov[7]);
+        s_d[3] = static_cast<T>(params_cov[8]);
     }
-    void initialize_unc(){
-        std::array<double,9> params_cov{0,};
+    
+    void initialize_unc() {
+        std::array<T, 9> params_cov;
+        params_cov.fill(T(0));
         update_unc(params_cov);
     }
-    int get_precision(double s){
-        int max_precision =0;
+    
+    int get_precision(T s) {
+        int max_precision = 0;
         int min_precision = -4;
-        for(int i =max_precision; i>=min_precision;i--){
-            double mod= pow(10, i);
-            int v = floor(s/mod);
-            if(v!=0){
+        for (int i = max_precision; i >= min_precision; i--) {
+            T mod = ceres::pow(T(10), T(i));
+            T v = ceres::floor(s / mod);
+            if (v != T(0)) {
                 return -i;
             }
         }
         return 4;
     }
-    std::string sigma3(double x, double s_x){
-        int n = get_precision(s_x);
-        int toralance = 3;
-        return to_stringf(x,n)+"\u00B1"+to_stringf(toralance*s_x,n+1);
+
+    std::string sigma3(T x, T s_x) {
+        if (std::is_same_v<T, double>) { // double 타입일 때만
+            int n = get_precision(s_x);
+            int toralance = 3;
+            return to_stringf(x, n) + "\u00B1" + to_stringf(T(toralance) * s_x, n + 1);
+        }
+        else return std::string();
     }
-    std::string to_string(){
-        std::string str = "fx\tfy\tcx\tcy\tskew\td1\td2\td3\td4\n"
-        +std::to_string(fx) + "\t"+std::to_string(fy) + "\t"+std::to_string(cx) + "\t"+std::to_string(cy) + "\t"+std::to_string(skew) 
-        + "\t"+std::to_string(d[0]) + "\t"+std::to_string(d[1]) + "\t"+std::to_string(d[2]) + "\t"+std::to_string(d[3]);
+    
+    std::string to_string() {
+        std::string str = "fx\tfy\tcx\tcy\tskew\td1\td2\td3\td4\n";
+        str += std::to_string(static_cast<double>(fx)) + "\t";
+        str += std::to_string(static_cast<double>(fy)) + "\t";
+        str += std::to_string(static_cast<double>(cx)) + "\t";
+        str += std::to_string(static_cast<double>(cy)) + "\t";
+        str += std::to_string(static_cast<double>(skew)) + "\t";
+        str += std::to_string(static_cast<double>(d[0])) + "\t";
+        str += std::to_string(static_cast<double>(d[1])) + "\t";
+        str += std::to_string(static_cast<double>(d[2])) + "\t";
+        str += std::to_string(static_cast<double>(d[3]));
         return str;
     }
-    tabulate::Table to_table(bool only_intrinsic = false,  bool details = false){
+
+    tabulate::Table to_table(bool only_intrinsic = false, bool details = false) {
         tabulate::Table table;
-        int toralance = 2;
-        if(only_intrinsic){
-            table.add_row({"Parameter","fx", "fy", "cx","cy","skew"});
-            table.add_row({"mean", to_stringf(fx, 2), to_stringf(fy, 2), to_stringf(cx, 2),to_stringf(cy, 2),to_stringf(skew, 2)
-            });
-        }
-        else{
-            table.add_row({"Parameter","fx", "fy", "cx","cy","skew","d1","d2","d3","d4"});
-            table.add_row({ "mean",to_stringf(fx, 2), to_stringf(fy, 2), to_stringf(cx, 2), to_stringf(cy, 2),to_stringf(skew, 2),
-            to_stringf(d[0], 3), to_stringf(d[1], 3),to_stringf(d[2], 3),to_stringf(d[3], 4)
-            });
-            if(details){
-                table.add_row({ "2sigma",to_stringf(toralance*s_fx, 3), to_stringf(toralance*s_fy, 3),to_stringf(toralance*s_cx, 3), to_stringf(toralance*s_cy, 3),to_stringf(toralance*s_skew, 3),
-                   to_stringf(toralance*s_d[0], 4), to_stringf(toralance*s_d[1], 4),to_stringf(toralance*s_d[2], 4),to_stringf(toralance*s_d[3], 5)
-                });
-                // table.add_row({ sigma3(fx, s_fx), sigma3(fy, s_fy), sigma3(cx, s_cx),sigma3(cy, s_cy),sigma3(skew, s_skew),
-                // sigma3(d[0],s_d[0]), sigma3(d[1],s_d[1]), sigma3(d[2],s_d[2]), sigma3(d[3],s_d[3]), sigma3(radius,s_radius)});
+        if (std::is_same_v<T, double>) { // double 타입일 때만
+            int toralance = 3;
+            if (only_intrinsic) {
+                table.add_row({"Parameter", "fx", "fy", "cx", "cy", "skew"});
+                table.add_row({"mean", to_stringf(fx, 2), to_stringf(fy, 2), to_stringf(cx, 2), to_stringf(cy, 2), to_stringf(skew, 2)});
+            } else {
+                table.add_row({"Parameter", "fx", "fy", "cx", "cy", "skew", "d1", "d2", "d3", "d4"});
+                table.add_row({"mean", to_stringf(fx, 2), to_stringf(fy, 2), to_stringf(cx, 2), to_stringf(cy, 2), to_stringf(skew, 2),
+                               to_stringf(d[0], 3), to_stringf(d[1], 3), to_stringf(d[2], 3), to_stringf(d[3], 4)});
+                if (details) {
+                    table.add_row({"2sigma", to_stringf(T(toralance) * s_fx, 3), to_stringf(T(toralance) * s_fy, 3),
+                                   to_stringf(T(toralance) * s_cx, 3), to_stringf(T(toralance) * s_cy, 3), to_stringf(T(toralance) * s_skew, 3),
+                                   to_stringf(T(toralance) * s_d[0], 4), to_stringf(T(toralance) * s_d[1], 4),
+                                   to_stringf(T(toralance) * s_d[2], 4), to_stringf(T(toralance) * s_d[3], 5)});
+                }
             }
         }
-        
-        
         return table;
     }
 };
 
-struct Point{
-    double x;
-    double y;
-    Point(double _x, double _y) : x(_x), y(_y){};
+typedef Params_T<double> Params;
+
+// struct Point{
+//     double x;
+//     double y;
+//     Point(double _x, double _y) : x(_x), y(_y){};
+// };
+
+template<typename T>
+struct Point_T {
+    T x, y;
+    Point_T(T _x, T _y) : x(_x), y(_y) {};
 };
+
+typedef Point_T<double> Point;
 
 static bool endsWith(std::string const &str, std::string const &suffix) {
     if (str.length() < suffix.length()) {
