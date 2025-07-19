@@ -13,4 +13,4 @@ int main(int argc, char** argv){
     stereo_calibrator.stereo_calibration(node);
 
     return 0;
-}
+}  

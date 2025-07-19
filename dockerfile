@@ -22,6 +22,8 @@ RUN apt-get update \
 	python3-dev\
 	python3-pip \
 	python3-opencv\
+	libboost-all-dev \
+    libpcl-dev \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Install Ceres Solver
@@ -45,8 +47,8 @@ RUN rm -rf /tmp/*
 
 #-----------------------------------------------------------
 
-RUN pip3 install pyinstaller scipy matplotlib pyyaml
-# 5) í”„ë¡œì íŠ¸ ë³µì‚¬ ë° ë¹Œë“œ
+RUN pip install pyinstaller scipy matplotlib pyyaml
+# 5) ÇÁ·ÎÁ§Æ® º¹»ç ¹× ºôµå
 WORKDIR /app
 COPY . .
 
