@@ -1,0 +1,7 @@
+services:
+  builder:
+    image: discocal-builder:latest
+    build:
+      context: .
+      dockerfile: dockerfile
+    
