@@ -41,4 +41,4 @@ lidar:
 
 options:
   save_results_path : "./"
-  visualize : true
+  visualize : false

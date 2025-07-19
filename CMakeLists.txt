@@ -46,5 +46,6 @@ target_link_libraries(pydiscocal PRIVATE
     ${OpenCV_LIBRARIES}
     targetDetector
     calibrator
+    lidarModule
     yaml-cpp
 )

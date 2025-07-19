@@ -134,18 +134,22 @@ bool estimate_lidar_extrinsic(const std::string& pcd_path,
         circle_centers.push_back(final_circle_center);
     }
     cout<< "[INFO] Circle centers found: " << circle_centers.size() << endl;
-    for (const auto& center : circle_centers) {
-        std::cout << "Circle center: " << center.transpose() << std::endl;
-    }
     auto sorted_centers = sortCentersByRotatedLidarFrame(circle_centers, params.n_x, params.n_y);
-    std::cout << "Sorted Centers:" << std::endl;
-    for (const auto& center : sorted_centers) {
-        std::cout << "x: " << center.x() << ", y: " << center.y() << ", z: " << center.z() << std::endl;
-    }
     Eigen::Matrix4f T_board = optimize_rotation_transform_general(
-    sorted_centers, plane_model, params.n_x, params.n_y, params.distance);
-    std::cout << "[INFO] Optimized transformation matrix:\n" << T_board << std::endl;
-    
+        sorted_centers, plane_model, params.n_x, params.n_y, params.distance);
+    if(params.visualize){
+        
+        for (const auto& center : circle_centers) {
+            std::cout << "Circle center: " << center.transpose() << std::endl;
+        }
+        
+        std::cout << "Sorted Centers:" << std::endl;
+        for (const auto& center : sorted_centers) {
+            std::cout << "x: " << center.x() << ", y: " << center.y() << ", z: " << center.z() << std::endl;
+        }
+        
+        std::cout << "[INFO] Optimized transformation matrix:\n" << T_board << std::endl;
+    }
     out_pose = LieAlgebra::to_se3(T_board.cast<double>().eval());
     return true;  
 }
@@ -709,7 +713,7 @@ Eigen::Matrix4f optimize_rotation_transform_general(
 
     ceres::Solver::Options options;
     options.linear_solver_type = ceres::DENSE_QR;
-    options.minimizer_progress_to_stdout = true;
+    options.minimizer_progress_to_stdout = false;
     ceres::Solver::Summary summary;
     ceres::Solve(options, &problem, &summary);
 

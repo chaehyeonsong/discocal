@@ -6,7 +6,10 @@ run_mono
 run_stereo
 sample_data/
 tmp_data/
-
+dist/
+run_lidar.spec
+run_mono.spec
+run_stereo.spec
 #pages
 Gemfile.lock
 _site

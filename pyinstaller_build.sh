@@ -14,3 +14,6 @@ echo "Using SO file: $SO_FILE"
 # Run PyInstaller for mono and stereo
 pyinstaller --onefile --add-binary "$SO_FILE:." src/python/run_mono.py
 pyinstaller --onefile --add-binary "$SO_FILE:." src/python/run_stereo.py
+# Run PyInstaller for lidar
+pyinstaller --onefile --add-binary "$SO_FILE:." src/python/run_lidar.py
+# 

@@ -22,6 +22,8 @@ RUN apt-get update \
 	python3-dev\
 	python3-pip \
 	python3-opencv\
+	libboost-all-dev \
+    libpcl-dev \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Install Ceres Solver
@@ -29,7 +31,7 @@ RUN wget http://ceres-solver.org/ceres-solver-2.2.0.tar.gz \
 	&& tar xf ceres-solver-2.2.0.tar.gz \
 	&& mkdir ceres-build && cd ceres-build \
 	&& cmake ../ceres-solver-2.2.0 -DCMAKE_BUILD_TYPE=Release \
-	&& make -j8 \
+	&& make -j$(nproc) \
 	&& make install
 
 # Install yaml-cpp
@@ -37,29 +39,26 @@ RUN git clone https://github.com/jbeder/yaml-cpp.git \
 	&& cd yaml-cpp \
 	&& mkdir build && cd build \
 	&& cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local .. \
-	&& make -j8 \
+	&& make -j$(nproc) \
 	&& make install
 
 # Clean up build artifacts
 RUN rm -rf /tmp/*
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libboost-all-dev \
-    libpcl-dev \
-    && rm -rf /var/lib/apt/lists/*
+
 #-----------------------------------------------------------
 
-#RUN pip3 install pyinstaller scipy matplotlib pyyaml
-# 5) ?îÑÎ°úÏ†ù?ä∏ Î≥µÏÇ¨ Î∞? ÎπåÎìú
-#WORKDIR /app
-#COPY . .
+RUN pip install pyinstaller scipy matplotlib pyyaml
+# 5) «¡∑Œ¡ß∆Æ ∫πªÁ π◊ ∫ÙµÂ
+WORKDIR /app
+COPY . .
 
-#RUN rm -rf build && mkdir build && cd build \
-#	&& cmake .. \
-#	&& make -j$(nproc)
+RUN rm -rf build && mkdir build && cd build \
+	&& cmake .. \
+	&& make -j$(nproc)
 
 # Copy build script
-#COPY pyinstaller_build.sh /app/
-#RUN chmod +x /app/pyinstaller_build.sh
+COPY pyinstaller_build.sh /app/
+RUN chmod +x /app/pyinstaller_build.sh
 
 # Run PyInstaller with dynamic .so detection
-#RUN /app/pyinstaller_build.sh
+RUN /app/pyinstaller_build.sh
