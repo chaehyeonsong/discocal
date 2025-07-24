@@ -62,30 +62,60 @@ Supports:
 ```bash
 git clone https://github.com/chaehyeonsong/discocal.git
 cd discocal
-docker compose up --build
+docker build -t discocal .
 ```
 After build, runfiles will be created in discocal folder 
 
 ## 2. Run 
-Note: Revise the config file before run
-* Intrinsic calibration
-	```bash
-	sudo chmod +x run_mono && ./run_mono [config_path]
-	```
-* Extrinsic calibration
-	```bash
-	sudo chmod +x run_stereo && ./run_stereo [config_path]
-	```
 
-You can download sample images in [here](https://www.dropbox.com/scl/fo/mdy8xivja5wfwrjpculb3/ALXiShefmtTgfacgkOm7Zcw?rlkey=0ndgwesufd22f7i0mcfrtl8uo&st=s99ke8pt&dl=0)
+To allow Docker containers to access your X server, run this in your terminal on the host machine (not inside Docker):
+```bash
+xhost +local:root
+```
+After, run Docker with X11 forwarding enabled, This command starts the container with GUI access:
+```bash
+sudo docker run -it --rm \
+    -e DISPLAY=$DISPLAY \
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
+    -v "$(pwd)":/app \
+    -w /app \
+    discocal
+```
+Inside the Docker container, build and run the program:
+```bash
+mkdir build
+cd build
+cmake ..
+make
+LIBGL_ALWAYS_SOFTWARE=1 ./lidar.out
+```
 
-<!-- # Applications
+## 3. Key Parameters in lidar.yaml
 
-### Thermal Infrared Camera calibration
+### coarse boundary
+	coarse_bd_x1: 0.0 #for coarse boundary detection
+    coarse_bd_x2: 5.0
+    coarse_bd_y1: -2.0
+    coarse_bd_y2: 2.0
+    coarse_bd_z1: -0.5
+    coarse_bd_z2: 3.0
+ Tip 1: Adjust `coarse_bd_z1` to exclude ground points. This helps better distinguish the circular board from its surroundings.
 
-We can leverage the detection robustness of the circular patterns, particularly for unconventional cameras, such as thermal cameras. Watch the demo video!
+ Tip 2: Adjust other parameters to eliminate planar surfaces that resemble the circular board. These similar planes may interfere with accurate board detection.
 
-[![Video Label](http://img.youtube.com/vi/j86pyBZe7t0/0.jpg)](https://youtu.be/j86pyBZe7t0) -->
+### board detection parameter
+	eps : 0.05  # for clustering
+Tip 1: If the distance between points on the board exceeds 'eps' (in meters), clustering may fail. Adjust this parameter appropriately for accurate detection. Use visualization mode to assist with tuning and debugging.
+
+### plane threshold
+	distance_threshold: 0.02 #for plane fitting , plane width/2
+After detecting the board, this parameter determines the allowable distance from the plane. when projecting points onto it. Adjust to control how tightly points must fit the detected plane.
+
+### cdr & direction variance
+	cdr: 0.4  # For boundary detection — decreasing this value increases the number of boundaries detected
+    direction_var: 1.0  # For boundary detection — increasing this value increases the number of boundaries detected
+ Tune these parameters based on the visualized boundary point results for optimal detection.
+
 
 # Citation
 

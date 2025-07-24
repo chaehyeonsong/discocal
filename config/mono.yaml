@@ -1,5 +1,5 @@
 camera:
-  img_dir : "./sample_imgs/rgb12/right"
+  img_dir : "../sample_data/calib_imgs/seunghun"
   n_d: 2
   type: "circle"
   n_x: 4 
@@ -14,7 +14,7 @@ camera:
   # distance: 0.09
 
 options:
-  visualize : true
+  visualize : false
   evaluation: true
   # save_pose : false 
   # save_rpe : false
