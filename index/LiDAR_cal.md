@@ -37,6 +37,40 @@ DiscoCal is designed to work reliably even when the board appears at arbitrary p
 
 ### 3. Run
 
+This section illustrates how to manually build and run the Docker container for LiDAR calibration.  
+For a simpler setup using Docker Compose, refer to the [Quick Installation Guide](https://github.com/chaehyeonsong/discocal).
+
+1) Build with Docker
+```bash
+git clone https://github.com/chaehyeonsong/discocal.git
+cd discocal
+docker build -t discocal-lidar .
+```
+After build, runfiles will be created in discocal folder 
+
+2) Run the Container (with GUI support) 
+
+To allow Docker containers to access your X server, run this in your terminal on the host machine (not inside Docker):
+```bash
+xhost +local:root
+```
+After, run Docker with X11 forwarding enabled, This command starts the container with GUI access:
+```bash
+sudo docker run -it --rm \
+    -e DISPLAY=$DISPLAY \
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
+    -v "$(pwd)":/app \
+    -w /app \
+    discocal-lidar
+```
+Inside the Docker container, build and run the program:
+```bash
+mkdir build
+cd build
+cmake ..
+make
+LIBGL_ALWAYS_SOFTWARE=1 ./lidar.out
+```
 
 ## Algorithm
 The overall process consists of four main stages:
