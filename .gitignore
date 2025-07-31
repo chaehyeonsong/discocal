@@ -10,6 +10,13 @@ dist/
 run_lidar.spec
 run_mono.spec
 run_stereo.spec
+run_lidar
+run_mono
+run_stereo
+config/mono.yaml
+config/stereo.yaml
+lidar_camera_extrinsic.txt
+
 #pages
 Gemfile.lock
 _site

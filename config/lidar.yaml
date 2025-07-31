@@ -1,5 +1,5 @@
 cameras:
-  - img_dir: "../sample_data/imgs/"
+  - img_dir: "sample_data/imgs/"
     cal_intrinsic: false
     type: "circle"
     n_x: 2 
@@ -19,7 +19,7 @@ cameras:
     d4: 0
 
 lidar:
-  - point_cloud_dir: "../sample_data/lidars/"
+  - point_cloud_dir: "sample_data/lidars/"
     type: "circle"
     n_x: 2 
     n_y: 2
