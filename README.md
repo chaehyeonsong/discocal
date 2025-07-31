@@ -62,33 +62,32 @@ Supports:
 ```bash
 git clone https://github.com/chaehyeonsong/discocal.git
 cd discocal
-docker build -t discocal .
+docker compose up --build
 ```
 After build, runfiles will be created in discocal folder 
 
+**Option 3) Manual Docker Build and Run (for code modification)**
+
+For manual Docker build and execution of the LiDAR calibration module,
+see [LiDAR Calibration ? How to Run](https://chaehyeonsong.github.io/discocal/index/LiDAR_cal.html#3-run) 
+
 ## 2. Run 
 
-To allow Docker containers to access your X server, run this in your terminal on the host machine (not inside Docker):
-```bash
-xhost +local:root
-```
-After, run Docker with X11 forwarding enabled, This command starts the container with GUI access:
-```bash
-sudo docker run -it --rm \
-    -e DISPLAY=$DISPLAY \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -v "$(pwd)":/app \
-    -w /app \
-    discocal
-```
-Inside the Docker container, build and run the program:
-```bash
-mkdir build
-cd build
-cmake ..
-make
-LIBGL_ALWAYS_SOFTWARE=1 ./lidar.out
-```
+Note: Revise the config file before run
+* Intrinsic calibration
+	```bash
+	sudo chmod +x run_mono && ./run_mono [config_path]
+	```
+* Extrinsic calibration
+	```bash
+	sudo chmod +x run_stereo && ./run_stereo [config_path]
+	```
+* LiDAR-camera calibration
+	```bash
+	sudo chmod +x run_lidar && ./run_lidar [config_path]
+	```
+
+You can download sample images in [here](https://www.dropbox.com/scl/fo/mdy8xivja5wfwrjpculb3/ALXiShefmtTgfacgkOm7Zcw?rlkey=0ndgwesufd22f7i0mcfrtl8uo&st=s99ke8pt&dl=0)
 
 ## 3. Key Parameters in lidar.yaml
 
@@ -112,8 +111,8 @@ Tip 1: If the distance between points on the board exceeds 'eps' (in meters), cl
 After detecting the board, this parameter determines the allowable distance from the plane. when projecting points onto it. Adjust to control how tightly points must fit the detected plane.
 
 ### cdr & direction variance
-	cdr: 0.4  # For boundary detection — decreasing this value increases the number of boundaries detected
-    direction_var: 1.0  # For boundary detection — increasing this value increases the number of boundaries detected
+	cdr: 0.4  # For boundary detection ??? decreasing this value increases the number of boundaries detected
+    direction_var: 1.0  # For boundary detection ??? increasing this value increases the number of boundaries detected
  Tune these parameters based on the visualized boundary point results for optimal detection.
 
 
