@@ -20,7 +20,7 @@ Discocal supports:
 
 ## News
 <!-- :round_pushpin: :Patch notes,    :tada:: awards -->
-- 25.05.30. :round_pushpin: **The uncertainty-aware version is released.** It is more accurate and robost.
+- 25.05.30. :round_pushpin: **The uncertainty-aware version is released.** It is more accurate and robust.
 - 24.07.19. :tada: This work is invited to [OpenCV Webinar](https://www.youtube.com/live/MTMMoN6ogcY?si=22DAdrzM3p9kDQK4)
 - 24.06.17. :round_pushpin:Add a description of how to undisort images using our method.
 - 24.04.17. :round_pushpin:We update circular pattern detector! Now, you don't need to tune hyperparameters for detections
@@ -64,7 +64,7 @@ git clone https://github.com/chaehyeonsong/discocal.git
 cd discocal
 docker compose up --build
 ```
-After build, runfiles will be created in discocal folder 
+After build, runfiles will be created in discocal folder. **You Don't have to additionally build or run docker container**
 
 ## 2. Run 
 Note: Revise the config file before run
