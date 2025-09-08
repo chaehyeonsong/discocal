@@ -35,6 +35,32 @@ DiscoCal is designed to work reliably even when the board appears at arbitrary p
 
 - [`lidar.yaml`](../codes/lidar.yaml) : This is a config template of LiDAR-camera calibration. You can adjust some parameters for more reliable data processing.
 
+ Key Parameters in lidar.yaml are as below
+
+#### 1) coarse boundary
+	coarse_bd_x1: 0.0 #for coarse boundary detection
+    coarse_bd_x2: 5.0
+    coarse_bd_y1: -2.0
+    coarse_bd_y2: 2.0
+    coarse_bd_z1: -0.5
+    coarse_bd_z2: 3.0
+ Tip 1: Adjust `coarse_bd_z1` to exclude ground points. This helps better distinguish the circular board from its surroundings.
+
+ Tip 2: Adjust other parameters to eliminate planar surfaces that resemble the circular board. These similar planes may interfere with accurate board detection.
+
+#### 2) board detection parameter
+	eps : 0.05  # for clustering
+Tip 1: If the distance between points on the board exceeds 'eps' (in meters), clustering may fail. Adjust this parameter appropriately for accurate detection. Use visualization mode to assist with tuning and debugging.
+
+#### 3) plane threshold
+	distance_threshold: 0.02 #for plane fitting , plane width/2
+After detecting the board, this parameter determines the allowable distance from the plane. when projecting points onto it. Adjust to control how tightly points must fit the detected plane.
+
+#### 4) cdr & direction variance
+	cdr: 0.4  # For boundary detection - decreasing this value increases the number of boundaries detected
+    direction_var: 1.0  # For boundary detection - increasing this value increases the number of boundaries detected
+ Tune these parameters based on the visualized boundary point results for optimal detection.
+
 ### 3. Run
 
 This section illustrates how to manually build and run the Docker container for LiDAR calibration.  
