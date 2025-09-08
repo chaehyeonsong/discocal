@@ -58,7 +58,7 @@ RUN rm -rf build && mkdir build && cd build \
 
 # Copy build script
 COPY pyinstaller_build.sh /app/
+RUN ls -al /app/
 RUN chmod +x /app/pyinstaller_build.sh
-
 # Run PyInstaller with dynamic .so detection
 RUN /app/pyinstaller_build.sh
