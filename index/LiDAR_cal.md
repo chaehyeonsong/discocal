@@ -29,6 +29,12 @@ Prepare **multiple pairs** of:
 Capture the board from a variety of positions and angles to maximize calibration robustness.  
 DiscoCal is designed to work reliably even when the board appears at arbitrary poses.
 
+If your LiDAR captures are stored in `.ply` format, you can convert them into `.pcd` format using the following command:
+
+```bash
+python convert_ply_into_pcd.py ./INPUT_DIR ./OUTPUT_DIR
+```
+
 <img src="../figs/LiDAR_RGB_sample.png" width="600">
 
 ### 2. Modify the config file
