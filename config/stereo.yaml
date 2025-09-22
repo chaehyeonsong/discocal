@@ -4,6 +4,7 @@ cameras:
     type: "circle"
     n_x: 4 
     n_y: 3
+    asymmetric: false
     radius: 0.03
     distance: 0.09
     detection_mode: ""
@@ -23,6 +24,7 @@ cameras:
     type: "circle"
     n_x: 4 
     n_y: 3
+    asymmetric: false
     radius: 0.03
     distance: 0.09
     detection_mode: ""

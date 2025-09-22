@@ -34,7 +34,7 @@ class CalibratorError: public std::exception{
 
 class Calibrator{
     public:
-        Calibrator(int n_x, int n_y, int n_d,double r, double distance, int max_scene, string result_path);
+        Calibrator(int n_x, int n_y, bool asymmetric, int n_d,double r, double distance, int max_scene, string result_path);
         ~Calibrator() = default;
 
         void init();
@@ -52,8 +52,6 @@ class Calibrator{
 
         Params calibrate_test(int mode,Params initial_params);
         
-
-        
         void set_image_size(int _width, int _height);
         // for exp
         void visualize_rep(string path, Params params, int mode);
@@ -68,6 +66,7 @@ class Calibrator{
         int num_scene;
         int max_scene;
         int n_x, n_y, n_d;
+        bool is_asymmetric;
         double distance;
         double original_r;
         // double curr_r;

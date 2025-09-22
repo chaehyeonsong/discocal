@@ -1,8 +1,9 @@
 #include "CTargetDetector.h"
-TargetDetector::TargetDetector(int n_x, int n_y, bool draw){
+TargetDetector::TargetDetector(int n_x, int n_y, bool _is_asymmetric, bool draw){
     this->n_x = n_x;    
     this->n_y = n_y;
     this->numerical_stable = 1e-8;
+    this-> is_asymmetric = _is_asymmetric;
     
     this->size_threshold = 100; //default 100
 
@@ -14,7 +15,7 @@ TargetDetector::TargetDetector(int n_x, int n_y, bool draw){
     this->draw=draw; 
     this->drawing_scale= 1;
 
-    for(int i=0; i<(n_y+4)/5;i++){
+    for(int i=0; i<(max(n_x,n_y)+4)/5;i++){
         // text_colors.push_back(cv::Scalar(255,0,0));
         text_colors.push_back(cv::Scalar(0,255,0));
         text_colors.push_back(cv::Scalar(0,0,255));
@@ -47,8 +48,8 @@ cv::Mat TargetDetector::preprocessing(const cv::Mat img, string detection_mode){
     else{
         throw WrongTypeException();
     }
-    
 }
+
 void TargetDetector::update_autocorrelation(cv::Mat &src, vector<Shape>& control_shapes){
     cv::Mat grad_x3, grad_y3;
     cv::Scharr(src, grad_x3,CV_32F,1,0);
@@ -136,13 +137,11 @@ void TargetDetector::visualize_result(cv::Mat& img_output, pair<bool,vector<Shap
         {
             Shape shape = result.second[i];
             cv::Point2f pt(shape.x*this->drawing_scale,shape.y*this->drawing_scale);
-            for (int j=0;j<n_x;j++)
-            {
-                if(i/n_x == j ) {
-                    string message = to_string(i);
-                    cv::putText(img_output,message,pt,0,1,text_colors[j],2);
-                }
-            }
+            string message = to_string(i);
+            cv::Scalar color = text_colors[i/n_x];
+            if (is_asymmetric) color = text_colors[i/n_y];
+
+            cv::putText(img_output,message,pt,0,1,color,2);
             //draw covariance
             if(shape.uncertainty()!=0){
                 array<double,3> ellipse = cov2ellipse(shape.Kxx, shape.Kxy, shape.Kyy);
@@ -188,7 +187,6 @@ void TargetDetector::visualize_result(cv::Mat& img_output, pair<bool,vector<Shap
         if(!result.first) cv::putText(img_output,"detection fail",cv::Point2f(left,bottom),0,fontscale,cv::Scalar(0,0,255),thickness);
         this->detection_result = img_output;
     }
-
 }
 
 
@@ -228,9 +226,10 @@ bool TargetDetector::ellipse_test(const Shape &shape){
 }
 
 void TargetDetector::sortTarget(vector<cv::Point2f>&source, vector<cv::Point2f>&dist){
-    bool isAsymmetricGrid=false;
-    CircleGridFinder gridfinder(isAsymmetricGrid);
-    gridfinder.findGrid(source, cv::Size(n_x,n_y),dist);
+    // bool isAsymmetricGrid=false;
+    CircleGridFinder gridfinder(this->is_asymmetric);
+    if(is_asymmetric) gridfinder.findGrid(source, cv::Size(n_y,n_x),dist);
+    else gridfinder.findGrid(source, cv::Size(n_x,n_y),dist);
     reverse(dist.begin(), dist.end());
     return;
 }

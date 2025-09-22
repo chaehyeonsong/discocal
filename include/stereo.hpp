@@ -60,6 +60,8 @@ vector<pair<se3,bool>> StereoCalibration::calExtrinsic(YAML::Node args, int came
     int n_y = camera_node["n_y"].as<int>();
     double r = camera_node["radius"].as<double>();
     double distance = camera_node["distance"].as<double>();
+    bool is_asymmetric= false;
+    if(camera_node["asymmetric"])is_asymmetric= camera_node["asymmetric"].as<bool>();
 
     
     YAML::Node option_node = args["options"];
@@ -71,6 +73,7 @@ vector<pair<se3,bool>> StereoCalibration::calExtrinsic(YAML::Node args, int came
     if(option_node["save_rpe"]) save_rpe= option_node["save_rpe"].as<bool>();
     bool evaluation= false;
     if(option_node["evaluation"]) evaluation= option_node["evaluation"].as<bool>();
+
 
 
     vector<string> imgs;
@@ -91,8 +94,8 @@ vector<pair<se3,bool>> StereoCalibration::calExtrinsic(YAML::Node args, int came
     string results_path = img_dir+"calibration_results/";
     mkdir(results_path);
 
-    TargetDetector detector(n_x, n_y,visualize);
-    Calibrator calibrator = Calibrator(n_x,n_y,n_d,r,distance,max_scene,results_path);
+    TargetDetector detector(n_x, n_y,is_asymmetric,visualize);
+    Calibrator calibrator = Calibrator(n_x,n_y,is_asymmetric,n_d,r,distance,max_scene,results_path);
     vector<bool> valid_scene; 
 
     struct timeval  tv;

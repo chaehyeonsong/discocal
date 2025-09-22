@@ -1,12 +1,10 @@
 .vscode/
 build/
-sample_imgs/rgb
-sample_imgs/tir
+sample_imgs/
 run_mono
 run_stereo
 
 #pages
 Gemfile.lock
 _site
-sample_imgs/
 config/*

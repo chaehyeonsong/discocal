@@ -1,8 +1,9 @@
 #include "CCalibrator.h"
 
-Calibrator::Calibrator(int n_x, int n_y,int n_d, double r,double distance, int max_scene, string results_path){
+Calibrator::Calibrator(int n_x, int n_y, bool asymmetric, int n_d, double r,double distance, int max_scene, string results_path){
     this->n_x = n_x;
     this->n_y = n_y;
+    this->is_asymmetric = asymmetric;
     this->n_d = n_d;
     this->max_scene = max_scene;
     this->num_scene = 0;
@@ -46,17 +47,33 @@ void Calibrator::set_image_size(int _width, int _height){
 }
 
 void Calibrator::set_origin_target(){
-
-    for(int j=0;j<n_y;j++){
+    if(is_asymmetric){
         for(int i=0;i<n_x;i++){
-            double x,y;
-            x = distance*(i+1);
-            y = distance*(n_y-j);
-            Shape target(x,y, M_PI*original_r*original_r);
-            // target.radius = original_r;
-            origin_target.push_back(target);
+            double offset =0;
+            if(i%2==0) offset= distance/2.0;
+            for(int j=0;j<n_y;j++){
+                double x,y;
+                x = distance*i/2.0;
+                y = distance*j+offset;
+                Shape target(x,y, M_PI*original_r*original_r);
+                // target.radius = original_r;
+                origin_target.push_back(target);
+            }
         }
     }
+    else{
+        for(int j=0;j<n_y;j++){
+            for(int i=0;i<n_x;i++){
+                double x,y;
+                x = distance*(i+1);
+                y = distance*(n_y-j);
+                Shape target(x,y, M_PI*original_r*original_r);
+                // target.radius = original_r;
+                origin_target.push_back(target);
+            }
+        }
+    }
+
 
     ori_ms = get_mean_sigma(origin_target);
 }

@@ -47,6 +47,8 @@ void MonoCalibration::mono_calibration(YAML::Node node){
     string type = camera_node["type"].as<string>();
     double r = camera_node["radius"].as<double>();
     double distance = camera_node["distance"].as<double>();
+    bool is_asymmetric= false;
+    if(camera_node["asymmetric"])is_asymmetric= camera_node["asymmetric"].as<bool>();
 
 
     YAML::Node option_node =node["options"];
@@ -83,10 +85,10 @@ void MonoCalibration::mono_calibration(YAML::Node node){
     string results_path = img_dir+"calibration_results/";
     mkdir(results_path);
 
-    TargetDetector detector(n_x, n_y,visualize);
+    TargetDetector detector(n_x, n_y,is_asymmetric,visualize);
     pair<bool,vector<Shape>> result;
     int count=0;
-    Calibrator calibrator = Calibrator(n_x,n_y,n_d,r,distance,max_scene,results_path);
+    Calibrator calibrator = Calibrator(n_x,n_y,is_asymmetric,n_d,r,distance,max_scene,results_path);
 
     // vector<int> success_img_list;
     vector<int> fail_img_list;
