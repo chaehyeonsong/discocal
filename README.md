@@ -68,7 +68,7 @@ docker compose up --build
 After build, runfiles will be created in discocal folder. **You Don't have to additionally build or run docker container**
 
 ## 2. Run 
-*** Note: Revise the config file before run. (refer to [Docs](https://chaehyeonsong.github.io/discocal/))***
+**Note: Revise the config file before run. (refer to [Docs](https://chaehyeonsong.github.io/discocal/))**
 * Intrinsic calibration
 	```bash
 	sudo chmod +x run_mono && ./run_mono [config_path]
