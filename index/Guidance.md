@@ -34,9 +34,12 @@ cv::Mat undist_image = imagehandler.undist(image);
 
 ---
 ## Target design
-<img src="../figs/board2.png" height="300">
+<img src="../figs/board.png" height="480">
 
 Our method needs a planer white board on which black circle grid patterns are printed. 
+
+Discocal support two types of grid: symmetric and asymmetric. Be careful to set $$n_x$$ and $$n_y$$ of the **asymmetric grid.**
+
 You can easily design these patterns in this [site](https://calib.io/pages/camera-calibration-pattern-generator).
 
 **Previous methods prefer to reduce the size of the circles to minimize bias, but our method is not limited to this. In fact, the larger the circles, the more accurate the measurements.**
