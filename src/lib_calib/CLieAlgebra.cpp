@@ -9,63 +9,6 @@ Eigen::Matrix3d LieAlgebra::skew_symmetric_matrix(const Eigen::Vector3d &v)
     return skew;
 }
 
-Eigen::Vector3d LieAlgebra::to_so3(const Eigen::Matrix3d &R)
-{
-    double trace_R = R.trace();
-    if(trace_R >3 || trace_R <-3) {
-        cout<< R*R.transpose()<<endl;
-        throw LieAlgebraError();
-    }
-    double theta = acos((trace_R - double(1.0)) / double(2.0));
-
-    if (theta == double(0.))
-        return Eigen::Vector3d::Zero();
-
-    Eigen::Matrix3d skew_m = (theta / (double(2.) * sin(theta))) * (R - R.transpose());
-    Eigen::Vector3d skew_v(skew_m(2, 1), skew_m(0, 2), skew_m(1, 0));
-    return skew_v;
-}
-
-Eigen::Vector3d LieAlgebra::normalize_so3(const Eigen::Vector3d &_w)
-{
-    Eigen::Vector3d w = _w;
-    double scale = w.norm()/M_PI;
-    if(scale>1){
-        int share = int(scale);
-        if(share%2 ==0){
-            w = w/scale*(scale-share);
-        }
-        else{
-            w = w/scale*(scale-share-1);
-        }
-    }
-    return w;
-}
-
-Eigen::Matrix3d LieAlgebra::to_SO3(const Eigen::Vector3d & _w)
-{
-    Eigen::Vector3d w = normalize_so3(_w);
-    // Eigen::Vector3d w = _w;
-    double theta = w.norm();
-    if (theta == double(0))
-        return Eigen::Matrix3d::Identity();
-
-    Eigen::Matrix3d w_hat = skew_symmetric_matrix(w);
-    Eigen::Matrix3d mat = Eigen::Matrix3d::Identity() + (sin(theta) / theta) * w_hat + ((1.0 - cos(theta)) / (theta * theta)) * (w_hat * w_hat);
-
-    return mat;
-}
-
-Eigen::Matrix3d LieAlgebra::to_E(se3 se3){
-    
-    Eigen::Matrix3d Rot, E;
-    Rot= LieAlgebra::to_SO3(se3.rot);
-    E.col(0)= Rot.col(0);
-    E.col(1)= Rot.col(1);
-    E.col(2)= se3.trans;
-
-    return E;
-}
 
 Eigen::Matrix4d LieAlgebra::to_SE3(se3 se3){
     Eigen::Matrix4d T;
