@@ -1,5 +1,7 @@
 .vscode/
 build/
+install/
+log/
 sample_imgs/rgb
 sample_imgs/tir
 run_mono
