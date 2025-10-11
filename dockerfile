@@ -22,8 +22,6 @@ RUN apt-get update \
 	python3-dev\
 	python3-pip \
 	python3-opencv\
-	&& locale-gen en_US.UTF-8 \
-	&& update-locale LANG=en_US.UTF-8 \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Install Ceres Solver
