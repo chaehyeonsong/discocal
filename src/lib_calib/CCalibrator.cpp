@@ -121,9 +121,9 @@ Params Calibrator::batch_optimize(std::vector<int> sample, Params initial_params
     for(int i=0;i<sample.size();i++){
         int index =sample.at(i);
         int num_residual= targets.at(index).size()*2;
-
-        CostFunction* cost_function = new NumericDiffCostFunction<CalibrationFunctor,ceres::CENTRAL, ceres::DYNAMIC,5,4,3,3>(
-            new CalibrationFunctor(origin_target,targets[index],original_r,n_d,projection_mode,use_weight), ceres::TAKE_OWNERSHIP, num_residual
+        // Change to AutoDiffCostFunction
+        CostFunction* cost_function = new AutoDiffCostFunction<CalibrationFunctor, ceres::DYNAMIC, 5,4,3,3>(
+            new CalibrationFunctor(origin_target,targets[index],original_r,n_d,projection_mode,use_weight), num_residual
         );
 
         problem.AddResidualBlock(cost_function, loss_function, fcs, distorsion, Es.at(index).rot.data(),Es.at(index).trans.data() );
@@ -134,7 +134,6 @@ Params Calibrator::batch_optimize(std::vector<int> sample, Params initial_params
         problem.SetParameterBlockConstant(distorsion);
     }
 
-    
     
     // Run the solver!
     Solver::Options options;
@@ -156,13 +155,10 @@ Params Calibrator::batch_optimize(std::vector<int> sample, Params initial_params
     // printf("final error: %f\n",summary.final_cost);
     // std::vector<double*> Problem::EvaluateOptions::parameter_blocks;
     // eval_option.parameter_blocks={};
-
     Solve(options, &problem, &summary);
     normalize_Es();
 
     Params results(fcs[0],fcs[1],fcs[2],fcs[3],fcs[4],distorsion[0],distorsion[1],distorsion[2],distorsion[3]);
-
-    
 
     double cost = 0.0;
     Problem::EvaluateOptions eval_option;
@@ -176,9 +172,9 @@ Params Calibrator::batch_optimize(std::vector<int> sample, Params initial_params
         int index =sample.at(i);
         int num_residual= targets.at(index).size()*2;
         use_weight =false;
-
-        CostFunction* cost_function = new NumericDiffCostFunction<CalibrationFunctor,ceres::CENTRAL, ceres::DYNAMIC, 5,4,3,3>(
-            new CalibrationFunctor(origin_target,targets[index],original_r,n_d,projection_mode,use_weight), ceres::TAKE_OWNERSHIP, num_residual
+        // Change to AutoDiffCostFunction
+        CostFunction* cost_function = new AutoDiffCostFunction<CalibrationFunctor,ceres::DYNAMIC, 5,4,3,3>(
+            new CalibrationFunctor(origin_target,targets[index],original_r,n_d,projection_mode,use_weight), num_residual
         );
         problem2.AddResidualBlock(cost_function, new ceres::TrivialLoss(),fcs, distorsion,Es.at(index).rot.data(),Es.at(index).trans.data() );
 
@@ -500,8 +496,9 @@ void Calibrator::update_Es(Params intrinsic, int mode){
     for(int i=0;i<sample.size();i++){
         int index =sample.at(i);
         int num_residual= targets.at(index).size()*2;
-        CostFunction* cost_function = new NumericDiffCostFunction<CalibrationFunctor,ceres::CENTRAL, ceres::DYNAMIC,5,4,3,3>(
-            new CalibrationFunctor(origin_target,targets[index],original_r,n_d,mode,use_weight), ceres::TAKE_OWNERSHIP, num_residual
+        // Change to AutoDiffCostFunction
+        CostFunction* cost_function = new AutoDiffCostFunction<CalibrationFunctor, ceres::DYNAMIC,5,4,3,3>(
+            new CalibrationFunctor(origin_target,targets[index],original_r,n_d,mode,use_weight), num_residual
         );
         problem.AddResidualBlock(cost_function, loss_function, fcs, distorsion, Es.at(index).rot.data(),Es.at(index).trans.data() );
 
