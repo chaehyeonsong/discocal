@@ -15,12 +15,13 @@ def main():
 
     # 실제 calibration 호출
     pydiscocal.mono_calibration(args.config_path)
-    print("Start evaluation ...")
+    
 
     with open(args.config_path, 'r') as f:
         cal_params = yaml.full_load(f)
 
     if cal_params["options"]["evaluation"]:
+        print("Start evaluation ...")
         img_dir = cal_params["camera"]["img_dir"]
         if img_dir[-1] != '/':
             img_dir += '/'
@@ -30,7 +31,9 @@ def main():
         with open(results_dir+"intrinsic_parameters.yaml", 'r') as f:
             params = yaml.full_load(f)
 
-        evaluate(params)
+        evaluate(params, cal_params["options"]["visualize"])
+
+        print("End evaluation ...")
 
 if __name__ == "__main__":
     main()

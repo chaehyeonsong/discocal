@@ -16,7 +16,7 @@ Discocal supports:
 - Thermal infrared camera calibration
 - Extrinsic calibration of N cameras
 - RGB-TIR extrinsic calibartion
-- (Comming soon) LiDAR-Camera extrinsic calibration
+- LiDAR-Camera extrinsic calibration
 
 ## News
 <!-- :round_pushpin: :Patch notes,    :tada:: awards -->

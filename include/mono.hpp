@@ -151,13 +151,13 @@ void MonoCalibration::mono_calibration(YAML::Node node){
             calibrator.update_Es(final_params,0);
         }
         else final_params=calibrator.calibrate(0,evaluation);
-        if(save_pose) calibrator.save_extrinsic(img_dir+"est_pose_c0.txt");
-        if(save_rpe) calibrator.visualize_rep(img_dir+"rpe_c0.txt",final_params,0);
+        if(save_pose) calibrator.save_extrinsic();
+        if(save_rpe) calibrator.visualize_rep(results_path+"rpe_c0.txt",final_params,0);
     }
     else{
         final_params=calibrator.calibrate(2,evaluation);
-        if(save_pose) calibrator.save_extrinsic(img_dir+"est_pose_s.txt");
-        if(save_rpe) calibrator.visualize_rep(img_dir+"rpe_s.txt",final_params,2);
+        if(save_pose) calibrator.save_extrinsic(results_path+"est_pose_s.txt");
+        if(save_rpe) calibrator.visualize_rep(results_path+"rpe_s.txt",final_params,2);
     }
 
 }

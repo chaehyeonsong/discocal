@@ -145,10 +145,11 @@ def cov_geo(cov):
     return axis, angle
 
 
-def evaluate(params):
+def evaluate(params, visualize : bool):
     width = params['width']
     height = params['height']
     params['n_sample']=25
+
 
     ignore_scenes =[]
     measurements, mean_prediction, var_prediction,A_inv,A_info = gpr(params, ignore_scenes=ignore_scenes,measure_unc=True)
@@ -200,17 +201,18 @@ def evaluate(params):
 
 
 
-    ## visualization
+    ## visualizationß
     cv2.imwrite(params['results_dir']+"./unc_map.tif", Z)
     img_name = "calibration_uncertainty"
     img_save_path = params["results_dir"]+img_name+".png"
     fig.savefig(img_save_path,bbox_inches='tight', pad_inches=0.1)
 
-    output_img = cv2.imread(img_save_path)
-    cv2.imshow(img_name,output_img)
-    print("Press any key to close the window")
-    key = cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    if visualize:
+        output_img = cv2.imread(img_save_path)
+        cv2.imshow(img_name,output_img)
+        print("Press any key to close the window")
+        key = cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
     
 
