@@ -86,7 +86,7 @@ void MonoCalibration::mono_calibration(YAML::Node node){
     mkdir(results_path);
 
     TargetDetector detector(n_x, n_y,is_asymmetric,visualize);
-    pair<bool,vector<Shape>> result;
+    Target result;
     int count=0;
     Calibrator calibrator = Calibrator(n_x,n_y,is_asymmetric,n_d,r,distance,max_scene,results_path);
 

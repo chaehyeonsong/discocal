@@ -6,7 +6,6 @@
 #include <filesystem>
 #include <iostream>
 
-
 static void print_process(int count, int MAX, std::string prefix = ""){
     const char bar = '='; // 프로그레스바 문자  
 	const char blank = ' '; // 비어있는 프로그레스바 문자  
@@ -128,29 +127,56 @@ struct Shape{
     }
 };
 
+typedef std::pair<bool, std::vector<Shape>> Target;
 
 struct Params{
-    double fx;
-    double fy;
-    double cx;
-    double cy;
-    double skew;
+    
+    // double fx;
+    // double fy;
+    // double cx;
+    // double cy;
+    // double skew;
+    double K[5];
     double d[4];
     // double radius;
-    double s_fx;
-    double s_fy;
-    double s_cx;
-    double s_cy;
-    double s_skew;
+    // double s_fx;
+    // double s_fy;
+    // double s_cx;
+    // double s_cy;
+    // double s_skew;
+    double s_K[5];
     double s_d[4];
+
+    double& fx()   { return K[0]; }
+    double& fy()   { return K[1]; }
+    double& cx()   { return K[2]; }
+    double& cy()   { return K[3]; }
+    double& skew() { return K[4]; }
+    const double& fx() const   { return K[0]; }
+    const double& fy() const   { return K[1]; }
+    const double& cx() const   { return K[2]; }
+    const double& cy() const   { return K[3]; }
+    const double& skew() const { return K[4]; }
+
+
+    double& s_fx()   { return s_K[0]; }
+    double& s_fy()   { return s_K[1]; }
+    double& s_cx()   { return s_K[2]; }
+    double& s_cy()   { return s_K[3]; }
+    double& s_skew() { return s_K[4]; }
+    const double& s_fx() const   { return s_K[0]; }
+    const double& s_fy() const   { return s_K[1]; }
+    const double& s_cx() const   { return s_K[2]; }
+    const double& s_cy() const   { return s_K[3]; }
+    const double& s_skew() const { return s_K[4]; }
     // double s_radius;
 
     Params(double _fx=0, double _fy=0, double _cx=0, double _cy=0, double _skew=0, double _d1=0, double _d2=0, double _d3=0, double _d4=0){
-        fx = _fx;
-        fy = _fy;
-        cx = _cx;
-        cy = _cy;
-        skew = _skew;
+        K[0] = _fx;
+        K[1] = _fy;
+        K[2] = _cx;
+        K[3] = _cy;
+        K[4] = _skew;
         d[0] = _d1;
         d[1] = _d2;
         d[2] = _d3;
@@ -159,11 +185,12 @@ struct Params{
         initialize_unc();
     }
     Params(YAML::Node camera_node){
-        fx = camera_node["fx"].as<double>();
-        fy = camera_node["fy"].as<double>();
-        cx = camera_node["cx"].as<double>();
-        cy = camera_node["cy"].as<double>();
-        skew = camera_node["skew"].as<double>();
+        K[0] = camera_node["fx"].as<double>();
+        K[1] = camera_node["fy"].as<double>();
+        K[2] = camera_node["cx"].as<double>();
+        K[3] = camera_node["cy"].as<double>();
+        K[4] = camera_node["skew"].as<double>();
+
         d[0] = camera_node["d1"].as<double>();
         d[1] = camera_node["d2"].as<double>();
         d[2] = camera_node["d3"].as<double>();
@@ -171,11 +198,12 @@ struct Params{
         initialize_unc();
     }
     void update_unc(std::array<double,9> params_cov){
-        s_fx = params_cov[0];
-        s_fy = params_cov[1];
-        s_cx = params_cov[2];
-        s_cy = params_cov[3];
-        s_skew = params_cov[4];
+        s_K[0] = params_cov[0];
+        s_K[1] = params_cov[1];
+        s_K[2] = params_cov[2];
+        s_K[3] = params_cov[3];
+        s_K[4] = params_cov[4];
+
         s_d[0] = params_cov[5];
         s_d[1] = params_cov[6];
         s_d[2] = params_cov[7];
@@ -204,7 +232,7 @@ struct Params{
     }
     std::string to_string(){
         std::string str = "fx\tfy\tcx\tcy\tskew\td1\td2\td3\td4\n"
-        +std::to_string(fx) + "\t"+std::to_string(fy) + "\t"+std::to_string(cx) + "\t"+std::to_string(cy) + "\t"+std::to_string(skew) 
+        +std::to_string(K[0]) + "\t"+std::to_string(K[1]) + "\t"+std::to_string(K[2]) + "\t"+std::to_string(K[3]) + "\t"+std::to_string(K[4]) 
         + "\t"+std::to_string(d[0]) + "\t"+std::to_string(d[1]) + "\t"+std::to_string(d[2]) + "\t"+std::to_string(d[3]);
         return str;
     }
@@ -213,16 +241,17 @@ struct Params{
         int toralance = 2;
         if(only_intrinsic){
             table.add_row({"Parameter","fx", "fy", "cx","cy","skew"});
-            table.add_row({"mean", to_stringf(fx, 2), to_stringf(fy, 2), to_stringf(cx, 2),to_stringf(cy, 2),to_stringf(skew, 2)
+            table.add_row({
+                "mean", to_stringf(K[0], 2), to_stringf(K[1], 2), to_stringf(K[2], 2),to_stringf(K[3], 2),to_stringf(K[4], 2)
             });
         }
         else{
             table.add_row({"Parameter","fx", "fy", "cx","cy","skew","d1","d2","d3","d4"});
-            table.add_row({ "mean",to_stringf(fx, 2), to_stringf(fy, 2), to_stringf(cx, 2), to_stringf(cy, 2),to_stringf(skew, 2),
+            table.add_row({ "mean",to_stringf(K[0], 2), to_stringf(K[1], 2), to_stringf(K[2], 2), to_stringf(K[3], 2),to_stringf(K[4], 2),
             to_stringf(d[0], 3), to_stringf(d[1], 3),to_stringf(d[2], 3),to_stringf(d[3], 4)
             });
             if(details){
-                table.add_row({ "2sigma",to_stringf(toralance*s_fx, 3), to_stringf(toralance*s_fy, 3),to_stringf(toralance*s_cx, 3), to_stringf(toralance*s_cy, 3),to_stringf(toralance*s_skew, 3),
+                table.add_row({ "2sigma",to_stringf(toralance*s_K[0], 3), to_stringf(toralance*s_K[1], 3),to_stringf(toralance*s_K[2], 3), to_stringf(toralance*s_K[3], 3),to_stringf(toralance*s_K[4], 3),
                    to_stringf(toralance*s_d[0], 4), to_stringf(toralance*s_d[1], 4),to_stringf(toralance*s_d[2], 4),to_stringf(toralance*s_d[3], 5)
                 });
                 // table.add_row({ sigma3(fx, s_fx), sigma3(fy, s_fy), sigma3(cx, s_cx),sigma3(cy, s_cy),sigma3(skew, s_skew),

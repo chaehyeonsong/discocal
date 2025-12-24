@@ -15,7 +15,7 @@ camera:
   # distance: 0.09
 
 options:
-  visualize : true
+  visualize : false
   evaluation: true
   # save_pose : false 
   # save_rpe : false

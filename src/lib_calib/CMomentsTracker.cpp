@@ -391,7 +391,9 @@ Point MomentsTracker::ne2dp_Numerical(Eigen::Matrix3d Q, vector<double> ds){
 }
 
 
-Point MomentsTracker::project(double wx, double wy, double r,Params intrinsic, Eigen::Matrix3d E, int mode){
+Point MomentsTracker::project(double wx, double wy, double r,Params intrinsic, Eigen::Matrix3d E, int mode, bool toImage){
+    // mode:
+    // 0: moments, 1: conic, 2: points, 3: ne2dp_Numerical, 4: wc2dp_Numerical
     Eigen::Matrix3d Cw;
     Cw <<   1.0, 0.0, -wx,
             0.0, 1.0, -wy,
@@ -429,8 +431,9 @@ Point MomentsTracker::project(double wx, double wy, double r,Params intrinsic, E
         throw MomentsTrackerError();
     }
 
-    double u_e = dp.x*intrinsic.fx+dp.y*intrinsic.skew+intrinsic.cx; 
-    double v_e = dp.y*intrinsic.fy+intrinsic.cy;
+    if(!toImage) return dp;
 
+    double u_e = dp.x*intrinsic.fx()+dp.y*intrinsic.skew()+intrinsic.cx(); 
+    double v_e = dp.y*intrinsic.fy()+intrinsic.cy();
     return Point(u_e, v_e);
 }

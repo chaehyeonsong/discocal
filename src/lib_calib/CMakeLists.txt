@@ -12,3 +12,13 @@ target_include_directories(calibrator PUBLIC
 target_link_libraries(calibrator
     ${CERES_LIBRARIES}
 )
+
+
+add_library(stereoCalibrator CStereoCalibrator.cpp CMomentsTracker.cpp CLieAlgebra.cpp)
+target_include_directories(stereoCalibrator PUBLIC 
+    ${CMAKE_SOURCE_DIR}/include 
+    ${EIGEN3_INCLUDE_DIRS}
+)
+target_link_libraries(stereoCalibrator
+    ${CERES_LIBRARIES}
+)
