@@ -30,7 +30,7 @@ class WrongTypeException: public std::exception{
 class TargetDetector{
     public:
         TargetDetector(int n_x, int n_y, bool _is_asymmetric, bool draw = true);
-        pair<bool,vector<Shape>>detect(cv::Mat& img, string type);
+        Target detect(cv::Mat& img, string type);
         static cv::Mat preprocessing(cv::Mat img, string detection_mode);
         static cv::Mat translation_blur(const cv::Mat &img, double trans);
         static cv::Mat rotation_blur(const cv::Mat &img, double dtheta);

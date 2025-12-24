@@ -1,6 +1,5 @@
 cameras:
   - img_dir: "./sample_imgs/rgb12/left/"
-    cal_intrinsic: false
     type: "circle"
     n_x: 4 
     n_y: 3
@@ -20,7 +19,6 @@ cameras:
     d4: 0
 
   - img_dir: "./sample_imgs/rgb12/right/"
-    cal_intrinsic: false
     type: "circle"
     n_x: 4 
     n_y: 3
@@ -40,5 +38,6 @@ cameras:
     d4: 0
 
 options:
-  save_results_path : "./"
+  results_path : "./extrinsic_result"
   visualize : true
+  full_optimize : false

@@ -103,8 +103,8 @@ void Calibrator::printParams(Params params){
 void Calibrator::set_inital_Es(Params params){
     Eigen::Matrix3d K, E, R;
     
-    K << params.fx, params.skew , params.cx,
-        0,  params.fy,  params.cy,
+    K << params.fx(), params.skew(), params.cx(),
+        0,  params.fy(),  params.cy(),
         0,  0,  1;
 
     if(K.determinant()==0){
@@ -127,8 +127,9 @@ void Calibrator::set_inital_Es(Params params){
 
 Params Calibrator::batch_optimize(std::vector<int> sample, Params initial_params, int projection_mode, bool save_jacob, bool fix_intrinsic){
 
-    double fcs[5]={initial_params.fx, initial_params.fy, initial_params.cx, initial_params.cy, initial_params.skew};
-    double distorsion[4]={initial_params.d[0],initial_params.d[1],initial_params.d[2],initial_params.d[3]};
+    // double fcs[5]={initial_params.fx, initial_params.fy, initial_params.cx, initial_params.cy, initial_params.skew};
+    // double distorsion[4]={initial_params.d[0],initial_params.d[1],initial_params.d[2],initial_params.d[3]};
+    Params results = initial_params;
 
     bool use_weight= true;
     Problem problem; 
@@ -143,12 +144,12 @@ Params Calibrator::batch_optimize(std::vector<int> sample, Params initial_params
             new CalibrationFunctor(origin_target,targets[index],original_r,n_d,projection_mode,use_weight), ceres::TAKE_OWNERSHIP, num_residual
         );
 
-        problem.AddResidualBlock(cost_function, loss_function, fcs, distorsion, Es.at(index).rot.data(),Es.at(index).trans.data() );
+        problem.AddResidualBlock(cost_function, loss_function, results.K, results.d, Es.at(index).rot.data(),Es.at(index).trans.data() );
 
     }
     if(fix_intrinsic){ 
-        problem.SetParameterBlockConstant(fcs);
-        problem.SetParameterBlockConstant(distorsion);
+        problem.SetParameterBlockConstant(results.K);
+        problem.SetParameterBlockConstant(results.d);
     }
 
     
@@ -177,7 +178,7 @@ Params Calibrator::batch_optimize(std::vector<int> sample, Params initial_params
     Solve(options, &problem, &summary);
     normalize_Es();
 
-    Params results(fcs[0],fcs[1],fcs[2],fcs[3],fcs[4],distorsion[0],distorsion[1],distorsion[2],distorsion[3]);
+    // Params results(fcs[0],fcs[1],fcs[2],fcs[3],fcs[4],distorsion[0],distorsion[1],distorsion[2],distorsion[3]);
 
     
 
@@ -197,7 +198,7 @@ Params Calibrator::batch_optimize(std::vector<int> sample, Params initial_params
         CostFunction* cost_function = new NumericDiffCostFunction<CalibrationFunctor,ceres::CENTRAL, ceres::DYNAMIC, 5,4,3,3>(
             new CalibrationFunctor(origin_target,targets[index],original_r,n_d,projection_mode,use_weight), ceres::TAKE_OWNERSHIP, num_residual
         );
-        problem2.AddResidualBlock(cost_function, new ceres::TrivialLoss(),fcs, distorsion,Es.at(index).rot.data(),Es.at(index).trans.data() );
+        problem2.AddResidualBlock(cost_function, new ceres::TrivialLoss(),results.K, results.d, Es.at(index).rot.data(),Es.at(index).trans.data() );
 
     }
     problem2.Evaluate(eval_option, &cost, &residuals, &gradient, &jacobian);
@@ -293,9 +294,6 @@ void Calibrator::visualize_rep(string path,Params params, int mode){
     for(int i=0;i<num_scene;i++){
         sample.push_back(i);
     }
-
-    double fx{params.fx}, fy{params.fy}, cx{params.cx}, cy{params.cy}, skew{params.skew};
-    vector<double> ds = {1, params.d[0], params.d[1],params.d[2],params.d[3]};
     Eigen::Matrix3d E, E_inv, Qn;
 
     MomentsTracker* tracker = new MomentsTracker(n_d);
@@ -328,7 +326,7 @@ void Calibrator::visualize_rep(string path,Params params, int mode){
 }
 
 void Calibrator::save_data_for_gpr(std::vector<int> sample,Params params, int mode){
-    double fx{params.fx}, fy{params.fy}, cx{params.cx}, cy{params.cy}, skew{params.skew};
+    // double fx{params.fx}, fy{params.fy}, cx{params.cx}, cy{params.cy}, skew{params.skew};
     vector<double> ds = {1, params.d[0], params.d[1],params.d[2],params.d[3]};
     Eigen::Matrix3d E, E_inv, Qn;
 
@@ -348,41 +346,44 @@ void Calibrator::save_data_for_gpr(std::vector<int> sample,Params params, int mo
         for(int j=0;j<origin_target.size();j++){
             double wx = origin_target[j].x;
             double wy = origin_target[j].y;
-            Eigen::Matrix3d Cw;
-            Cw <<   1.0, 0.0, -wx,
-                    0.0, 1.0, -wy,
-                    -wx, -wy, pow(wx,2)+pow(wy,2)-pow(original_r,2);
 
-            Point dp(0,0);
-            if(mode ==0){
-                Eigen::Matrix3d E_inv=  E.inverse();
-                Eigen::Matrix3d Qn = E_inv.transpose()*Cw*E_inv;
-                dp = tracker->ne2dp(Qn,ds);
-            }
-            else if(mode == 1){
-                Eigen::Matrix3d E_inv=  E.inverse();
-                Eigen::Matrix3d Qn = E_inv.transpose()*Cw*E_inv;
-                array<double,5> ellipse_n= tracker->ellipse2array(Qn);
-                Point pn(ellipse_n[0],ellipse_n[1]);
-                dp = tracker->distort_Point(pn,ds);
-            }
-            else if(mode == 2){
-                Eigen::Vector3d Pw{wx,wy,1};
-                Eigen::Vector3d Pn = E*Pw;
-                Point pn(Pn[0]/Pn[2],Pn[1]/Pn[2]);
-                dp = tracker->distort_Point(pn,ds);
-            }
-            else if(mode == 3){
-                Eigen::Matrix3d E_inv=  E.inverse();
-                Eigen::Matrix3d Qn = E_inv.transpose()*Cw*E_inv;
-                dp = tracker->ne2dp_Numerical(Qn,ds);
-            }
-            else if(mode == 4){
-                dp = tracker->wc2dp_Numerical(Cw,E,ds);
-            }
-            else{
-                throw MomentsTrackerError();
-            }
+            Point dp = tracker->project( wx, wy, original_r, params, E, mode, false);
+
+            // Eigen::Matrix3d Cw;
+            // Cw <<   1.0, 0.0, -wx,
+            //         0.0, 1.0, -wy,
+            //         -wx, -wy, pow(wx,2)+pow(wy,2)-pow(original_r,2);
+
+            // Point dp(0,0);
+            // if(mode ==0){
+            //     Eigen::Matrix3d E_inv=  E.inverse();
+            //     Eigen::Matrix3d Qn = E_inv.transpose()*Cw*E_inv;
+            //     dp = tracker->ne2dp(Qn,ds);
+            // }
+            // else if(mode == 1){
+            //     Eigen::Matrix3d E_inv=  E.inverse();
+            //     Eigen::Matrix3d Qn = E_inv.transpose()*Cw*E_inv;
+            //     array<double,5> ellipse_n= tracker->ellipse2array(Qn);
+            //     Point pn(ellipse_n[0],ellipse_n[1]);
+            //     dp = tracker->distort_Point(pn,ds);
+            // }
+            // else if(mode == 2){
+            //     Eigen::Vector3d Pw{wx,wy,1};
+            //     Eigen::Vector3d Pn = E*Pw;
+            //     Point pn(Pn[0]/Pn[2],Pn[1]/Pn[2]);
+            //     dp = tracker->distort_Point(pn,ds);
+            // }
+            // else if(mode == 3){
+            //     Eigen::Matrix3d E_inv=  E.inverse();
+            //     Eigen::Matrix3d Qn = E_inv.transpose()*Cw*E_inv;
+            //     dp = tracker->ne2dp_Numerical(Qn,ds);
+            // }
+            // else if(mode == 4){
+            //     dp = tracker->wc2dp_Numerical(Cw,E,ds);
+            // }
+            // else{
+            //     throw MomentsTrackerError();
+            // }
 
             if(writeFile.is_open()){
                 writeFile << index<<'\t'<< j<<'\t'<< dp.x<<'\t'<< dp.y<<"\n";
@@ -397,8 +398,8 @@ void Calibrator::save_data_for_gpr(std::vector<int> sample,Params params, int mo
 }
 
 double Calibrator::cal_reprojection_error(std::vector<int> sample,Params params, int mode){
-    double fx{params.fx}, fy{params.fy}, cx{params.cx}, cy{params.cy}, skew{params.skew};
-    vector<double> ds = {1, params.d[0], params.d[1],params.d[2],params.d[3]};
+    // double fx{params.fx}, fy{params.fy}, cx{params.cx}, cy{params.cy}, skew{params.skew};
+    // vector<double> ds = {1, params.d[0], params.d[1],params.d[2],params.d[3]};
     Eigen::Matrix3d E;
 
     MomentsTracker* tracker = new MomentsTracker(n_d);
@@ -432,8 +433,8 @@ double Calibrator::cal_reprojection_error(std::vector<int> sample,Params params,
 
 double Calibrator::cal_calibration_quality(std::vector<int> sample,Params params, int mode){
     // To be developed
-    double fx{params.fx}, fy{params.fy}, cx{params.cx}, cy{params.cy}, skew{params.skew};
-    vector<double> ds = {1, params.d[0], params.d[1],params.d[2],params.d[3]};
+    // double fx{params.fx}, fy{params.fy}, cx{params.cx}, cy{params.cy}, skew{params.skew};
+    // vector<double> ds = {1, params.d[0], params.d[1],params.d[2],params.d[3]};
     Eigen::Matrix3d E;
 
     MomentsTracker* tracker = new MomentsTracker(n_d);
@@ -508,8 +509,8 @@ void Calibrator::update_Es(Params intrinsic, int mode){
     init();
     set_inital_Es(intrinsic);
     std::vector<int> sample = sorted_random_sampling(num_scene,num_scene);
-    double fcs[5]={intrinsic.fx, intrinsic.fy, intrinsic.cx, intrinsic.cy, intrinsic.skew};
-    double distorsion[4]={intrinsic.d[0],intrinsic.d[1],intrinsic.d[2],intrinsic.d[3]};
+    // double fcs[5]={intrinsic.fx, intrinsic.fy, intrinsic.cx, intrinsic.cy, intrinsic.skew};
+    // double distorsion[4]={intrinsic.d[0],intrinsic.d[1],intrinsic.d[2],intrinsic.d[3]};
     bool use_weight= true;
     Problem problem; 
     ceres::LossFunction* loss_function;
@@ -520,11 +521,11 @@ void Calibrator::update_Es(Params intrinsic, int mode){
         CostFunction* cost_function = new NumericDiffCostFunction<CalibrationFunctor,ceres::CENTRAL, ceres::DYNAMIC,5,4,3,3>(
             new CalibrationFunctor(origin_target,targets[index],original_r,n_d,mode,use_weight), ceres::TAKE_OWNERSHIP, num_residual
         );
-        problem.AddResidualBlock(cost_function, loss_function, fcs, distorsion, Es.at(index).rot.data(),Es.at(index).trans.data() );
+        problem.AddResidualBlock(cost_function, loss_function, intrinsic.K, intrinsic.d, Es.at(index).rot.data(),Es.at(index).trans.data() );
 
     }
-    problem.SetParameterBlockConstant(fcs);
-    problem.SetParameterBlockConstant(distorsion);
+    problem.SetParameterBlockConstant(intrinsic.K);
+    problem.SetParameterBlockConstant(intrinsic.d);
 
     Solver::Options options;
     options.linear_solver_type = ceres::DENSE_SCHUR;
@@ -547,8 +548,8 @@ Params Calibrator::calibrate(int mode, bool save_jacob){
    
     bool result= cal_initial_params(&initial_params);
     if(!result){
-        initial_params.fx = initial_params.cx = this->width/2;
-        initial_params.fy = initial_params.cy = this->height/2;
+        initial_params.fx() = initial_params.cx() = this->width/2;
+        initial_params.fy() = initial_params.cy() = this->height/2;
     }
     //  if(debug) cout<< initial_params.to_table(true)<<endl;
     // if(debug) printParams(initial_params,true);
@@ -592,19 +593,23 @@ Params Calibrator::calibrate(int mode, bool save_jacob){
         writeFile<<"mode: "<<mode <<"\n";
         writeFile<<"radius: " << original_r << "\n";
         writeFile<<"distance: " << distance << "\n";
-        writeFile<<"fx: " << final_params.fx << "\n";
-        writeFile<<"fy: " << final_params.fy << "\n";
-        writeFile<<"cx: " << final_params.cx << "\n";
-        writeFile<<"cy: " << final_params.cy << "\n";
-        writeFile<<"skew: " << final_params.skew << "\n";
+
+        writeFile<<"fx: " << final_params.K[0] << "\n";
+        writeFile<<"fy: " << final_params.K[1]<< "\n";
+        writeFile<<"cx: " << final_params.K[2] << "\n";
+        writeFile<<"cy: " << final_params.K[3] << "\n";
+        writeFile<<"skew: " << final_params.K[4] << "\n";
+
         writeFile<<"d1: " << final_params.d[0] << "\n";
         writeFile<<"d2: " << final_params.d[1] << "\n";
         writeFile<<"d3: " << final_params.d[2] << "\n";
         writeFile<<"d4: " << final_params.d[3] << "\n";
-        writeFile<<"sfx: " << final_params.s_fx << "\n";
-        writeFile<<"sfy: " << final_params.s_fy << "\n";
-        writeFile<<"scx: " << final_params.s_cx << "\n";
-        writeFile<<"scy: " << final_params.s_cy << "\n";
+
+        writeFile<<"sfx: " << final_params.s_K[0] << "\n";
+        writeFile<<"sfy: " << final_params.s_K[1] << "\n";
+        writeFile<<"scx: " << final_params.s_K[2] << "\n";
+        writeFile<<"scy: " << final_params.s_K[3] << "\n";
+
         writeFile<<"sd1: " << final_params.s_d[0] << "\n";
         writeFile<<"sd2: " << final_params.s_d[1] << "\n";
         writeFile<<"sd3: " << final_params.s_d[2] << "\n";
@@ -823,11 +828,11 @@ bool Calibrator::cal_initial_params(Params* inital_params){
                 return false;
             }
             else{
-                inital_params->fx= fx;
-                inital_params->fy= fy;
-                inital_params->cx = cx;
-                inital_params->cy= cy;
-                inital_params->skew = skew;
+                inital_params->fx()= fx;
+                inital_params->fy()= fy;
+                inital_params->cx() = cx;
+                inital_params->cy()= cy;
+                inital_params->skew() = skew;
                 return true;
             }
         }

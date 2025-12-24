@@ -45,7 +45,9 @@ public:
     Point ne2dp(Eigen::Matrix3d Q, vector<double> ds);
     Point wc2dp_Numerical(Eigen::Matrix3d Cw,Eigen::Matrix3d H, vector<double> ds,int total_iter=1600);
     Point ne2dp_Numerical(Eigen::Matrix3d Q, vector<double> ds);
-    Point project(double wx, double wy, double r,Params intrinsic, Eigen::Matrix3d E, int mode);
+
+     // 0: moments, 1: conic, 2: points, 3: ne2dp_Numerical, 4: wc2dp_Numerical
+    Point project(double wx, double wy, double r,Params intrinsic, Eigen::Matrix3d E, int mode, bool toImage = true);
     array<double, 5> ellipse2array(Eigen::Matrix3d Q);
     Point distort_Point(Point pn, vector<double> ds);
 };
