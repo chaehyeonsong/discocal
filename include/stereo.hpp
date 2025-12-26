@@ -269,7 +269,8 @@ void StereoCalibration::stereo_calibration(YAML::Node node)
         }
     }
 
-    stereo_calibrator.calibrate(all_targets, dest, extrinsics, all_params, all_radius, all_n_d, full_optimize);
+    vector<array<double, 6>> ext_std = stereo_calibrator.calibrate(all_targets, dest, extrinsics, all_params, all_radius, all_n_d, full_optimize);
+
     for(int i=0;i<all_params.size();i++){
         string intrinsic_path = results_dir + "camera"+ to_string(i)+"_intrinsic.yaml";
         std::ofstream intrinsicFile(intrinsic_path.data());
@@ -295,15 +296,15 @@ void StereoCalibration::stereo_calibration(YAML::Node node)
         intrinsicFile<<"d3: " << final_params.d[2] << "\n";
         intrinsicFile<<"d4: " << final_params.d[3] << "\n";
 
-        intrinsicFile<<"sfx: " << final_params.s_K[0] << "\n";
-        intrinsicFile<<"sfy: " << final_params.s_K[1] << "\n";
-        intrinsicFile<<"scx: " << final_params.s_K[2] << "\n";
-        intrinsicFile<<"scy: " << final_params.s_K[3] << "\n";
+        // intrinsicFile<<"sfx: " << final_params.s_K[0] << "\n";
+        // intrinsicFile<<"sfy: " << final_params.s_K[1] << "\n";
+        // intrinsicFile<<"scx: " << final_params.s_K[2] << "\n";
+        // intrinsicFile<<"scy: " << final_params.s_K[3] << "\n";
 
-        intrinsicFile<<"sd1: " << final_params.s_d[0] << "\n";
-        intrinsicFile<<"sd2: " << final_params.s_d[1] << "\n";
-        intrinsicFile<<"sd3: " << final_params.s_d[2] << "\n";
-        intrinsicFile<<"sd4: " << final_params.s_d[3] << "\n";
+        // intrinsicFile<<"sd1: " << final_params.s_d[0] << "\n";
+        // intrinsicFile<<"sd2: " << final_params.s_d[1] << "\n";
+        // intrinsicFile<<"sd3: " << final_params.s_d[2] << "\n";
+        // intrinsicFile<<"sd4: " << final_params.s_d[3] << "\n";
 
         intrinsicFile.close();
     }
@@ -326,16 +327,19 @@ void StereoCalibration::stereo_calibration(YAML::Node node)
     for (int i = 0; i < n_camera - 1; i++)
     {
         se3 E = extrinsics[i];
+        array<double, 6> std_dev = ext_std[i];
         string message = "camera0to" + to_string(i + 1) + ": fail\n";
         if (success[i])
         {
             message = "camera0to" + to_string(i + 1) + ":\t" + E.to_string() + "\n";
+            message += "2Sigma:\t" + to_string(2 * std_dev[0]) + "\t" + to_string(2 * std_dev[1]) + "\t" + to_string(2 * std_dev[2]) + "\t" + to_string(2 * std_dev[3]) + "\t" + to_string(2 * std_dev[4]) + "\t" + to_string(2 * std_dev[5]) + "\n";
             table.add_row({"camera0to" + to_string(i + 1), to_stringf(E.rot[0], 4), to_stringf(E.rot[1], 4), to_stringf(E.rot[2], 4), to_stringf(E.trans[0], 4), to_stringf(E.trans[1], 4), to_stringf(E.trans[2], 4)});
+            table.add_row({"2Sigma", to_stringf(2*std_dev[0], 4), to_stringf(2*std_dev[1], 4), to_stringf(2*std_dev[2], 4), to_stringf(2*std_dev[3], 4), to_stringf(2*std_dev[4], 4), to_stringf(2*std_dev[5], 4)});
         }
         else table.add_row({"camera0to" + to_string(i + 1), "fail", fail_icon, fail_icon, fail_icon, fail_icon, fail_icon});
 
         if (writeFile.is_open())
-        {
+        { 
             writeFile << message;
         }
     }

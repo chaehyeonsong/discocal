@@ -30,7 +30,7 @@ class StereoCalibrator{
         StereoCalibrator(int n_x, int n_y, bool asymmetric, double distance);
         ~StereoCalibrator() = default;
         
-        void calibrate(
+        vector<array<double, 6>> calibrate(
             const vector<vector<Target>> & all_targets,
             vector<se3>& Es,
             vector<se3>& all_ext,
